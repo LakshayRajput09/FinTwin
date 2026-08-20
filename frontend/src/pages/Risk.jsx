@@ -52,7 +52,7 @@ function Risk() {
 
       const forecastResponse =
         await fetch(
-          "http://127.0.0.1:8000/api/forecast",
+          "https://fintwin-h7pc.onrender.com",
           {
             method: "POST",
 
@@ -111,7 +111,7 @@ function Risk() {
 
       const riskResponse =
         await fetch(
-          "http://127.0.0.1:8000/api/risk",
+          "https://fintwin-h7pc.onrender.com",
           {
             method: "POST",
 
