@@ -24,11 +24,19 @@ app = FastAPI(
 # CORS
 # ==========================================
 
+ALLOWED_ORIGINS = [
+    # Local development
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+
+    # Production frontend
+    "https://fin-twin01.vercel.app",
+]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,6 +46,7 @@ app.add_middleware(
 # ==========================================
 # REQUEST MODELS
 # ==========================================
+
 
 class PaymentPredictionRequest(BaseModel):
     invoice_amount: float
@@ -84,6 +93,7 @@ class FinancingRequest(BaseModel):
 # ROOT
 # ==========================================
 
+
 @app.get("/")
 def root():
     return {
@@ -95,6 +105,7 @@ def root():
 # ==========================================
 # HEALTH CHECK
 # ==========================================
+
 
 @app.get("/health")
 def health():
@@ -108,11 +119,11 @@ def health():
 # ML PAYMENT DELAY PREDICTION
 # ==========================================
 
+
 @app.post("/api/ml/predict-payment-delay")
 def predict_payment(
     request: PaymentPredictionRequest,
 ):
-
     result = predict_payment_delay(
         invoice_amount=request.invoice_amount,
         days_until_due=request.days_until_due,
@@ -131,11 +142,11 @@ def predict_payment(
 # AI CASH FLOW FORECAST
 # ==========================================
 
+
 @app.post("/api/forecast")
 def create_forecast(
     request: ForecastRequest,
 ):
-
     result = generate_cash_forecast(
         current_cash=request.current_cash,
         invoices=request.invoices,
@@ -154,11 +165,11 @@ def create_forecast(
 # AI RISK ANALYSIS
 # ==========================================
 
+
 @app.post("/api/risk")
 def create_risk_analysis(
     request: RiskRequest,
 ):
-
     result = generate_risk_analysis(
         current_cash=request.current_cash,
         invoices=request.invoices,
@@ -177,11 +188,11 @@ def create_risk_analysis(
 # FINANCIAL SHOCK SIMULATOR
 # ==========================================
 
+
 @app.post("/api/simulator")
 def create_simulation(
     request: SimulationRequest,
 ):
-
     result = run_simulation(
         current_cash=request.current_cash,
         invoices=request.invoices,
@@ -202,11 +213,11 @@ def create_simulation(
 # FINANCING OPTIONS
 # ==========================================
 
+
 @app.post("/api/financing")
 def create_financing_analysis(
     request: FinancingRequest,
 ):
-
     result = generate_financing_analysis(
         liquidity_gap=request.liquidity_gap,
         outstanding_receivables=request.outstanding_receivables,
