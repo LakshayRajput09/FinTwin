@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   AlertTriangle,
   CheckCircle,
@@ -11,9 +12,9 @@ import {
 
 import ModulePage from "../components/ModulePage";
 
-import {
-  getFinancialData,
-} from "../data/financialStore";
+import { getFinancialData } from "../data/financialStore";
+
+import { API_URL } from "../config";
 
 
 function Forecast() {
@@ -29,77 +30,99 @@ function Forecast() {
   // ==========================================
 
   useEffect(() => {
-
     loadForecast();
-
   }, []);
 
 
   async function loadForecast() {
-
     try {
-
       setLoading(true);
-
       setError("");
 
-
-      const data =
-        getFinancialData();
+      const data = getFinancialData();
 
 
-      const response =
-        await fetch(
-          "http://127.0.0.1:8000/api/forecast",
-          {
-            method: "POST",
+      // ==========================================
+      // CALL FIN TWIN FORECAST API
+      // ==========================================
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+      const response = await fetch(
+        `${API_URL}/api/forecast`,
+        {
+          method: "POST",
 
-            body: JSON.stringify({
+          headers: {
+            "Content-Type": "application/json",
+          },
 
-              current_cash:
-                data.business.openingCash,
+          body: JSON.stringify({
+            current_cash:
+              data.business?.openingCash || 0,
 
-              invoices:
-                data.invoices,
+            invoices:
+              data.invoices || [],
 
-              payments:
-                data.payments,
+            payments:
+              data.payments || [],
 
-              recurring_expenses:
-                data.recurringExpenses,
+            recurring_expenses:
+              data.recurringExpenses || [],
 
-              one_time_expenses:
-                data.expenses,
+            one_time_expenses:
+              data.expenses || [],
+          }),
+        }
+      );
 
-            }),
-          }
-        );
 
+      // ==========================================
+      // HANDLE HTTP ERRORS
+      // ==========================================
 
       if (!response.ok) {
+        let message =
+          `Forecast API returned ${response.status}`;
 
-        throw new Error(
-          `Forecast API returned ${response.status}`
-        );
+        try {
+          const errorData =
+            await response.json();
 
+          if (errorData?.detail) {
+            message =
+              typeof errorData.detail === "string"
+                ? errorData.detail
+                : JSON.stringify(
+                    errorData.detail
+                  );
+          }
+        } catch {
+          // Ignore JSON parsing error
+        }
+
+        throw new Error(message);
       }
 
+
+      // ==========================================
+      // READ RESPONSE
+      // ==========================================
 
       const result =
         await response.json();
 
 
       if (!result.success) {
-
         throw new Error(
+          result.message ||
           "Forecast generation failed"
         );
+      }
 
+
+      if (!result.forecast) {
+        throw new Error(
+          "Forecast API returned no forecast data"
+        );
       }
 
 
@@ -108,21 +131,18 @@ function Forecast() {
       );
 
     } catch (err) {
-
       console.error(
         "Forecast error:",
         err
       );
 
       setError(
-        err.message ||
+        err?.message ||
         "Unable to generate forecast."
       );
 
     } finally {
-
       setLoading(false);
-
     }
   }
 
@@ -132,14 +152,12 @@ function Forecast() {
   // ==========================================
 
   function formatMoney(amount) {
-
     if (
       amount === undefined ||
       amount === null
     ) {
       return "₹0";
     }
-
 
     const value =
       Number(amount);
@@ -148,22 +166,18 @@ function Forecast() {
     if (
       Math.abs(value) >= 10000000
     ) {
-
       return `₹${(
         value / 10000000
       ).toFixed(2)} Cr`;
-
     }
 
 
     if (
       Math.abs(value) >= 100000
     ) {
-
       return `₹${(
         value / 100000
       ).toFixed(2)} L`;
-
     }
 
 
@@ -178,11 +192,9 @@ function Forecast() {
   // ==========================================
 
   function formatDate(dateString) {
-
     if (!dateString) {
       return "-";
     }
-
 
     return new Date(
       dateString
@@ -202,7 +214,6 @@ function Forecast() {
   // ==========================================
 
   function getRiskClass(risk) {
-
     if (risk === "HIGH") {
       return "risk-high";
     }
@@ -220,22 +231,18 @@ function Forecast() {
   // ==========================================
 
   if (loading) {
-
     return (
       <ModulePage
         title="AI Forecast"
         description="Generating your financial forecast using the FinTwin ML engine."
       >
-
         <div className="module-card">
-
           <div
             style={{
               padding: "50px",
               textAlign: "center",
             }}
           >
-
             <Brain
               size={35}
               style={{
@@ -251,11 +258,8 @@ function Forecast() {
               Predicting payment delays and
               future cash positions.
             </p>
-
           </div>
-
         </div>
-
       </ModulePage>
     );
   }
@@ -266,21 +270,15 @@ function Forecast() {
   // ==========================================
 
   if (error) {
-
     return (
       <ModulePage
         title="AI Forecast"
         description="Financial forecasting powered by the FinTwin ML engine."
       >
-
-        <div
-          className="module-alert"
-        >
-
+        <div className="module-alert">
           <AlertTriangle size={22} />
 
           <div>
-
             <strong>
               Forecast could not be generated
             </strong>
@@ -301,11 +299,8 @@ function Forecast() {
             >
               Try Again
             </button>
-
           </div>
-
         </div>
-
       </ModulePage>
     );
   }
@@ -344,11 +339,9 @@ function Forecast() {
           marginBottom: "18px",
         }}
       >
-
         <Brain size={21} />
 
         <div>
-
           <strong>
             AI Forecast Active
           </strong>
@@ -357,9 +350,7 @@ function Forecast() {
             Payment timing is predicted using
             historical customer payment behavior.
           </p>
-
         </div>
-
       </div>
 
 
@@ -368,20 +359,17 @@ function Forecast() {
       ====================================== */}
 
       <div className="module-grid">
-
         {periods.map(
           (period) => (
-
             <div
               className="module-stat"
               key={
                 period.period_days
               }
             >
-
               <span>
                 {period.period_days}-DAY
-                FORECAST
+                {" "}FORECAST
               </span>
 
               <strong>
@@ -417,12 +405,9 @@ function Forecast() {
               >
                 {period.risk} RISK
               </div>
-
             </div>
-
           )
         )}
-
       </div>
 
 
@@ -436,17 +421,13 @@ function Forecast() {
           marginTop: "18px",
         }}
       >
-
         <div className="section-heading">
 
-          <div
-            className="section-heading-icon"
-          >
+          <div className="section-heading-icon">
             <TrendingUp size={19} />
           </div>
 
           <div>
-
             <h2>
               AI Cash-Flow Forecast
             </h2>
@@ -455,7 +436,6 @@ function Forecast() {
               Expected inflows and outflows
               calculated by the forecasting engine.
             </p>
-
           </div>
 
         </div>
@@ -467,7 +447,6 @@ function Forecast() {
             marginTop: "20px",
           }}
         >
-
           <table
             style={{
               width: "100%",
@@ -475,9 +454,7 @@ function Forecast() {
               fontSize: "11px",
             }}
           >
-
             <thead>
-
               <tr>
 
                 <th
@@ -531,15 +508,12 @@ function Forecast() {
                 </th>
 
               </tr>
-
             </thead>
 
 
             <tbody>
-
               {periods.map(
                 (period) => (
-
                   <tr
                     key={
                       period.period_days
@@ -631,16 +605,12 @@ function Forecast() {
                     </td>
 
                   </tr>
-
                 )
               )}
-
             </tbody>
 
           </table>
-
         </div>
-
       </div>
 
 
@@ -654,17 +624,13 @@ function Forecast() {
           marginTop: "18px",
         }}
       >
-
         <div className="section-heading">
 
-          <div
-            className="section-heading-icon"
-          >
+          <div className="section-heading-icon">
             <CalendarDays size={19} />
           </div>
 
           <div>
-
             <h2>
               AI Payment Predictions
             </h2>
@@ -673,7 +639,6 @@ function Forecast() {
               Predicted collection timing for
               outstanding invoices.
             </p>
-
           </div>
 
         </div>
@@ -684,7 +649,6 @@ function Forecast() {
             marginTop: "18px",
           }}
         >
-
           {predictions.length === 0 ? (
 
             <div
@@ -722,7 +686,6 @@ function Forecast() {
                       flex: 1,
                     }}
                   >
-
                     <strong
                       style={{
                         fontSize: "12px",
@@ -741,7 +704,6 @@ function Forecast() {
                       Invoice{" "}
                       {prediction.invoice_id}
                     </p>
-
                   </div>
 
 
@@ -750,7 +712,6 @@ function Forecast() {
                       textAlign: "right",
                     }}
                   >
-
                     <strong>
                       {formatMoney(
                         prediction.amount
@@ -769,7 +730,6 @@ function Forecast() {
                         prediction.expected_payment_date
                       )}
                     </p>
-
                   </div>
 
 
@@ -795,9 +755,7 @@ function Forecast() {
             )
 
           )}
-
         </div>
-
       </div>
 
 
@@ -811,11 +769,9 @@ function Forecast() {
           marginTop: "18px",
         }}
       >
-
         <CheckCircle size={20} />
 
         <div>
-
           <strong>
             How FinTwin forecasts cash
           </strong>
@@ -828,9 +784,7 @@ function Forecast() {
             predictions are then used to estimate
             future cash availability.
           </p>
-
         </div>
-
       </div>
 
     </ModulePage>
