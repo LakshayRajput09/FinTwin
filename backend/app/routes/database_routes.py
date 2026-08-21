@@ -1,231 +1,227 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
-from app.database import get_db
+from app.ml.predict import predict_payment_delay
+from app.services.forecast_service import generate_cash_forecast
+from app.services.risk_service import generate_risk_analysis
+from app.services.simulator_service import run_simulation
+from app.services.financing_service import generate_financing_analysis
 
-from app.models import (
-    Business,
-    Customer,
-    Invoice,
-    Payment,
-    Expense,
-    RecurringExpense,
+# Database routes
+from app.routes.database_routes import router as database_router
+
+
+# ==========================================
+# FASTAPI APPLICATION
+# ==========================================
+
+app = FastAPI(
+    title="FinTwin API",
+    description="AI-powered financial digital twin for MSMEs",
+    version="1.0.0",
 )
 
 
-router = APIRouter(
-    prefix="/api",
-    tags=["Database"],
+# ==========================================
+# CORS
+# ==========================================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "https://fin-twin.vercel.app",
+        "https://fin-twin-one.vercel.app",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
 # ==========================================
-# BUSINESS
+# DATABASE ROUTER
 # ==========================================
 
-@router.get("/business")
-def get_business(
-    db: Session = Depends(get_db),
-):
-    business = (
-        db.query(Business)
-        .first()
-    )
+app.include_router(database_router)
 
-    if not business:
-        return {
-            "success": False,
-            "message": "Business not found",
-        }
 
+# ==========================================
+# REQUEST MODELS
+# ==========================================
+
+
+class PaymentPredictionRequest(BaseModel):
+    invoice_amount: float
+    days_until_due: int
+    previous_avg_delay: float
+    previous_late_payments: int
+    customer_invoice_count: int
+
+
+class ForecastRequest(BaseModel):
+    current_cash: float
+    invoices: list[dict]
+    payments: list[dict]
+    recurring_expenses: list[dict]
+    one_time_expenses: list[dict]
+
+
+class RiskRequest(BaseModel):
+    current_cash: float
+    invoices: list[dict]
+    recurring_expenses: list[dict]
+    one_time_expenses: list[dict]
+    forecast: dict
+
+
+class SimulationRequest(BaseModel):
+    current_cash: float
+    invoices: list[dict]
+    recurring_expenses: list[dict]
+    one_time_expenses: list[dict]
+
+    revenue_change_percent: float = 0
+    expense_change_percent: float = 0
+    payment_delay_days: int = 0
+
+
+class FinancingRequest(BaseModel):
+    liquidity_gap: float
+    outstanding_receivables: float
+    current_cash: float
+
+
+# ==========================================
+# ROOT
+# ==========================================
+
+@app.get("/")
+def root():
     return {
-        "success": True,
-        "business": {
-            "id": business.id,
-            "name": business.name,
-            "industry": business.industry,
-            "gstin": business.gstin,
-            "currency": business.currency,
-            "openingCash": business.opening_cash,
-            "monthlyRevenue": business.monthly_revenue,
-            "monthlyExpenses": business.monthly_expenses,
-        },
+        "message": "FinTwin API is running",
+        "status": "healthy",
     }
 
 
 # ==========================================
-# CUSTOMERS
+# HEALTH CHECK
 # ==========================================
 
-@router.get("/customers")
-def get_customers(
-    db: Session = Depends(get_db),
-):
-    customers = (
-        db.query(Customer)
-        .all()
-    )
-
+@app.get("/health")
+def health():
     return {
-        "success": True,
-        "customers": [
-            {
-                "id": customer.id,
-                "name": customer.name,
-                "industry": customer.industry,
-                "businessId": customer.business_id,
-            }
-            for customer in customers
-        ],
+        "status": "healthy",
+        "service": "FinTwin Backend",
     }
 
 
 # ==========================================
-# INVOICES
+# ML PAYMENT DELAY PREDICTION
 # ==========================================
 
-@router.get("/invoices")
-def get_invoices(
-    db: Session = Depends(get_db),
+@app.post("/api/ml/predict-payment-delay")
+def predict_payment(
+    request: PaymentPredictionRequest,
 ):
-    invoices = (
-        db.query(Invoice)
-        .all()
+    result = predict_payment_delay(
+        invoice_amount=request.invoice_amount,
+        days_until_due=request.days_until_due,
+        previous_avg_delay=request.previous_avg_delay,
+        previous_late_payments=request.previous_late_payments,
+        customer_invoice_count=request.customer_invoice_count,
     )
 
     return {
         "success": True,
-        "invoices": [
-            {
-                "id": invoice.id,
-                "customerId": invoice.customer_id,
-                "customer": invoice.customer,
-                "amount": invoice.amount,
-                "invoiceDate": (
-                    invoice.invoice_date.isoformat()
-                    if invoice.invoice_date
-                    else None
-                ),
-                "dueDate": (
-                    invoice.due_date.isoformat()
-                    if invoice.due_date
-                    else None
-                ),
-                "status": invoice.status,
-                "paymentDate": (
-                    invoice.payment_date.isoformat()
-                    if invoice.payment_date
-                    else None
-                ),
-                "source": invoice.source,
-                "businessId": invoice.business_id,
-            }
-            for invoice in invoices
-        ],
+        "prediction": result,
     }
 
 
 # ==========================================
-# PAYMENTS
+# AI CASH FLOW FORECAST
 # ==========================================
 
-@router.get("/payments")
-def get_payments(
-    db: Session = Depends(get_db),
+@app.post("/api/forecast")
+def create_forecast(
+    request: ForecastRequest,
 ):
-    payments = (
-        db.query(Payment)
-        .all()
+    result = generate_cash_forecast(
+        current_cash=request.current_cash,
+        invoices=request.invoices,
+        payments=request.payments,
+        recurring_expenses=request.recurring_expenses,
+        one_time_expenses=request.one_time_expenses,
     )
 
     return {
         "success": True,
-        "payments": [
-            {
-                "id": payment.id,
-                "invoiceId": payment.invoice_id,
-                "customerId": payment.customer_id,
-                "amount": payment.amount,
-                "expectedDate": (
-                    payment.expected_date.isoformat()
-                    if payment.expected_date
-                    else None
-                ),
-                "actualDate": (
-                    payment.actual_date.isoformat()
-                    if payment.actual_date
-                    else None
-                ),
-                "daysDelayed": payment.days_delayed,
-                "source": payment.source,
-                "businessId": payment.business_id,
-            }
-            for payment in payments
-        ],
+        "forecast": result,
     }
 
 
 # ==========================================
-# EXPENSES
+# AI RISK ANALYSIS
 # ==========================================
 
-@router.get("/expenses")
-def get_expenses(
-    db: Session = Depends(get_db),
+@app.post("/api/risk")
+def create_risk_analysis(
+    request: RiskRequest,
 ):
-    expenses = (
-        db.query(Expense)
-        .all()
+    result = generate_risk_analysis(
+        current_cash=request.current_cash,
+        invoices=request.invoices,
+        recurring_expenses=request.recurring_expenses,
+        one_time_expenses=request.one_time_expenses,
+        forecast=request.forecast,
     )
 
     return {
         "success": True,
-        "expenses": [
-            {
-                "id": expense.id,
-                "category": expense.category,
-                "description": expense.description,
-                "amount": expense.amount,
-                "date": (
-                    expense.date.isoformat()
-                    if expense.date
-                    else None
-                ),
-                "recurring": expense.recurring,
-                "source": expense.source,
-                "businessId": expense.business_id,
-            }
-            for expense in expenses
-        ],
+        "risk": result,
     }
 
 
 # ==========================================
-# RECURRING EXPENSES
+# FINANCIAL SHOCK SIMULATOR
 # ==========================================
 
-@router.get("/recurring-expenses")
-def get_recurring_expenses(
-    db: Session = Depends(get_db),
+@app.post("/api/simulator")
+def create_simulation(
+    request: SimulationRequest,
 ):
-    expenses = (
-        db.query(RecurringExpense)
-        .all()
+    result = run_simulation(
+        current_cash=request.current_cash,
+        invoices=request.invoices,
+        recurring_expenses=request.recurring_expenses,
+        one_time_expenses=request.one_time_expenses,
+        revenue_change_percent=request.revenue_change_percent,
+        expense_change_percent=request.expense_change_percent,
+        payment_delay_days=request.payment_delay_days,
     )
 
     return {
         "success": True,
-        "recurringExpenses": [
-            {
-                "id": expense.id,
-                "category": expense.category,
-                "description": expense.description,
-                "amount": expense.amount,
-                "frequency": expense.frequency,
-                "dayOfMonth": expense.day_of_month,
-                "source": expense.source,
-                "businessId": expense.business_id,
-            }
-            for expense in expenses
-        ],
+        "simulation": result,
+    }
+
+
+# ==========================================
+# FINANCING OPTIONS
+# ==========================================
+
+@app.post("/api/financing")
+def create_financing_analysis(
+    request: FinancingRequest,
+):
+    result = generate_financing_analysis(
+        liquidity_gap=request.liquidity_gap,
+        outstanding_receivables=request.outstanding_receivables,
+        current_cash=request.current_cash,
+    )
+
+    return {
+        "success": True,
+        "financing": result,
     }
