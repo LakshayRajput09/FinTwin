@@ -4,26 +4,33 @@
 //
 // Central data layer for the application.
 //
-// IMPORTANT:
-// Pages and components should eventually
-// access financial information through this
-// store instead of keeping separate copies.
+// Database-backed version.
 //
-// Future sources:
-// - CSV / Excel
-// - GST / e-Invoice
-// - RBI Account Aggregator
-// - Manual entries
+// Data flow:
+//
+// React
+//   ↓
+// financialStore
+//   ↓
+// FastAPI
+//   ↓
+// PostgreSQL
+//
+// sampleData is kept only as a local fallback
+// if the API cannot be reached.
+//
 // ==========================================
 
 import {
-  business,
-  customers,
-  invoices,
-  payments,
-  recurringExpenses,
-  expenses,
+  business as sampleBusiness,
+  customers as sampleCustomers,
+  invoices as sampleInvoices,
+  payments as samplePayments,
+  recurringExpenses as sampleRecurringExpenses,
+  expenses as sampleExpenses,
 } from "./sampleData";
+
+import { API_URL } from "../config";
 
 
 // ==========================================
@@ -31,20 +38,235 @@ import {
 // ==========================================
 
 let financialData = {
-  business: { ...business },
+  business: {
+    ...sampleBusiness,
+  },
 
-  customers: [...customers],
-
-  invoices: [...invoices],
-
-  payments: [...payments],
-
-  recurringExpenses: [
-    ...recurringExpenses,
+  customers: [
+    ...sampleCustomers,
   ],
 
-  expenses: [...expenses],
+  invoices: [
+    ...sampleInvoices,
+  ],
+
+  payments: [
+    ...samplePayments,
+  ],
+
+  recurringExpenses: [
+    ...sampleRecurringExpenses,
+  ],
+
+  expenses: [
+    ...sampleExpenses,
+  ],
 };
+
+
+// ==========================================
+// DATABASE STATUS
+// ==========================================
+
+let databaseConnected = false;
+
+
+// ==========================================
+// GET DATABASE STATUS
+// ==========================================
+
+export function isDatabaseConnected() {
+  return databaseConnected;
+}
+
+
+// ==========================================
+// LOAD DATA FROM DATABASE
+// ==========================================
+//
+// This function retrieves all financial data
+// from PostgreSQL through FastAPI.
+//
+// ==========================================
+
+export async function loadFinancialData() {
+
+  try {
+
+    const [
+      businessResponse,
+      customersResponse,
+      invoicesResponse,
+      paymentsResponse,
+      expensesResponse,
+      recurringExpensesResponse,
+    ] = await Promise.all([
+
+      fetch(
+        `${API_URL}/api/business`
+      ),
+
+      fetch(
+        `${API_URL}/api/customers`
+      ),
+
+      fetch(
+        `${API_URL}/api/invoices`
+      ),
+
+      fetch(
+        `${API_URL}/api/payments`
+      ),
+
+      fetch(
+        `${API_URL}/api/expenses`
+      ),
+
+      fetch(
+        `${API_URL}/api/recurring-expenses`
+      ),
+    ]);
+
+
+    // ==========================================
+    // CHECK RESPONSES
+    // ==========================================
+
+    if (
+      !businessResponse.ok ||
+      !customersResponse.ok ||
+      !invoicesResponse.ok ||
+      !paymentsResponse.ok ||
+      !expensesResponse.ok ||
+      !recurringExpensesResponse.ok
+    ) {
+      throw new Error(
+        "Database API request failed"
+      );
+    }
+
+
+    // ==========================================
+    // READ JSON
+    // ==========================================
+
+    const [
+      businessData,
+      customersData,
+      invoicesData,
+      paymentsData,
+      expensesData,
+      recurringExpensesData,
+    ] = await Promise.all([
+
+      businessResponse.json(),
+
+      customersResponse.json(),
+
+      invoicesResponse.json(),
+
+      paymentsResponse.json(),
+
+      expensesResponse.json(),
+
+      recurringExpensesResponse.json(),
+    ]);
+
+
+    // ==========================================
+    // UPDATE INTERNAL STATE
+    // ==========================================
+
+    if (
+      businessData.success &&
+      businessData.business
+    ) {
+      financialData.business =
+        businessData.business;
+    }
+
+
+    if (
+      customersData.success &&
+      Array.isArray(
+        customersData.customers
+      )
+    ) {
+      financialData.customers =
+        customersData.customers;
+    }
+
+
+    if (
+      invoicesData.success &&
+      Array.isArray(
+        invoicesData.invoices
+      )
+    ) {
+      financialData.invoices =
+        invoicesData.invoices;
+    }
+
+
+    if (
+      paymentsData.success &&
+      Array.isArray(
+        paymentsData.payments
+      )
+    ) {
+      financialData.payments =
+        paymentsData.payments;
+    }
+
+
+    if (
+      expensesData.success &&
+      Array.isArray(
+        expensesData.expenses
+      )
+    ) {
+      financialData.expenses =
+        expensesData.expenses;
+    }
+
+
+    if (
+      recurringExpensesData.success &&
+      Array.isArray(
+        recurringExpensesData.recurringExpenses
+      )
+    ) {
+      financialData.recurringExpenses =
+        recurringExpensesData.recurringExpenses;
+    }
+
+
+    databaseConnected = true;
+
+    console.log(
+      "FinTwin database connected successfully."
+    );
+
+
+    return getFinancialData();
+
+  } catch (error) {
+
+    databaseConnected = false;
+
+    console.error(
+      "FinTwin database connection failed:",
+      error
+    );
+
+    console.warn(
+      "Using local sample data fallback."
+    );
+
+
+    return getFinancialData();
+  }
+}
 
 
 // ==========================================
@@ -52,7 +274,9 @@ let financialData = {
 // ==========================================
 
 export function getFinancialData() {
+
   return {
+
     ...financialData,
 
     customers: [
@@ -83,6 +307,7 @@ export function getFinancialData() {
 // ==========================================
 
 export function getBusiness() {
+
   return {
     ...financialData.business,
   };
@@ -94,41 +319,74 @@ export function getBusiness() {
 // ==========================================
 
 export function getInvoices() {
+
   return [
     ...financialData.invoices,
   ];
 }
 
 
+// ==========================================
+// ADD INVOICE
+// ==========================================
+//
+// NOTE:
+// This still updates local state for now.
+//
+// Database POST endpoint will be added
+// in the next migration step.
+// ==========================================
+
 export function addInvoice(invoice) {
+
   financialData.invoices.push({
+
     ...invoice,
 
     source:
-      invoice.source || "manual",
+      invoice.source ||
+      "manual",
   });
 }
 
 
-export function addInvoices(newInvoices) {
+// ==========================================
+// ADD MULTIPLE INVOICES
+// ==========================================
+
+export function addInvoices(
+  newInvoices
+) {
+
   newInvoices.forEach(
     (invoice) => {
+
       addInvoice(invoice);
+
     }
   );
 }
+
+
 // ==========================================
 // REPLACE INVOICES
 // ==========================================
 
-export function replaceInvoices(newInvoices) {
-  financialData.invoices = newInvoices.map(
-    (invoice) => ({
-      ...invoice,
-      source:
-        invoice.source || "csv",
-    })
-  );
+export function replaceInvoices(
+  newInvoices
+) {
+
+  financialData.invoices =
+    newInvoices.map(
+      (invoice) => ({
+
+        ...invoice,
+
+        source:
+          invoice.source ||
+          "csv",
+      })
+    );
 }
 
 
@@ -137,18 +395,28 @@ export function replaceInvoices(newInvoices) {
 // ==========================================
 
 export function getCustomers() {
+
   return [
     ...financialData.customers,
   ];
 }
 
 
-export function addCustomer(customer) {
+// ==========================================
+// ADD CUSTOMER
+// ==========================================
+
+export function addCustomer(
+  customer
+) {
+
   financialData.customers.push({
+
     ...customer,
 
     source:
-      customer.source || "manual",
+      customer.source ||
+      "manual",
   });
 }
 
@@ -158,18 +426,28 @@ export function addCustomer(customer) {
 // ==========================================
 
 export function getPayments() {
+
   return [
     ...financialData.payments,
   ];
 }
 
 
-export function addPayment(payment) {
+// ==========================================
+// ADD PAYMENT
+// ==========================================
+
+export function addPayment(
+  payment
+) {
+
   financialData.payments.push({
+
     ...payment,
 
     source:
-      payment.source || "manual",
+      payment.source ||
+      "manual",
   });
 }
 
@@ -179,25 +457,40 @@ export function addPayment(payment) {
 // ==========================================
 
 export function getExpenses() {
+
   return [
     ...financialData.expenses,
   ];
 }
 
 
+// ==========================================
+// RECURRING EXPENSES
+// ==========================================
+
 export function getRecurringExpenses() {
+
   return [
     ...financialData.recurringExpenses,
   ];
 }
 
 
-export function addExpense(expense) {
+// ==========================================
+// ADD EXPENSE
+// ==========================================
+
+export function addExpense(
+  expense
+) {
+
   financialData.expenses.push({
+
     ...expense,
 
     source:
-      expense.source || "manual",
+      expense.source ||
+      "manual",
   });
 }
 
@@ -210,9 +503,11 @@ export function updateInvoice(
   invoiceId,
   updates
 ) {
+
   financialData.invoices =
     financialData.invoices.map(
       (invoice) =>
+
         invoice.id === invoiceId
           ? {
               ...invoice,
@@ -230,6 +525,7 @@ export function updateInvoice(
 export function removeInvoice(
   invoiceId
 ) {
+
   financialData.invoices =
     financialData.invoices.filter(
       (invoice) =>
@@ -239,59 +535,95 @@ export function removeInvoice(
 
 
 // ==========================================
-// CALCULATE TOTAL RECEIVABLES
+// TOTAL RECEIVABLES
 // ==========================================
 
 export function getTotalReceivables() {
+
   return financialData.invoices
+
     .filter(
       (invoice) =>
         invoice.status !== "Paid"
     )
+
     .reduce(
-      (total, invoice) =>
+      (
+        total,
+        invoice
+      ) =>
         total +
-        Number(invoice.amount || 0),
+        Number(
+          invoice.amount || 0
+        ),
+
       0
     );
 }
 
 
 // ==========================================
-// CALCULATE TOTAL REVENUE
+// TOTAL REVENUE
 // ==========================================
 
 export function getTotalRevenue() {
-  return financialData.invoices.reduce(
-    (total, invoice) =>
-      total +
-      Number(invoice.amount || 0),
-    0
-  );
+
+  return financialData.invoices
+
+    .reduce(
+      (
+        total,
+        invoice
+      ) =>
+        total +
+        Number(
+          invoice.amount || 0
+        ),
+
+      0
+    );
 }
 
 
 // ==========================================
-// CALCULATE TOTAL EXPENSES
+// TOTAL EXPENSES
 // ==========================================
 
 export function getTotalExpenses() {
 
   const recurringTotal =
-    financialData.recurringExpenses.reduce(
-      (total, expense) =>
-        total +
-        Number(expense.amount || 0),
-      0
-    );
+    financialData.recurringExpenses
+
+      .reduce(
+        (
+          total,
+          expense
+        ) =>
+          total +
+          Number(
+            expense.amount || 0
+          ),
+
+        0
+      );
+
 
   const oneTimeTotal =
-    financialData.expenses.reduce(
-      (total, expense) =>
-        total +
-        Number(expense.amount || 0),
-      0
-    );
+    financialData.expenses
+
+      .reduce(
+        (
+          total,
+          expense
+        ) =>
+          total +
+          Number(
+            expense.amount || 0
+          ),
+
+        0
+      );
+
 
   return (
     recurringTotal +
@@ -303,26 +635,38 @@ export function getTotalExpenses() {
 // ==========================================
 // RESET DATA
 // ==========================================
-//
-// Useful for development/testing.
-// ==========================================
 
 export function resetFinancialData() {
+
   financialData = {
-    business: { ...business },
 
-    customers: [...customers],
+    business: {
+      ...sampleBusiness,
+    },
 
-    invoices: [...invoices],
-
-    payments: [...payments],
-
-    recurringExpenses: [
-      ...recurringExpenses,
+    customers: [
+      ...sampleCustomers,
     ],
 
-    expenses: [...expenses],
+    invoices: [
+      ...sampleInvoices,
+    ],
+
+    payments: [
+      ...samplePayments,
+    ],
+
+    recurringExpenses: [
+      ...sampleRecurringExpenses,
+    ],
+
+    expenses: [
+      ...sampleExpenses,
+    ],
   };
+
+
+  databaseConnected = false;
 }
 
 
@@ -333,24 +677,37 @@ export function resetFinancialData() {
 export function getDataSources() {
 
   const allRecords = [
+
     ...financialData.invoices,
+
     ...financialData.payments,
+
     ...financialData.expenses,
+
     ...financialData.recurringExpenses,
   ];
 
+
   const sources = {};
+
 
   allRecords.forEach(
     (record) => {
 
       const source =
-        record.source || "unknown";
+        record.source ||
+        "unknown";
+
 
       sources[source] =
-        (sources[source] || 0) + 1;
+        (
+          sources[source] ||
+          0
+        ) + 1;
+
     }
   );
+
 
   return sources;
 }

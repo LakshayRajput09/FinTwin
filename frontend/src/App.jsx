@@ -4,6 +4,12 @@ import {
   Route,
 } from "react-router-dom";
 
+import { useEffect } from "react";
+
+import {
+  loadFinancialData,
+} from "./data/financialStore";
+
 import Dashboard from "./pages/Dashboard";
 import CashFlow from "./pages/CashFlow";
 import Invoices from "./pages/Invoices";
@@ -18,6 +24,18 @@ import Settings from "./pages/Settings";
 
 
 function App() {
+
+  // ==========================================
+  // LOAD DATABASE DATA
+  // ==========================================
+
+  useEffect(() => {
+
+    loadFinancialData();
+
+  }, []);
+
+
   return (
     <BrowserRouter>
 
