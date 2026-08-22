@@ -18,6 +18,8 @@ import {
   ArrowRight,
   Upload,
   Plus,
+  Building,
+  Save,
 } from "lucide-react";
 import {
   AreaChart,
@@ -38,7 +40,7 @@ import {
   getBusiness,
   getInvoices,
   getCustomers,
-  loadDemoData,
+  updateBusinessProfile,
   subscribeFinancialData,
 } from "../data/financialStore";
 import {
@@ -46,15 +48,23 @@ import {
   calculateAgingBreakdown,
   generateLocalForecast,
 } from "../engines/digitalTwin";
+import { useAuth } from "../context/AuthContext";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
   const [data, setData] = useState(getFinancialData());
   const [summary, setSummary] = useState(getCashFlowSummary());
   const [aging, setAging] = useState(calculateAgingBreakdown());
   const [forecast, setForecast] = useState(generateLocalForecast(30));
+
+  // Quick Onboarding Inputs
+  const [quickCash, setQuickCash] = useState("");
+  const [quickReserve, setQuickReserve] = useState("");
+  const [setupSaved, setSetupSaved] = useState(false);
 
   useEffect(() => {
     const unsub = subscribeFinancialData(() => {
@@ -71,6 +81,17 @@ export default function Dashboard() {
   const pendingInvoices = data.invoices.filter((i) => i.status !== "Paid");
   const isEmptyState = data.invoices.length === 0 && summary.currentCash === 0 && data.expenses.length === 0;
 
+  const handleQuickSetupSave = (e) => {
+    e.preventDefault();
+    if (!quickCash && !quickReserve) return;
+    updateBusinessProfile({
+      openingCash: Number(quickCash) || data.business.openingCash || 0,
+      minCashReserve: Number(quickReserve) || data.business.minCashReserve || 0,
+    });
+    setSetupSaved(true);
+    setTimeout(() => setSetupSaved(false), 3000);
+  };
+
   // Chart data for Aging Breakdown
   const agingData = [
     { name: "0-30 Days", value: aging["0-30 Days"] || 0 },
@@ -82,7 +103,7 @@ export default function Dashboard() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       {/* =================================================================
-          EMPTY / ONBOARDING PROMPT (WHEN STARTING CLEAN)
+          INITIAL DATA SETUP WIZARD (FIRST TIME AFTER LOGIN)
           ================================================================= */}
       {isEmptyState && (
         <div
@@ -94,40 +115,92 @@ export default function Dashboard() {
           }}
         >
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
-            <div>
+            <div style={{ flex: 1, minWidth: 280 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                 <div className="card-icon-wrap emerald" style={{ width: 32, height: 32 }}>
                   <Sparkles size={16} />
                 </div>
                 <h2 style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>
-                  Ready for Your Real Financial Data
+                  Welcome {user?.name || "Partner"} — Initialize Your Digital Twin
                 </h2>
               </div>
-              <p style={{ color: "var(--text-secondary)", fontSize: 13.5, maxWidth: 680, lineHeight: 1.6 }}>
-                All pre-filled numbers have been removed. Upload your company's invoices (CSV, Excel, PDF, or JSON) and log your expenses to see your live Digital Twin cash flow, AI delay predictions, and 90-day runway.
+              <p style={{ color: "var(--text-secondary)", fontSize: 13.5, maxWidth: 640, lineHeight: 1.6 }}>
+                FinTwin starts with a clean slate ready for your business data. Enter your current liquid cash balance below and upload your invoices to calculate your real cash runway, delay predictions, and working capital.
               </p>
+
+              {/* Inline Quick Cash Setup */}
+              <form
+                onSubmit={handleQuickSetupSave}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  marginTop: 18,
+                  flexWrap: "wrap",
+                }}
+              >
+                <div>
+                  <label className="form-label" style={{ fontSize: 11, marginBottom: 4 }}>
+                    Opening Liquid Cash (₹ INR)
+                  </label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    placeholder="e.g. 500000"
+                    style={{ width: 180, height: 38 }}
+                    value={quickCash}
+                    onChange={(e) => setQuickCash(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label" style={{ fontSize: 11, marginBottom: 4 }}>
+                    Min. Safety Reserve (₹ INR)
+                  </label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    placeholder="e.g. 200000"
+                    style={{ width: 180, height: 38 }}
+                    value={quickReserve}
+                    onChange={(e) => setQuickReserve(e.target.value)}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-emerald"
+                  style={{ alignSelf: "flex-end", height: 38 }}
+                >
+                  <Save size={14} />
+                  <span>Set Balance</span>
+                </button>
+              </form>
+
+              {setupSaved && (
+                <div style={{ marginTop: 8, fontSize: 12, color: "#34d399", display: "flex", alignItems: "center", gap: 6 }}>
+                  <CheckCircle2 size={13} />
+                  <span>Opening balance saved to your account!</span>
+                </div>
+              )}
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 220 }}>
               <button
                 className="btn btn-primary"
+                style={{ justifyContent: "center", padding: "12px 20px" }}
                 onClick={() => navigate("/invoices")}
               >
-                <Upload size={14} />
-                <span>Upload Invoices</span>
+                <Upload size={16} />
+                <span>Upload Invoices (CSV / Excel / PDF)</span>
               </button>
               <button
                 className="btn btn-secondary"
-                onClick={() => navigate("/settings")}
+                style={{ justifyContent: "center" }}
+                onClick={() => navigate("/expenses")}
               >
-                <span>Set Opening Balance</span>
-              </button>
-              <button
-                className="btn btn-secondary"
-                style={{ fontSize: 12, color: "#a78bfa" }}
-                onClick={() => loadDemoData()}
-              >
-                <span>⚡ Load Demo Data</span>
+                <CreditCard size={15} />
+                <span>Log Monthly Expenses</span>
               </button>
             </div>
           </div>

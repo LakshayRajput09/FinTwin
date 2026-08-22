@@ -77,6 +77,21 @@ class CustomerUpdateRequest(BaseModel):
     industry: Optional[str] = None
 
 
+# ------------------------------------------
+# Business
+# ------------------------------------------
+
+class BusinessSaveRequest(BaseModel):
+    id: Optional[str] = "BUS-001"
+    name: str
+    industry: Optional[str] = "General"
+    gstin: Optional[str] = None
+    currency: Optional[str] = "INR"
+    openingCash: Optional[float] = 0.0
+    monthlyRevenue: Optional[float] = 0.0
+    monthlyExpenses: Optional[float] = 0.0
+
+
 # ==========================================
 # DATE HELPER
 # ==========================================
@@ -125,34 +140,70 @@ def get_business(
         }
 
     return {
-
         "success": True,
-
         "business": {
+            "id": business.id,
+            "name": business.name,
+            "industry": business.industry,
+            "gstin": business.gstin,
+            "currency": business.currency,
+            "openingCash": business.opening_cash,
+            "monthlyRevenue": business.monthly_revenue,
+            "monthlyExpenses": business.monthly_expenses,
+        },
+    }
 
-            "id":
-                business.id,
 
-            "name":
-                business.name,
+@router.post("/business")
+@router.put("/business")
+def save_business(
+    request: BusinessSaveRequest,
+    db: Session = Depends(get_db),
+):
+    biz_id = request.id or "BUS-001"
+    business = db.query(Business).filter(Business.id == biz_id).first()
 
-            "industry":
-                business.industry,
+    if not business:
+        business = Business(
+            id=biz_id,
+            name=request.name,
+            industry=request.industry,
+            gstin=request.gstin,
+            currency=request.currency or "INR",
+            opening_cash=request.openingCash or 0.0,
+            monthly_revenue=request.monthlyRevenue or 0.0,
+            monthly_expenses=request.monthlyExpenses or 0.0,
+        )
+        db.add(business)
+    else:
+        business.name = request.name
+        if request.industry is not None:
+            business.industry = request.industry
+        if request.gstin is not None:
+            business.gstin = request.gstin
+        if request.currency is not None:
+            business.currency = request.currency
+        if request.openingCash is not None:
+            business.opening_cash = request.openingCash
+        if request.monthlyRevenue is not None:
+            business.monthly_revenue = request.monthlyRevenue
+        if request.monthlyExpenses is not None:
+            business.monthly_expenses = request.monthlyExpenses
 
-            "gstin":
-                business.gstin,
+    db.commit()
+    db.refresh(business)
 
-            "currency":
-                business.currency,
-
-            "openingCash":
-                business.opening_cash,
-
-            "monthlyRevenue":
-                business.monthly_revenue,
-
-            "monthlyExpenses":
-                business.monthly_expenses,
+    return {
+        "success": True,
+        "business": {
+            "id": business.id,
+            "name": business.name,
+            "industry": business.industry,
+            "gstin": business.gstin,
+            "currency": business.currency,
+            "openingCash": business.opening_cash,
+            "monthlyRevenue": business.monthly_revenue,
+            "monthlyExpenses": business.monthly_expenses,
         },
     }
 
@@ -565,153 +616,132 @@ def create_invoice(
 
 
     # --------------------------------------
-    # Check business
+    # Auto-ensure business exists
     # --------------------------------------
-
-    business = (
-        db.query(Business)
-        .filter(
-            Business.id ==
-            request.businessId
-        )
-        .first()
-    )
-
-
+    business = db.query(Business).filter(Business.id == request.businessId).first()
     if not business:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Business not found.",
+        business = Business(
+            id=request.businessId,
+            name="My Enterprise",
+            industry="General",
+            currency="INR",
+            opening_cash=0.0,
+            monthly_revenue=0.0,
+            monthly_expenses=0.0,
         )
-
+        db.add(business)
+        db.commit()
 
     # --------------------------------------
-    # Check customer
+    # Auto-ensure customer exists
     # --------------------------------------
-
-    customer = (
-        db.query(Customer)
-        .filter(
-            Customer.id ==
-            request.customerId
-        )
-        .first()
-    )
-
-
+    customer = db.query(Customer).filter(Customer.id == request.customerId).first()
     if not customer:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Customer not found.",
+        customer = Customer(
+            id=request.customerId,
+            business_id=request.businessId,
+            name=request.customer or f"Customer {request.customerId}",
+            industry="General",
         )
-
+        db.add(customer)
+        db.commit()
 
     # --------------------------------------
     # Create invoice
     # --------------------------------------
-
     invoice = Invoice(
-
         id=request.id,
-
-        business_id=
-            request.businessId,
-
-        customer_id=
-            request.customerId,
-
-        customer=
-            request.customer,
-
-        amount=
-            request.amount,
-
-        invoice_date=
-            parse_date(
-                request.invoiceDate
-            ),
-
-        due_date=
-            parse_date(
-                request.dueDate
-            ),
-
-        status=
-            request.status,
-
-        payment_date=
-            parse_date(
-                request.paymentDate
-            ),
-
-        source=
-            request.source,
+        business_id=request.businessId,
+        customer_id=request.customerId,
+        customer=request.customer or customer.name,
+        amount=request.amount,
+        invoice_date=parse_date(request.invoiceDate),
+        due_date=parse_date(request.dueDate),
+        status=request.status or "Pending",
+        payment_date=parse_date(request.paymentDate),
+        source=request.source or "manual",
     )
 
-
     db.add(invoice)
-
     db.commit()
-
     db.refresh(invoice)
 
-
     return {
-
         "success": True,
-
         "invoice": {
-
-            "id":
-                invoice.id,
-
-            "customerId":
-                invoice.customer_id,
-
-            "customer":
-                invoice.customer,
-
-            "amount":
-                invoice.amount,
-
-            "invoiceDate": (
-
-                invoice.invoice_date.isoformat()
-
-                if invoice.invoice_date
-
-                else None
-            ),
-
-            "dueDate": (
-
-                invoice.due_date.isoformat()
-
-                if invoice.due_date
-
-                else None
-            ),
-
-            "status":
-                invoice.status,
-
-            "paymentDate": (
-
-                invoice.payment_date.isoformat()
-
-                if invoice.payment_date
-
-                else None
-            ),
-
-            "source":
-                invoice.source,
-
-            "businessId":
-                invoice.business_id,
+            "id": invoice.id,
+            "customerId": invoice.customer_id,
+            "customer": invoice.customer,
+            "amount": invoice.amount,
+            "invoiceDate": invoice.invoice_date.isoformat() if invoice.invoice_date else None,
+            "dueDate": invoice.due_date.isoformat() if invoice.due_date else None,
+            "status": invoice.status,
+            "paymentDate": invoice.payment_date.isoformat() if invoice.payment_date else None,
+            "source": invoice.source,
+            "businessId": invoice.business_id,
         },
+    }
+
+
+# ==========================================
+# INVOICES - BULK CREATE
+# ==========================================
+
+@router.post("/invoices/bulk")
+def create_invoices_bulk(
+    requests: List[InvoiceCreateRequest],
+    db: Session = Depends(get_db),
+):
+    created = []
+    for req in requests:
+        # Skip existing
+        existing = db.query(Invoice).filter(Invoice.id == req.id).first()
+        if existing:
+            continue
+
+        # Auto-ensure business
+        biz = db.query(Business).filter(Business.id == req.businessId).first()
+        if not biz:
+            biz = Business(
+                id=req.businessId,
+                name="My Enterprise",
+                industry="General",
+                currency="INR",
+            )
+            db.add(biz)
+            db.commit()
+
+        # Auto-ensure customer
+        cust = db.query(Customer).filter(Customer.id == req.customerId).first()
+        if not cust:
+            cust = Customer(
+                id=req.customerId,
+                business_id=req.businessId,
+                name=req.customer or "Enterprise Client",
+                industry="General",
+            )
+            db.add(cust)
+            db.commit()
+
+        inv = Invoice(
+            id=req.id,
+            business_id=req.businessId,
+            customer_id=req.customerId,
+            customer=req.customer or cust.name,
+            amount=req.amount,
+            invoice_date=parse_date(req.invoiceDate),
+            due_date=parse_date(req.dueDate),
+            status=req.status or "Pending",
+            payment_date=parse_date(req.paymentDate),
+            source=req.source or "file_import",
+        )
+        db.add(inv)
+        created.append(inv)
+
+    db.commit()
+    return {
+        "success": True,
+        "count": len(created),
     }
 
 

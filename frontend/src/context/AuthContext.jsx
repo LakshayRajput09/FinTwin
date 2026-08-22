@@ -1,107 +1,107 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { switchBusinessProfile } from "../data/financialStore";
+import { initUserSession, clearActiveSession } from "../data/financialStore";
 
 const AuthContext = createContext();
 
-const DEMO_USERS = {
-  founder: {
-    id: "USR-001",
-    name: "Lakshay Rajput",
-    email: "lakshay@abcmfg.in",
-    role: "Founder & CEO",
-    company: "ABC Manufacturing",
-    businessId: "BUS-001",
-    avatar: "LR",
-  },
-  cfo: {
-    id: "USR-002",
-    name: "Ananya Sharma",
-    email: "ananya.cfo@zenithlogistics.com",
-    role: "Chief Financial Officer (CFO)",
-    company: "Zenith Retail & Logistics",
-    businessId: "BUS-002",
-    avatar: "AS",
-  },
-  accountant: {
-    id: "USR-003",
-    name: "Vikram Mehta",
-    email: "vikram@apexengg.com",
-    role: "Financial Controller",
-    company: "Apex Engineering & Tech",
-    businessId: "BUS-003",
-    avatar: "VM",
-  },
-};
-
 export function AuthProvider({ children }) {
+  // Start as null unless previously signed in
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem("fintwin_auth_user");
-      return saved ? JSON.parse(saved) : DEMO_USERS.founder;
+      return saved ? JSON.parse(saved) : null;
     } catch (e) {
-      return DEMO_USERS.founder;
+      return null;
     }
   });
 
   useEffect(() => {
     if (user) {
       localStorage.setItem("fintwin_auth_user", JSON.stringify(user));
-      if (user.businessId) {
-        switchBusinessProfile(user.businessId);
-      }
+      initUserSession(user);
     } else {
       localStorage.removeItem("fintwin_auth_user");
+      clearActiveSession();
     }
   }, [user]);
 
-  const login = (email, password) => {
-    // Check demo match or create session
-    const matched = Object.values(DEMO_USERS).find(
-      (u) => u.email.toLowerCase() === email.toLowerCase()
-    );
+  const login = (identifier, password, role = "CEO") => {
+    const raw = (identifier || "").trim();
+    const isEmail = raw.includes("@");
+    const isPhone = /^[0-9+ -]{7,15}$/.test(raw);
 
-    if (matched) {
-      setUser(matched);
-      return { success: true, user: matched };
+    const cleanId = raw.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    const userId = `usr_${cleanId || "user"}`;
+    const businessId = `biz_${userId}`;
+
+    let displayName = "Business Owner";
+    let email = isEmail ? raw.toLowerCase() : "";
+    let phone = !isEmail ? raw : "";
+
+    if (isEmail) {
+      const cleanName = raw.split("@")[0].replace(/[._]/g, " ");
+      displayName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    } else if (isPhone) {
+      displayName = `User (${raw.slice(-4)})`;
     }
 
-    const customUser = {
-      id: `USR-${Date.now()}`,
-      name: email.split("@")[0].toUpperCase(),
-      email,
-      role: "Finance Admin",
-      company: "My Business",
-      businessId: "BUS-001",
-      avatar: email.substring(0, 2).toUpperCase(),
+    const loggedUser = {
+      id: userId,
+      name: displayName,
+      email: email,
+      phone: phone,
+      role: role || "CEO",
+      company: `${displayName}'s Enterprise`,
+      businessId: businessId,
+      avatar: displayName.substring(0, 2).toUpperCase(),
     };
-    setUser(customUser);
-    return { success: true, user: customUser };
+
+    try {
+      localStorage.setItem("fintwin_auth_user", JSON.stringify(loggedUser));
+    } catch (e) {
+      console.warn("Error storing user session:", e);
+    }
+    initUserSession(loggedUser);
+    setUser(loggedUser);
+    return { success: true, user: loggedUser };
   };
 
-  const register = ({ name, email, company, gstin, role }) => {
+  const register = ({ name, email, phone, company, gstin, industry, role = "CEO" }) => {
+    const rawIdentifier = (email || phone || name || "user").trim();
+    const cleanId = rawIdentifier.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    const userId = `usr_${cleanId}`;
+    const businessId = `biz_${userId}`;
+
     const newUser = {
-      id: `USR-${Date.now()}`,
-      name,
-      email,
+      id: userId,
+      name: name || "Business Owner",
+      email: (email || "").toLowerCase(),
+      phone: phone || "",
       company: company || "My Enterprise",
-      gstin: gstin || "27AABCA1234F1Z8",
-      role: role || "Managing Director",
-      businessId: "BUS-001",
+      industry: industry || "Manufacturing & Heavy Engineering",
+      gstin: gstin || "",
+      role: role || "CEO",
+      businessId: businessId,
       avatar: name ? name.substring(0, 2).toUpperCase() : "ME",
     };
+
+    try {
+      localStorage.setItem("fintwin_auth_user", JSON.stringify(newUser));
+    } catch (e) {
+      console.warn("Error storing user session:", e);
+    }
+    initUserSession(newUser);
     setUser(newUser);
     return { success: true, user: newUser };
   };
 
-  const switchDemoRole = (roleKey) => {
-    if (DEMO_USERS[roleKey]) {
-      setUser(DEMO_USERS[roleKey]);
-      switchBusinessProfile(DEMO_USERS[roleKey].businessId);
-    }
-  };
-
   const logout = () => {
+    try {
+      localStorage.removeItem("fintwin_auth_user");
+    } catch (e) {
+      console.warn("Error removing auth token:", e);
+    }
     setUser(null);
+    clearActiveSession();
   };
 
   return (
@@ -112,8 +112,6 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
-        switchDemoRole,
-        DEMO_USERS,
       }}
     >
       {children}

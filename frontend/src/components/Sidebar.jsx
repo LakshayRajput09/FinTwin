@@ -12,22 +12,21 @@ import {
   FileSpreadsheet,
   Layers,
   Settings,
-  ChevronDown,
+  Percent,
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Zap,
-  RefreshCw,
   ExternalLink,
   User,
+  UserCheck,
   LogOut,
+  X,
 } from "lucide-react";
 
 import {
   getBusiness,
   subscribeFinancialData,
   isDatabaseConnected,
-  switchBusinessProfile,
 } from "../data/financialStore";
 import { calculateRunwayDays } from "../engines/digitalTwin";
 import { useAuth } from "../context/AuthContext";
@@ -41,19 +40,20 @@ const primaryNav = [
   { name: "90-Day Forecast", path: "/forecast", icon: TrendingUp },
   { name: "What-If Simulator", path: "/simulator", icon: FlaskConical },
   { name: "MSME Financing", path: "/financing", icon: Landmark, badge: "New" },
+  { name: "GST & Tax Calculator", path: "/gst", icon: Percent, badge: "Tax" },
+  { name: "Payroll & Workers", path: "/payroll", icon: UserCheck, badge: "Payroll" },
   { name: "Reports & P&L", path: "/reports", icon: FileSpreadsheet },
   { name: "Integrations", path: "/integrations", icon: Layers },
   { name: "Settings", path: "/settings", icon: Settings },
 ];
 
-export default function Sidebar({ collapsed, setCollapsed }) {
+export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMobile }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout, switchDemoRole } = useAuth();
+  const { user, logout } = useAuth();
 
   const [business, setBusiness] = useState(getBusiness());
   const [dbConnected, setDbConnected] = useState(isDatabaseConnected());
-  const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
   const [runway, setRunway] = useState(calculateRunwayDays());
 
   useEffect(() => {
@@ -65,17 +65,21 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     return unsub;
   }, []);
 
-  const handleProfileSelect = (id, roleKey) => {
-    switchBusinessProfile(id);
-    if (roleKey) switchDemoRole(roleKey);
-    setShowProfileSwitcher(false);
+  const handleNavClick = () => {
+    if (onCloseMobile) {
+      onCloseMobile();
+    }
   };
 
   return (
-    <aside className={`app-sidebar ${collapsed ? "collapsed" : ""}`}>
+    <aside
+      className={`app-sidebar ${collapsed ? "collapsed" : ""} ${
+        mobileOpen ? "mobile-open" : ""
+      }`}
+    >
       {/* Brand Header */}
       <div className="sidebar-header">
-        <Link to="/landing" className="brand-logo-wrap">
+        <Link to="/landing" className="brand-logo-wrap" onClick={handleNavClick}>
           <div className="brand-logo-icon">FT</div>
           {!collapsed && (
             <div className="brand-text">
@@ -86,104 +90,73 @@ export default function Sidebar({ collapsed, setCollapsed }) {
             </div>
           )}
         </Link>
-        <button
-          className="sidebar-collapse-btn"
-          onClick={() => setCollapsed(!collapsed)}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          {/* Desktop collapse toggle */}
+          <button
+            className="sidebar-collapse-btn desktop-only"
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+
+          {/* Mobile close toggle */}
+          <button
+            className="sidebar-collapse-btn mobile-close-btn"
+            onClick={onCloseMobile}
+            title="Close menu"
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
-      {/* Business & Role Switcher */}
+      {/* Logged in User Profile Card */}
       {!collapsed && (
-        <div style={{ position: "relative" }}>
+        <div style={{ padding: "0 14px", marginBottom: 12 }}>
           <div
             className="sidebar-business-card"
-            onClick={() => setShowProfileSwitcher(!showProfileSwitcher)}
+            onClick={() => {
+              navigate("/settings");
+              handleNavClick();
+            }}
+            title="Manage Company Settings"
           >
             <div className="biz-avatar">
-              {business.name ? business.name.charAt(0) : "F"}
+              {user?.company ? user.company.charAt(0) : "B"}
             </div>
-            <div className="biz-details">
-              <div className="biz-name">{business.name || "My Business"}</div>
-              <div className="biz-type">
-                {user ? `${user.role?.split(" ")[0]} Mode` : (business.industry || "MSME Account")}
+              <div className="biz-details">
+                <div className="biz-name">{user?.company || business.name || "My Enterprise"}</div>
+                <div className="biz-type" style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                  <span>{user?.name || "Executive"}</span>
+                  {user?.role && (
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        padding: "1px 6px",
+                        borderRadius: "var(--radius-full)",
+                        background:
+                          user.role === "Accountant"
+                            ? "rgba(16,185,129,0.15)"
+                            : user.role === "CFO"
+                            ? "rgba(139,92,246,0.15)"
+                            : "rgba(59,130,246,0.15)",
+                        color:
+                          user.role === "Accountant"
+                            ? "#34d399"
+                            : user.role === "CFO"
+                            ? "#c4b5fd"
+                            : "#60a5fa",
+                      }}
+                    >
+                      {user.role}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-            <ChevronDown size={14} style={{ color: "var(--text-muted)" }} />
           </div>
-
-          {showProfileSwitcher && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                left: 14,
-                right: 14,
-                background: "var(--bg-card-solid)",
-                border: "1px solid var(--border-medium)",
-                borderRadius: "var(--radius-md)",
-                boxShadow: "var(--shadow-lg)",
-                zIndex: 200,
-                padding: "6px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  color: "var(--text-dim)",
-                  padding: "6px 8px",
-                }}
-              >
-                Switch MSME Role Profile
-              </div>
-              <div
-                style={{
-                  padding: "8px 10px",
-                  borderRadius: "var(--radius-sm)",
-                  cursor: "pointer",
-                  fontSize: 12.5,
-                  fontWeight: business.id === "BUS-001" ? 600 : 400,
-                  color: business.id === "BUS-001" ? "#60a5fa" : "var(--text-secondary)",
-                  background: business.id === "BUS-001" ? "rgba(59,130,246,0.12)" : "transparent",
-                }}
-                onClick={() => handleProfileSelect("BUS-001", "founder")}
-              >
-                👑 Founder / CEO (ABC Mfg)
-              </div>
-              <div
-                style={{
-                  padding: "8px 10px",
-                  borderRadius: "var(--radius-sm)",
-                  cursor: "pointer",
-                  fontSize: 12.5,
-                  fontWeight: business.id === "BUS-002" ? 600 : 400,
-                  color: business.id === "BUS-002" ? "#60a5fa" : "var(--text-secondary)",
-                  background: business.id === "BUS-002" ? "rgba(59,130,246,0.12)" : "transparent",
-                }}
-                onClick={() => handleProfileSelect("BUS-002", "cfo")}
-              >
-                💼 CFO (Zenith Logistics)
-              </div>
-              <div
-                style={{
-                  padding: "8px 10px",
-                  borderRadius: "var(--radius-sm)",
-                  cursor: "pointer",
-                  fontSize: 12.5,
-                  fontWeight: business.id === "BUS-003" ? 600 : 400,
-                  color: business.id === "BUS-003" ? "#60a5fa" : "var(--text-secondary)",
-                  background: business.id === "BUS-003" ? "rgba(59,130,246,0.12)" : "transparent",
-                }}
-                onClick={() => handleProfileSelect("BUS-003", "accountant")}
-              >
-                📊 Controller (Apex Engg)
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -198,6 +171,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
               key={item.path}
               to={item.path}
               className={`nav-item ${isActive ? "active" : ""}`}
+              onClick={handleNavClick}
               title={collapsed ? item.name : undefined}
             >
               <div className="nav-item-icon">
@@ -205,7 +179,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
               </div>
               {!collapsed && <span>{item.name}</span>}
               {!collapsed && item.badge && (
-                <span className={`nav-badge ${item.badge === "Live" ? "success" : ""}`}>
+                <span className={`nav-badge ${item.badge === "Live" ? "success" : item.badge === "Tax" ? "alert" : ""}`}>
                   {item.badge}
                 </span>
               )}
@@ -228,20 +202,30 @@ export default function Sidebar({ collapsed, setCollapsed }) {
           <div className="sidebar-db-status">
             <span className="status-indicator">
               <span className={dbConnected ? "dot-connected" : "dot-offline"} />
-              {dbConnected ? "Cloud Sync Active" : "Local Twin Mode"}
+              {dbConnected ? "Database Synced" : "Local Twin Mode"}
             </span>
-            <Link
-              to="/landing"
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                logout();
+                handleNavClick();
+                navigate("/login");
+              }}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 3,
-                fontSize: 10.5,
-                color: "var(--accent-blue)",
+                gap: 4,
+                fontSize: 11,
+                color: "#fb7185",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
               }}
             >
-              Landing <ExternalLink size={10} />
-            </Link>
+              <LogOut size={11} /> Logout
+            </button>
           </div>
         </div>
       )}

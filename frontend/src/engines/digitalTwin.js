@@ -70,7 +70,9 @@ export function calculateAgingBreakdown() {
 
 export function calculateRevenue() {
   const invoices = getInvoices();
-  return invoices.reduce((total, invoice) => total + Number(invoice.amount || 0), 0);
+  const itemizedRevenue = invoices.reduce((total, invoice) => total + Number(invoice.amount || 0), 0);
+  const business = getBusiness();
+  return itemizedRevenue > 0 ? itemizedRevenue : Number(business.monthlyRevenue || 0);
 }
 
 // ==========================================
@@ -79,7 +81,9 @@ export function calculateRevenue() {
 
 export function calculateRecurringExpenses() {
   const expenses = getRecurringExpenses();
-  return expenses.reduce((total, expense) => total + Number(expense.amount || 0), 0);
+  const itemizedRec = expenses.reduce((total, expense) => total + Number(expense.amount || 0), 0);
+  const business = getBusiness();
+  return itemizedRec > 0 ? itemizedRec : Number(business.monthlyExpenses || 0);
 }
 
 export function calculateOneTimeExpenses() {
@@ -90,7 +94,9 @@ export function calculateOneTimeExpenses() {
 export function calculateTotalMonthlyBurn() {
   const recurring = calculateRecurringExpenses();
   const oneTime = calculateOneTimeExpenses();
-  return recurring + Math.round(oneTime / 2);
+  const itemizedBurn = recurring + Math.round(oneTime / 2);
+  const business = getBusiness();
+  return itemizedBurn > 0 ? itemizedBurn : Number(business.monthlyExpenses || 0);
 }
 
 // ==========================================
@@ -254,5 +260,97 @@ export function calculateShockSimulation({
         : stressedProjectedCash < 200000
         ? "High Warning"
         : "Manageable",
+  };
+}
+
+// ==========================================
+// GST INTELLIGENCE & RECONCILIATION ENGINE
+// ==========================================
+
+export function calculateTransactionGst(amount, ratePercent = 18, isInclusive = false, isInterstate = false) {
+  const rate = Number(ratePercent) / 100;
+  const numAmt = Number(amount) || 0;
+
+  let baseAmount, totalGst, totalAmount;
+  if (isInclusive) {
+    baseAmount = Math.round((numAmt / (1 + rate)) * 100) / 100;
+    totalGst = Math.round((numAmt - baseAmount) * 100) / 100;
+    totalAmount = numAmt;
+  } else {
+    baseAmount = numAmt;
+    totalGst = Math.round((numAmt * rate) * 100) / 100;
+    totalAmount = Math.round((baseAmount + totalGst) * 100) / 100;
+  }
+
+  const cgst = isInterstate ? 0 : Math.round((totalGst / 2) * 100) / 100;
+  const sgst = isInterstate ? 0 : Math.round((totalGst - cgst) * 100) / 100;
+  const igst = isInterstate ? totalGst : 0;
+
+  return {
+    baseAmount,
+    ratePercent,
+    totalGst,
+    cgst,
+    sgst,
+    igst,
+    totalAmount,
+    isInclusive,
+    isInterstate,
+  };
+}
+
+export function calculateOverallGst(defaultRate = 18) {
+  const invoices = getInvoices();
+  const expenses = getExpenses();
+  const recurring = getRecurringExpenses();
+  const allExpenses = [...expenses, ...recurring];
+
+  const totalSalesGross = invoices.reduce((s, i) => s + Number(i.amount || 0), 0);
+  const totalPurchasesGross = allExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+
+  // Compute Output GST on Sales (Gross / (1 + Rate) * Rate)
+  let totalOutputGst = 0;
+  invoices.forEach((inv) => {
+    const amt = Number(inv.amount || 0);
+    const rate = Number(inv.gstRate || defaultRate);
+    const tax = (amt * rate) / (100 + rate);
+    totalOutputGst += tax;
+  });
+  totalOutputGst = Math.round(totalOutputGst);
+
+  // Compute Input Tax Credit (ITC) from Purchases
+  let totalInputTaxCredit = 0;
+  allExpenses.forEach((exp) => {
+    const amt = Number(exp.amount || 0);
+    const rate = Number(exp.gstRate || defaultRate);
+    const itc = (amt * rate) / (100 + rate);
+    totalInputTaxCredit += itc;
+  });
+  totalInputTaxCredit = Math.round(totalInputTaxCredit);
+
+  const netGstPayable = Math.max(0, totalOutputGst - totalInputTaxCredit);
+  const excessItcCarryforward = Math.max(0, totalInputTaxCredit - totalOutputGst);
+
+  return {
+    totalSalesGross,
+    totalPurchasesGross,
+    totalOutputGst,
+    totalInputTaxCredit,
+    netGstPayable,
+    excessItcCarryforward,
+    gstr1Summary: {
+      totalTaxableValue: Math.max(0, totalSalesGross - totalOutputGst),
+      totalTaxLiability: totalOutputGst,
+      invoiceCount: invoices.length,
+    },
+    gstr2bSummary: {
+      eligibleItc: totalInputTaxCredit,
+      purchaseCount: allExpenses.length,
+    },
+    gstr3bSummary: {
+      netTaxPayableInCash: netGstPayable,
+      itcUtilized: Math.min(totalOutputGst, totalInputTaxCredit),
+      status: invoices.length > 0 ? "Ready for Filing" : "Awaiting Data",
+    },
   };
 }

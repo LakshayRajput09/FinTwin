@@ -1,32 +1,28 @@
 import React, { useState, useEffect } from "react";
 import {
-  Settings as SettingsIcon,
   Building,
   ShieldCheck,
-  RotateCcw,
   CheckCircle2,
-  Bell,
   Database,
-  Layers,
   Save,
-  Sparkles,
   Trash2,
-  Upload,
 } from "lucide-react";
 
 import {
   getBusiness,
   updateBusinessProfile,
   clearAllData,
-  loadDemoData,
   subscribeFinancialData,
 } from "../data/financialStore";
+import { INDUSTRY_SECTORS } from "../data/sampleData";
+import { useAuth } from "../context/AuthContext";
 
 export default function Settings() {
+  const { user } = useAuth();
   const [business, setBusiness] = useState(getBusiness());
-  const [name, setName] = useState(business.name || "My Enterprise");
+  const [name, setName] = useState(business.name || user?.company || "My Enterprise");
   const [industry, setIndustry] = useState(business.industry || "Manufacturing & Trade");
-  const [gstin, setGstin] = useState(business.gstin || "");
+  const [gstin, setGstin] = useState(business.gstin || user?.gstin || "");
   const [currency, setCurrency] = useState(business.currency || "INR");
   const [openingCash, setOpeningCash] = useState(business.openingCash || 0);
   const [minCashReserve, setMinCashReserve] = useState(business.minCashReserve || 0);
@@ -38,15 +34,15 @@ export default function Settings() {
     const unsub = subscribeFinancialData(() => {
       const b = getBusiness();
       setBusiness(b);
-      setName(b.name || "My Enterprise");
+      setName(b.name || user?.company || "My Enterprise");
       setIndustry(b.industry || "Manufacturing & Trade");
-      setGstin(b.gstin || "");
+      setGstin(b.gstin || user?.gstin || "");
       setOpeningCash(b.openingCash || 0);
       setMinCashReserve(b.minCashReserve || 0);
       setTargetRunwayDays(b.targetRunwayDays || 60);
     });
     return unsub;
-  }, []);
+  }, [user]);
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
@@ -60,22 +56,16 @@ export default function Settings() {
       targetRunwayDays: Number(targetRunwayDays),
     });
 
-    setNotification("Business parameters saved and synchronized with Digital Twin!");
+    setNotification("Business parameters saved and synchronized with Database!");
     setTimeout(() => setNotification(""), 3500);
   };
 
   const handleClearData = () => {
-    if (window.confirm("Are you sure you want to clear all data and start with a clean slate?")) {
+    if (window.confirm("Are you sure you want to clear all your financial records and start fresh?")) {
       clearAllData();
       setNotification("All financial records cleared. Ready for your live data!");
       setTimeout(() => setNotification(""), 3500);
     }
-  };
-
-  const handleLoadDemo = () => {
-    loadDemoData("BUS-001");
-    setNotification("Loaded sample demo scenario data.");
-    setTimeout(() => setNotification(""), 3500);
   };
 
   return (
@@ -143,11 +133,11 @@ export default function Settings() {
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
                 >
-                  <option value="Manufacturing & Trade">Manufacturing & Trade</option>
-                  <option value="Retail & Logistics">Retail & Logistics</option>
-                  <option value="Wholesale & Distribution">Wholesale & Distribution</option>
-                  <option value="Engineering & IT">Engineering & IT</option>
-                  <option value="Construction & Real Estate">Construction & Real Estate</option>
+                  {INDUSTRY_SECTORS.map((sec) => (
+                    <option key={sec} value={sec}>
+                      {sec}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -242,10 +232,10 @@ export default function Settings() {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ padding: 14, borderRadius: "var(--radius-md)", background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ fontWeight: 600, fontSize: 13, color: "#fff", marginBottom: 4 }}>
-                Clean Slate Mode (Real Data)
+                Purge Account Data
               </div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, lineHeight: 1.5 }}>
-                Clear all invoices, expenses, and customers to test your actual business numbers from scratch.
+                Clear all your uploaded invoices, expenses, and customer records to start completely fresh.
               </div>
               <button
                 className="btn btn-danger btn-sm"
@@ -253,25 +243,17 @@ export default function Settings() {
                 onClick={handleClearData}
               >
                 <Trash2 size={14} />
-                <span>Clear All Data (Start Fresh)</span>
+                <span>Clear All Data</span>
               </button>
             </div>
 
-            <div style={{ padding: 14, borderRadius: "var(--radius-md)", background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.25)" }}>
-              <div style={{ fontWeight: 600, fontSize: 13, color: "#c4b5fd", marginBottom: 4 }}>
-                Sample Demonstration Data
+            <div style={{ padding: 14, borderRadius: "var(--radius-md)", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)" }}>
+              <div style={{ fontWeight: 600, fontSize: 13, color: "#34d399", marginBottom: 4 }}>
+                Account Security & Storage
               </div>
-              <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, lineHeight: 1.5 }}>
-                Load pre-configured MSME invoices and expense records for previewing features.
+              <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                Your data is encrypted and synced with the persistent database. When you log out, your session is saved securely.
               </div>
-              <button
-                className="btn btn-secondary btn-sm"
-                style={{ width: "100%", justifyContent: "center", color: "#a78bfa" }}
-                onClick={handleLoadDemo}
-              >
-                <Sparkles size={14} />
-                <span>Load Sample Demo Data</span>
-              </button>
             </div>
           </div>
         </div>

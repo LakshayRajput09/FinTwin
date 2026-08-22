@@ -16,6 +16,7 @@ import {
   LogOut,
   UserCheck,
   ChevronDown,
+  Menu,
 } from "lucide-react";
 
 import { getInvoices } from "../data/financialStore";
@@ -30,15 +31,17 @@ const titles = {
   "/forecast": { title: "AI 90-Day Cash Forecast", sub: "Probabilistic runway simulation with confidence intervals" },
   "/simulator": { title: "What-If Shock Simulator", sub: "Interactive scenario stress-testing for MSME liquidity" },
   "/financing": { title: "MSME Financing Marketplace", sub: "Working capital gap solutions & invoice discounting options" },
+  "/gst": { title: "GST Intelligence & Tax Calculator", sub: "Overall GST reconciliation (GSTR-1/2B/3B), transaction calculator & GSTIN lookup" },
+  "/payroll": { title: "Workers & Salary Payroll Hub", sub: "Employee directory, 1-click salary disbursements, and payroll burn ledger" },
   "/reports": { title: "Financial Reports & P&L", sub: "Exportable statements, monthly burn & liquidity reconciliation" },
   "/integrations": { title: "Accounting Integrations", sub: "Seamless sync with Tally Prime, Zoho Books, GSTN & Banks" },
   "/settings": { title: "Business Settings & Profiles", sub: "Company parameters, GSTIN setup, targets & scenario presets" },
 };
 
-export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearch }) {
+export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearch, onToggleMobileMenu }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout, switchDemoRole, DEMO_USERS } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -56,6 +59,14 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
     <header className="app-topbar">
       {/* Page Title & Subtitle */}
       <div className="topbar-left">
+        <button
+          className="mobile-menu-toggle"
+          onClick={onToggleMobileMenu}
+          title="Open Navigation Menu"
+        >
+          <Menu size={20} />
+        </button>
+
         <div className="topbar-page-info">
           <h1 className="topbar-page-title">{currentInfo.title}</h1>
           <span className="topbar-page-subtitle">{currentInfo.sub}</span>
@@ -296,65 +307,8 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                 </div>
               </div>
 
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--text-dim)", padding: "4px 6px" }}>
-                Switch Role Profile
-              </div>
-
-              <div
-                style={{
-                  padding: "6px 8px",
-                  borderRadius: "var(--radius-sm)",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  color: user?.businessId === "BUS-001" ? "#60a5fa" : "var(--text-secondary)",
-                }}
-                onClick={() => {
-                  switchDemoRole("founder");
-                  setShowUserDropdown(false);
-                }}
-              >
-                <span>👑 Founder / CEO (ABC Mfg)</span>
-              </div>
-
-              <div
-                style={{
-                  padding: "6px 8px",
-                  borderRadius: "var(--radius-sm)",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  color: user?.businessId === "BUS-002" ? "#60a5fa" : "var(--text-secondary)",
-                }}
-                onClick={() => {
-                  switchDemoRole("cfo");
-                  setShowUserDropdown(false);
-                }}
-              >
-                <span>💼 CFO (Zenith Logistics)</span>
-              </div>
-
-              <div
-                style={{
-                  padding: "6px 8px",
-                  borderRadius: "var(--radius-sm)",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  color: user?.businessId === "BUS-003" ? "#60a5fa" : "var(--text-secondary)",
-                }}
-                onClick={() => {
-                  switchDemoRole("accountant");
-                  setShowUserDropdown(false);
-                }}
-              >
-                <span>📊 Controller (Apex Engg)</span>
+              <div style={{ padding: "6px 8px", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", gap: 6, color: "var(--text-primary)" }} onClick={() => { setShowUserDropdown(false); navigate("/settings"); }}>
+                <span>🏢 Company Settings & Targets</span>
               </div>
 
               <div style={{ height: 1, background: "var(--border-subtle)", margin: "8px 0" }} />
@@ -377,7 +331,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                 }}
               >
                 <LogOut size={13} />
-                <span>Sign Out</span>
+                <span>Sign Out & Save</span>
               </div>
             </div>
           )}

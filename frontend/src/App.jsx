@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   BrowserRouter,
   Routes,
@@ -6,8 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 
-import { AuthProvider } from "./context/AuthContext";
-import { loadFinancialData } from "./data/financialStore";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // Master Layout
 import AppLayout from "./components/AppLayout";
@@ -23,140 +22,184 @@ import Customers from "./pages/Customers";
 import Forecast from "./pages/Forecast";
 import Simulator from "./pages/Simulator";
 import Financing from "./pages/Financing";
+import Gst from "./pages/Gst";
+import Payroll from "./pages/Payroll";
 import Reports from "./pages/Reports";
 import Integrations from "./pages/Integrations";
 import Settings from "./pages/Settings";
 
-function App() {
-  useEffect(() => {
-    // Initiate background sync with backend / local store
-    loadFinancialData();
-  }, []);
+// ==========================================
+// PROTECTED ROUTE WRAPPER
+// Ensures users MUST log in before accessing app data
+// ==========================================
+function ProtectedRoute({ children }) {
+  const { isAuthenticated } = useAuth();
 
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <AppLayout>{children}</AppLayout>;
+}
+
+// Redirects logged in users from /login to /dashboard
+function PublicAuthRoute({ children }) {
+  const { isAuthenticated } = useAuth();
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+}
+
+function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Landing Page */}
+          {/* Public Landing Pages */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/landing" element={<LandingPage />} />
 
-          {/* Authentication */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Login />} />
+          {/* Authentication Routes */}
+          <Route
+            path="/login"
+            element={
+              <PublicAuthRoute>
+                <Login />
+              </PublicAuthRoute>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <PublicAuthRoute>
+                <Login />
+              </PublicAuthRoute>
+            }
+          />
 
-          {/* Dashboard */}
+          {/* Protected Application Routes (Requires Login) */}
           <Route
             path="/dashboard"
             element={
-              <AppLayout>
+              <ProtectedRoute>
                 <Dashboard />
-              </AppLayout>
+              </ProtectedRoute>
             }
           />
 
-          {/* Cash Flow */}
           <Route
             path="/cash-flow"
             element={
-              <AppLayout>
+              <ProtectedRoute>
                 <CashFlow />
-              </AppLayout>
+              </ProtectedRoute>
             }
           />
 
-          {/* Invoices */}
           <Route
             path="/invoices"
             element={
-              <AppLayout>
+              <ProtectedRoute>
                 <Invoices />
-              </AppLayout>
+              </ProtectedRoute>
             }
           />
 
-          {/* Expenses */}
           <Route
             path="/expenses"
             element={
-              <AppLayout>
+              <ProtectedRoute>
                 <Expenses />
-              </AppLayout>
+              </ProtectedRoute>
             }
           />
 
-          {/* Customers */}
           <Route
             path="/customers"
             element={
-              <AppLayout>
+              <ProtectedRoute>
                 <Customers />
-              </AppLayout>
+              </ProtectedRoute>
             }
           />
 
-          {/* Forecast */}
           <Route
             path="/forecast"
             element={
-              <AppLayout>
+              <ProtectedRoute>
                 <Forecast />
-              </AppLayout>
+              </ProtectedRoute>
             }
           />
 
-          {/* Simulator */}
           <Route
             path="/simulator"
             element={
-              <AppLayout>
+              <ProtectedRoute>
                 <Simulator />
-              </AppLayout>
+              </ProtectedRoute>
             }
           />
 
-          {/* Financing */}
           <Route
             path="/financing"
             element={
-              <AppLayout>
+              <ProtectedRoute>
                 <Financing />
-              </AppLayout>
+              </ProtectedRoute>
             }
           />
 
-          {/* Financial Reports */}
+          <Route
+            path="/gst"
+            element={
+              <ProtectedRoute>
+                <Gst />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/payroll"
+            element={
+              <ProtectedRoute>
+                <Payroll />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/reports"
             element={
-              <AppLayout>
+              <ProtectedRoute>
                 <Reports />
-              </AppLayout>
+              </ProtectedRoute>
             }
           />
 
-          {/* Accounting Integrations */}
           <Route
             path="/integrations"
             element={
-              <AppLayout>
+              <ProtectedRoute>
                 <Integrations />
-              </AppLayout>
+              </ProtectedRoute>
             }
           />
 
-          {/* Settings */}
           <Route
             path="/settings"
             element={
-              <AppLayout>
+              <ProtectedRoute>
                 <Settings />
-              </AppLayout>
+              </ProtectedRoute>
             }
           />
 
           {/* Fallback Catch-All */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

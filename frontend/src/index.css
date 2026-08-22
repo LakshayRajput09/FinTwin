@@ -1489,12 +1489,358 @@ a {
   background: #04060b;
 }
 
-@media (max-width: 900px) {
-  .landing-hero-title { font-size: 38px; }
-  .landing-stats-row { grid-template-columns: repeat(2, 1fr); }
-  .feature-grid { grid-template-columns: 1fr; }
-  .pricing-grid { grid-template-columns: 1fr; }
-  .pricing-card.featured { transform: none; }
-  .landing-nav { padding: 0 20px; }
-  .landing-nav-links { display: none; }
+/* ==========================================================================
+   RESPONSIVE DESIGN SYSTEM ACROSS ALL DEVICES (Mobile, Tablet, Laptop, Desktop)
+   ========================================================================== */
+
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-right: 12px;
+  transition: all var(--transition-fast);
+}
+
+.mobile-menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--border-medium);
+}
+
+/* Mobile Sidebar Backdrop */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 150;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.mobile-close-btn {
+  display: none;
+}
+
+/* ==========================================================================
+   BREAKPOINTS
+   ========================================================================== */
+
+/* 1. Large Monitors & Desktops (> 1440px) */
+@media (min-width: 1441px) {
+  .page-container {
+    max-width: 1600px;
+    padding: 36px 44px 70px;
+  }
+}
+
+/* 2. Laptops & Small Desktops (1025px - 1440px) */
+@media (max-width: 1440px) {
+  .page-container {
+    padding: 28px 28px 60px;
+  }
+}
+
+/* 3. Tablets & iPads (769px - 1024px) */
+@media (max-width: 1024px) {
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .grid-12 {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .col-span-8, .col-span-4, .col-span-6 {
+    grid-column: span 12 / span 12;
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pricing-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .feature-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ai-copilot-drawer {
+    width: 380px;
+  }
+}
+
+/* 4. Mobile Devices & Small Tablets (<= 768px) */
+@media (max-width: 768px) {
+  :root {
+    --sidebar-width: 280px;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  .mobile-close-btn {
+    display: flex;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+  }
+
+  /* Off-canvas mobile sidebar */
+  .app-sidebar {
+    transform: translateX(-100%);
+    width: var(--sidebar-width) !important;
+    z-index: 200;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .app-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  /* Full-width content wrapper on mobile */
+  .main-content-wrapper,
+  .main-content-wrapper.sidebar-collapsed {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .page-container {
+    padding: 18px 14px 80px;
+  }
+
+  /* Topbar responsive adjustments */
+  .app-topbar {
+    padding: 0 14px;
+    height: 64px;
+  }
+
+  .topbar-page-title {
+    font-size: 15px;
+  }
+
+  .topbar-page-subtitle {
+    display: none;
+  }
+
+  .topbar-search-btn {
+    display: none;
+  }
+
+  .topbar-btn.ai-copilot-trigger span {
+    display: none;
+  }
+
+  .topbar-btn.primary-action span {
+    display: none;
+  }
+
+  .topbar-btn.primary-action {
+    padding: 7px 10px;
+  }
+
+  /* Grid Stack on Mobile */
+  .grid-4 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .grid-3 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .col-span-8, .col-span-4, .col-span-6 {
+    grid-column: span 12 / span 12;
+  }
+
+  /* Cards & Spacing */
+  .glass-card {
+    padding: 16px 14px;
+    border-radius: var(--radius-md);
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .card-title {
+    font-size: 15px;
+  }
+
+  .kpi-card {
+    padding: 16px 14px;
+  }
+
+  .kpi-value {
+    font-size: 24px;
+  }
+
+  /* Tables */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .custom-table th, .custom-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* Filter bar & Tabs */
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .tabs-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .tab-btn {
+    white-space: nowrap;
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  /* Modals */
+  .modal-card {
+    width: 95vw;
+    max-width: 95vw;
+    padding: 20px 16px;
+    max-height: 92vh;
+  }
+
+  .modal-card.wide {
+    width: 95vw;
+    max-width: 95vw;
+  }
+
+  /* AI Copilot Drawer as Bottom Sheet on Mobile */
+  .ai-copilot-drawer {
+    width: 100%;
+    height: 80vh;
+    top: auto;
+    bottom: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-left: none;
+    border-top: 1px solid rgba(139, 92, 246, 0.4);
+  }
+
+  .floating-copilot-btn {
+    right: 16px;
+    bottom: 16px;
+    height: 44px;
+    padding: 0 14px;
+    font-size: 12px;
+  }
+
+  .copilot-btn-text {
+    display: none;
+  }
+
+  /* Landing Page Mobile */
+  .landing-hero {
+    padding: 110px 16px 60px;
+  }
+
+  .landing-hero-title {
+    font-size: 32px;
+    letter-spacing: -0.8px;
+  }
+
+  .landing-hero-subtitle {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .landing-stats-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .landing-sandbox {
+    padding: 30px 14px;
+  }
+
+  .sandbox-card {
+    padding: 20px 14px;
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+    padding: 40px 14px;
+    gap: 16px;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    padding: 0 14px;
+    margin: 20px auto 40px;
+  }
+
+  .landing-footer {
+    padding: 40px 16px 24px;
+  }
+}
+
+/* 5. Extra Small Mobile Devices (< 480px) */
+@media (max-width: 480px) {
+  .landing-hero-title {
+    font-size: 28px;
+  }
+
+  .kpi-value {
+    font-size: 22px;
+  }
+
+  .form-input, .form-select {
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+
+  .btn {
+    font-size: 12.5px;
+    padding: 8px 14px;
+  }
+
+  .btn-lg {
+    font-size: 14px;
+    padding: 10px 16px;
+  }
 }

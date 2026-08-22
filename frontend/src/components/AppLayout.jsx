@@ -8,16 +8,27 @@ import { Sparkles } from "lucide-react";
 
 export default function AppLayout({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAiCopilotOpen, setIsAiCopilotOpen] = useState(false);
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
     <div className="app-container">
+      {/* Mobile Backdrop Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar Navigation */}
       <Sidebar
         collapsed={sidebarCollapsed}
         setCollapsed={setSidebarCollapsed}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
       {/* Main Content Area */}
@@ -30,20 +41,21 @@ export default function AppLayout({ children }) {
           onOpenAiCopilot={() => setIsAiCopilotOpen(true)}
           onOpenQuickAction={() => setIsQuickActionOpen(true)}
           onOpenSearch={() => setIsSearchOpen(true)}
+          onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         />
 
         <main className="page-container">{children}</main>
       </div>
 
-      {/* Floating AI Copilot Trigger (when closed) */}
+      {/* Floating AI Copilot Trigger */}
       {!isAiCopilotOpen && (
         <button
           className="floating-copilot-btn"
           onClick={() => setIsAiCopilotOpen(true)}
           title="Open FinTwin AI Financial Copilot"
         >
-          <Sparkles size={18} />
-          <span>Ask FinTwin</span>
+          <Sparkles size={17} />
+          <span className="copilot-btn-text">Ask FinTwin</span>
         </button>
       )}
 

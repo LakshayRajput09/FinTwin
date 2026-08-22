@@ -2,11 +2,47 @@
 // FinTwin Initial Clean Financial State & Demo Presets
 // ==========================================
 
+// Comprehensive Industry Sectors for MSMEs and Enterprises
+export const INDUSTRY_SECTORS = [
+  "Manufacturing & Heavy Engineering",
+  "Automotive & Auto Components",
+  "Textiles, Apparel & Garments",
+  "Pharmaceuticals & Healthcare",
+  "Retail, FMCG & Supermarkets",
+  "Logistics, Supply Chain & Freight",
+  "Agriculture, Dairy & Food Processing",
+  "Construction, Real Estate & Infrastructure",
+  "Information Technology & SaaS",
+  "Electronics & Electrical Equipment",
+  "Chemicals, Petrochemicals & Polymers",
+  "Hospitality, Restaurants & Catering",
+  "Renewable Energy & Solar Systems",
+  "Gems, Jewellery & Handicrafts",
+  "Education, EdTech & Training",
+  "Media, Advertising & Digital Agencies",
+  "Paper, Printing & Packaging",
+  "Metals, Mining & Metallurgy",
+  "Professional, Accounting & Legal Services",
+  "FinTech, NBFC & Financial Services",
+  "E-Commerce & D2C Brands",
+  "Medical Devices & Diagnostics",
+  "Telecommunications & Networking",
+  "Aerospace & Defense Components",
+  "Wholesale & Commodity Trading",
+  "General Commercial Enterprise",
+];
+
+export const EXECUTIVE_ROLES = [
+  { id: "CEO", title: "CEO (Chief Executive Officer)", desc: "Strategic solvency, shock stress-testing & growth financing", icon: "👑" },
+  { id: "CFO", title: "CFO (Chief Financial Officer)", desc: "Deep cash flow telemetry, 90-day AI forecast & capital allocation", icon: "💼" },
+  { id: "Accountant", title: "Accountant (Finance & Payroll)", desc: "Invoices, GST reconciliation, worker management & salary disbursement", icon: "📊" },
+];
+
 // Clean starting state with zero pre-filled numbers
 export const cleanBusiness = {
   id: "BUS-001",
   name: "My Enterprise",
-  industry: "Manufacturing & Trade",
+  industry: "Manufacturing & Heavy Engineering",
   gstin: "",
   currency: "INR",
   openingCash: 0,
@@ -25,6 +61,8 @@ export const invoices = [];
 export const payments = [];
 export const recurringExpenses = [];
 export const expenses = [];
+export const workers = [];
+export const payrollDisbursements = [];
 
 // ==========================================
 // OPTIONAL DEMO PRESETS (For testing only)

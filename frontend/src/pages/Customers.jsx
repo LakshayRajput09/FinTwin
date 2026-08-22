@@ -30,6 +30,7 @@ import {
   addCustomer,
   subscribeFinancialData,
 } from "../data/financialStore";
+import { INDUSTRY_SECTORS } from "../data/sampleData";
 import { calculateReceivables } from "../engines/digitalTwin";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
@@ -367,12 +368,11 @@ export default function Customers() {
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
                   >
-                    <option value="Manufacturing">Manufacturing</option>
-                    <option value="Retail">Retail</option>
-                    <option value="Wholesale">Wholesale & Trade</option>
-                    <option value="Logistics">Logistics & Transport</option>
-                    <option value="Construction">Construction & Infra</option>
-                    <option value="IT & Services">IT & Services</option>
+                    {INDUSTRY_SECTORS.map((sec) => (
+                      <option key={sec} value={sec}>
+                        {sec}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="form-group">

@@ -25,7 +25,7 @@ import { useAuth } from "../context/AuthContext";
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   // Interactive sandbox state in Hero
   const [sandboxRev, setSandboxRev] = useState(15); // in Lakhs
@@ -81,29 +81,45 @@ export default function LandingPage() {
           <a href="#faq" className="landing-nav-link">FAQ</a>
         </nav>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {isAuthenticated ? (
-            <Link
-              to="/dashboard"
-              className="btn btn-secondary btn-sm"
-              style={{ display: "flex", alignItems: "center", gap: 6 }}
-            >
-              <UserCheck size={14} style={{ color: "#34d399" }} />
-              <span>Signed In as {user?.name?.split(" ")[0]}</span>
-            </Link>
+            <>
+              <Link
+                to="/dashboard"
+                className="btn btn-secondary btn-sm"
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+              >
+                <UserCheck size={14} style={{ color: "#34d399" }} />
+                <span>Dashboard ({user?.name?.split(" ")[0] || "Account"})</span>
+              </Link>
+              <button
+                onClick={() => logout()}
+                className="btn btn-secondary btn-sm"
+                style={{ color: "#fb7185", padding: "6px 12px" }}
+                title="Log out"
+              >
+                Log Out
+              </button>
+            </>
           ) : (
-            <Link
-              to="/login"
-              className="btn btn-secondary btn-sm"
-            >
-              <span>Sign In</span>
-            </Link>
+            <>
+              <Link
+                to="/login"
+                className="btn btn-secondary btn-sm"
+                style={{ padding: "7px 16px" }}
+              >
+                <span>Log In</span>
+              </Link>
+              <Link
+                to="/signup"
+                className="btn btn-primary btn-sm"
+                style={{ padding: "7px 18px" }}
+              >
+                <span>Get Started Free</span>
+                <ArrowRight size={14} />
+              </Link>
+            </>
           )}
-
-          <Link to="/dashboard" className="btn btn-primary" style={{ padding: "8px 20px" }}>
-            <span>Launch Platform</span>
-            <ArrowRight size={15} />
-          </Link>
         </div>
       </header>
 
@@ -135,22 +151,36 @@ export default function LandingPage() {
         </p>
 
         <div className="landing-cta-group">
-          <button
-            className="btn btn-primary btn-lg"
-            onClick={() => navigate("/dashboard")}
-            style={{ gap: 10, fontSize: 16 }}
-          >
-            <Sparkles size={18} />
-            <span>Launch Digital Twin Demo</span>
-            <ArrowRight size={18} />
-          </button>
-          <Link
-            to="/login"
-            className="btn btn-secondary btn-lg"
-            style={{ gap: 8, fontSize: 15 }}
-          >
-            <span>Sign In / Demo Login</span>
-          </Link>
+          {isAuthenticated ? (
+            <Link
+              to="/dashboard"
+              className="btn btn-primary btn-lg"
+              style={{ gap: 10, fontSize: 16 }}
+            >
+              <Sparkles size={18} />
+              <span>Go to Executive Dashboard</span>
+              <ArrowRight size={18} />
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/signup"
+                className="btn btn-primary btn-lg"
+                style={{ gap: 10, fontSize: 16 }}
+              >
+                <Sparkles size={18} />
+                <span>Get Started Free</span>
+                <ArrowRight size={18} />
+              </Link>
+              <Link
+                to="/login"
+                className="btn btn-secondary btn-lg"
+                style={{ gap: 8, fontSize: 15 }}
+              >
+                <span>Log In to Account</span>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Hero Stats */}
@@ -515,7 +545,7 @@ export default function LandingPage() {
                 <CheckCircle2 size={15} style={{ color: "#34d399" }} /> CSV, Excel & PDF Import
               </li>
             </ul>
-            <button className="btn btn-secondary" style={{ width: "100%" }} onClick={() => navigate("/dashboard")}>
+            <button className="btn btn-secondary" style={{ width: "100%" }} onClick={() => navigate(isAuthenticated ? "/dashboard" : "/signup")}>
               Get Started
             </button>
           </div>
@@ -564,7 +594,7 @@ export default function LandingPage() {
                 <CheckCircle2 size={15} style={{ color: "#34d399" }} /> FinTwin AI Copilot Assistant
               </li>
             </ul>
-            <button className="btn btn-primary" style={{ width: "100%" }} onClick={() => navigate("/dashboard")}>
+            <button className="btn btn-primary" style={{ width: "100%" }} onClick={() => navigate(isAuthenticated ? "/dashboard" : "/signup")}>
               Launch Pro Twin
             </button>
           </div>
@@ -593,7 +623,7 @@ export default function LandingPage() {
                 <CheckCircle2 size={15} style={{ color: "#34d399" }} /> Dedicated Fractional CFO Advisory
               </li>
             </ul>
-            <button className="btn btn-secondary" style={{ width: "100%" }} onClick={() => navigate("/dashboard")}>
+            <button className="btn btn-secondary" style={{ width: "100%" }} onClick={() => navigate(isAuthenticated ? "/dashboard" : "/signup")}>
               Contact Sales
             </button>
           </div>

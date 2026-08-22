@@ -19,6 +19,11 @@ from app.services.forecast_service import generate_cash_forecast
 from app.services.risk_service import generate_risk_analysis
 from app.services.simulator_service import run_simulation
 from app.services.financing_service import generate_financing_analysis
+from app.services.gst_service import (
+    calculate_transaction_gst,
+    reconcile_overall_gst,
+    validate_gstin,
+)
 
 
 # ==========================================
@@ -88,6 +93,19 @@ class FinancingRequest(BaseModel):
     liquidity_gap: float
     outstanding_receivables: float
     current_cash: float
+
+
+class GstCalculateRequest(BaseModel):
+    amount: float
+    rate_percent: float = 18.0
+    is_inclusive: bool = False
+    is_interstate: bool = False
+
+
+class GstReconcileRequest(BaseModel):
+    invoices: list[dict]
+    expenses: list[dict]
+    default_gst_rate: float = 18.0
 
 
 # ==========================================
@@ -452,6 +470,46 @@ def create_financing_analysis(
     return {
         "success": True,
         "financing": result,
+    }
+
+
+# ==========================================
+# GST API ENDPOINTS
+# ==========================================
+
+@app.post("/api/gst/calculate")
+def get_transaction_gst(request: GstCalculateRequest):
+    result = calculate_transaction_gst(
+        amount=request.amount,
+        rate_percent=request.rate_percent,
+        is_inclusive=request.is_inclusive,
+        is_interstate=request.is_interstate,
+    )
+    return {
+        "success": True,
+        "calculation": result,
+    }
+
+
+@app.post("/api/gst/reconcile")
+def get_overall_gst_reconciliation(request: GstReconcileRequest):
+    result = reconcile_overall_gst(
+        invoices=request.invoices,
+        expenses=request.expenses,
+        default_gst_rate=request.default_gst_rate,
+    )
+    return {
+        "success": True,
+        "reconciliation": result,
+    }
+
+
+@app.get("/api/gst/validate/{gstin}")
+def get_gstin_validation(gstin: str):
+    result = validate_gstin(gstin=gstin)
+    return {
+        "success": True,
+        "validation": result,
     }
 
 
