@@ -1,713 +1,331 @@
 // ==========================================
-// FinTwin Financial Store
-// ==========================================
-//
-// Central data layer for the application.
-//
-// Database-backed version.
-//
-// Data flow:
-//
-// React
-//   ↓
-// financialStore
-//   ↓
-// FastAPI
-//   ↓
-// PostgreSQL
-//
-// sampleData is kept only as a local fallback
-// if the API cannot be reached.
-//
+// FinTwin Financial Data Store (Clean Slate Ready)
 // ==========================================
 
 import {
-  business as sampleBusiness,
-  customers as sampleCustomers,
-  invoices as sampleInvoices,
-  payments as samplePayments,
-  recurringExpenses as sampleRecurringExpenses,
-  expenses as sampleExpenses,
+  cleanBusiness,
+  demoPresets,
 } from "./sampleData";
 
 import { API_URL } from "../config";
 
+const STORAGE_KEY = "fintwin_live_store_v4";
 
-// ==========================================
-// INTERNAL STATE
-// ==========================================
+function loadFromStorage() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.warn("Could not load from localStorage:", e);
+  }
+  return null;
+}
 
-let financialData = {
-  business: {
-    ...sampleBusiness,
-  },
+function saveToStorage(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.warn("Could not save to localStorage:", e);
+  }
+}
 
-  customers: [
-    ...sampleCustomers,
-  ],
+const initialSaved = loadFromStorage();
 
-  invoices: [
-    ...sampleInvoices,
-  ],
-
-  payments: [
-    ...samplePayments,
-  ],
-
-  recurringExpenses: [
-    ...sampleRecurringExpenses,
-  ],
-
-  expenses: [
-    ...sampleExpenses,
-  ],
+let financialData = initialSaved || {
+  business: { ...cleanBusiness },
+  customers: [],
+  invoices: [],
+  payments: [],
+  recurringExpenses: [],
+  expenses: [],
 };
 
-
-// ==========================================
-// DATABASE STATUS
-// ==========================================
-
 let databaseConnected = false;
+const subscribers = new Set();
 
+export function subscribeFinancialData(callback) {
+  subscribers.add(callback);
+  return () => {
+    subscribers.delete(callback);
+  };
+}
 
-// ==========================================
-// GET DATABASE STATUS
-// ==========================================
+function notifySubscribers() {
+  saveToStorage(financialData);
+  subscribers.forEach((callback) => {
+    try {
+      callback(getFinancialData());
+    } catch (error) {
+      console.error("Financial store subscriber error:", error);
+    }
+  });
+}
 
 export function isDatabaseConnected() {
   return databaseConnected;
 }
 
+export function getFinancialData() {
+  return {
+    business: { ...financialData.business },
+    customers: [...financialData.customers],
+    invoices: [...financialData.invoices],
+    payments: [...financialData.payments],
+    recurringExpenses: [...financialData.recurringExpenses],
+    expenses: [...financialData.expenses],
+  };
+}
+
+export function getBusiness() {
+  return { ...financialData.business };
+}
+
+export function getCustomers() {
+  return [...financialData.customers];
+}
+
+export function getInvoices() {
+  return [...financialData.invoices];
+}
+
+export function getPayments() {
+  return [...financialData.payments];
+}
+
+export function getRecurringExpenses() {
+  return [...financialData.recurringExpenses];
+}
+
+export function getExpenses() {
+  return [...financialData.expenses];
+}
 
 // ==========================================
-// LOAD DATA FROM DATABASE
-// ==========================================
-//
-// This function retrieves all financial data
-// from PostgreSQL through FastAPI.
-//
+// CLEAN SLATE / RESET CONTROLS
 // ==========================================
 
-export async function loadFinancialData() {
-
+export function clearAllData() {
   try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (e) {}
 
-    const [
-      businessResponse,
-      customersResponse,
-      invoicesResponse,
-      paymentsResponse,
-      expensesResponse,
-      recurringExpensesResponse,
-    ] = await Promise.all([
+  financialData = {
+    business: { ...cleanBusiness },
+    customers: [],
+    invoices: [],
+    payments: [],
+    recurringExpenses: [],
+    expenses: [],
+  };
+  notifySubscribers();
+}
 
-      fetch(
-        `${API_URL}/api/business`
-      ),
+export function loadDemoData(presetKey = "BUS-001") {
+  const preset = demoPresets[presetKey] || demoPresets["BUS-001"];
+  financialData = {
+    business: { ...preset.business },
+    customers: [...preset.customers],
+    invoices: [...preset.invoices],
+    payments: [],
+    recurringExpenses: [...preset.recurringExpenses],
+    expenses: [...preset.expenses],
+  };
+  notifySubscribers();
+}
 
-      fetch(
-        `${API_URL}/api/customers`
-      ),
-
-      fetch(
-        `${API_URL}/api/invoices`
-      ),
-
-      fetch(
-        `${API_URL}/api/payments`
-      ),
-
-      fetch(
-        `${API_URL}/api/expenses`
-      ),
-
-      fetch(
-        `${API_URL}/api/recurring-expenses`
-      ),
-    ]);
-
-
-    // ==========================================
-    // CHECK RESPONSES
-    // ==========================================
-
-    if (
-      !businessResponse.ok ||
-      !customersResponse.ok ||
-      !invoicesResponse.ok ||
-      !paymentsResponse.ok ||
-      !expensesResponse.ok ||
-      !recurringExpensesResponse.ok
-    ) {
-      throw new Error(
-        "Database API request failed"
-      );
-    }
-
-
-    // ==========================================
-    // READ JSON
-    // ==========================================
-
-    const [
-      businessData,
-      customersData,
-      invoicesData,
-      paymentsData,
-      expensesData,
-      recurringExpensesData,
-    ] = await Promise.all([
-
-      businessResponse.json(),
-
-      customersResponse.json(),
-
-      invoicesResponse.json(),
-
-      paymentsResponse.json(),
-
-      expensesResponse.json(),
-
-      recurringExpensesResponse.json(),
-    ]);
-
-
-    // ==========================================
-    // UPDATE INTERNAL STATE
-    // ==========================================
-
-    if (
-      businessData.success &&
-      businessData.business
-    ) {
-      financialData.business =
-        businessData.business;
-    }
-
-
-    if (
-      customersData.success &&
-      Array.isArray(
-        customersData.customers
-      )
-    ) {
-      financialData.customers =
-        customersData.customers;
-    }
-
-
-    if (
-      invoicesData.success &&
-      Array.isArray(
-        invoicesData.invoices
-      )
-    ) {
-      financialData.invoices =
-        invoicesData.invoices;
-    }
-
-
-    if (
-      paymentsData.success &&
-      Array.isArray(
-        paymentsData.payments
-      )
-    ) {
-      financialData.payments =
-        paymentsData.payments;
-    }
-
-
-    if (
-      expensesData.success &&
-      Array.isArray(
-        expensesData.expenses
-      )
-    ) {
-      financialData.expenses =
-        expensesData.expenses;
-    }
-
-
-    if (
-      recurringExpensesData.success &&
-      Array.isArray(
-        recurringExpensesData.recurringExpenses
-      )
-    ) {
-      financialData.recurringExpenses =
-        recurringExpensesData.recurringExpenses;
-    }
-
-
-    databaseConnected = true;
-
-    console.log(
-      "FinTwin database connected successfully."
-    );
-
-
-    return getFinancialData();
-
-  } catch (error) {
-
-    databaseConnected = false;
-
-    console.error(
-      "FinTwin database connection failed:",
-      error
-    );
-
-    console.warn(
-      "Using local sample data fallback."
-    );
-
-
-    return getFinancialData();
+export function switchBusinessProfile(profileId) {
+  if (demoPresets[profileId]) {
+    loadDemoData(profileId);
   }
 }
 
-
-// ==========================================
-// GET COMPLETE DATA
-// ==========================================
-
-export function getFinancialData() {
-
-  return {
-
-    ...financialData,
-
-    customers: [
-      ...financialData.customers,
-    ],
-
-    invoices: [
-      ...financialData.invoices,
-    ],
-
-    payments: [
-      ...financialData.payments,
-    ],
-
-    recurringExpenses: [
-      ...financialData.recurringExpenses,
-    ],
-
-    expenses: [
-      ...financialData.expenses,
-    ],
-  };
-}
-
-
-// ==========================================
-// BUSINESS
-// ==========================================
-
-export function getBusiness() {
-
-  return {
+export function updateBusinessProfile(updated) {
+  financialData.business = {
     ...financialData.business,
+    ...updated,
   };
+  notifySubscribers();
 }
 
-
 // ==========================================
-// INVOICES
+// INVOICE ACTIONS
 // ==========================================
 
-export function getInvoices() {
+export function createInvoices(newInvoices) {
+  const normalized = Array.isArray(newInvoices) ? newInvoices : [newInvoices];
+  financialData.invoices = [...normalized, ...financialData.invoices];
 
-  return [
-    ...financialData.invoices,
-  ];
+  // Auto-register any new customers from uploaded invoices
+  normalized.forEach((inv) => {
+    if (inv.customer && !financialData.customers.some((c) => c.name === inv.customer)) {
+      financialData.customers.push({
+        id: inv.customerId || `CUS-${financialData.customers.length + 1}`,
+        name: inv.customer,
+        industry: "Client Account",
+        contactEmail: "",
+        creditScore: "Medium Risk",
+        paymentTermsDays: 30,
+        avgDelayDays: inv.predictedDelayDays || 5,
+      });
+    }
+  });
+
+  notifySubscribers();
 }
-
-
-// ==========================================
-// ADD INVOICE
-// ==========================================
-//
-// NOTE:
-// This still updates local state for now.
-//
-// Database POST endpoint will be added
-// in the next migration step.
-// ==========================================
 
 export function addInvoice(invoice) {
-
-  financialData.invoices.push({
-
-    ...invoice,
-
-    source:
-      invoice.source ||
-      "manual",
-  });
-}
-
-
-// ==========================================
-// ADD MULTIPLE INVOICES
-// ==========================================
-
-export function addInvoices(
-  newInvoices
-) {
-
-  newInvoices.forEach(
-    (invoice) => {
-
-      addInvoice(invoice);
-
-    }
-  );
-}
-
-
-// ==========================================
-// REPLACE INVOICES
-// ==========================================
-
-export function replaceInvoices(
-  newInvoices
-) {
-
-  financialData.invoices =
-    newInvoices.map(
-      (invoice) => ({
-
-        ...invoice,
-
-        source:
-          invoice.source ||
-          "csv",
-      })
-    );
-}
-
-
-// ==========================================
-// CUSTOMERS
-// ==========================================
-
-export function getCustomers() {
-
-  return [
-    ...financialData.customers,
-  ];
-}
-
-
-// ==========================================
-// ADD CUSTOMER
-// ==========================================
-
-export function addCustomer(
-  customer
-) {
-
-  financialData.customers.push({
-
-    ...customer,
-
-    source:
-      customer.source ||
-      "manual",
-  });
-}
-
-
-// ==========================================
-// PAYMENTS
-// ==========================================
-
-export function getPayments() {
-
-  return [
-    ...financialData.payments,
-  ];
-}
-
-
-// ==========================================
-// ADD PAYMENT
-// ==========================================
-
-export function addPayment(
-  payment
-) {
-
-  financialData.payments.push({
-
-    ...payment,
-
-    source:
-      payment.source ||
-      "manual",
-  });
-}
-
-
-// ==========================================
-// EXPENSES
-// ==========================================
-
-export function getExpenses() {
-
-  return [
-    ...financialData.expenses,
-  ];
-}
-
-
-// ==========================================
-// RECURRING EXPENSES
-// ==========================================
-
-export function getRecurringExpenses() {
-
-  return [
-    ...financialData.recurringExpenses,
-  ];
-}
-
-
-// ==========================================
-// ADD EXPENSE
-// ==========================================
-
-export function addExpense(
-  expense
-) {
-
-  financialData.expenses.push({
-
-    ...expense,
-
-    source:
-      expense.source ||
-      "manual",
-  });
-}
-
-
-// ==========================================
-// UPDATE INVOICE
-// ==========================================
-
-export function updateInvoice(
-  invoiceId,
-  updates
-) {
-
-  financialData.invoices =
-    financialData.invoices.map(
-      (invoice) =>
-
-        invoice.id === invoiceId
-          ? {
-              ...invoice,
-              ...updates,
-            }
-          : invoice
-    );
-}
-
-
-// ==========================================
-// REMOVE INVOICE
-// ==========================================
-
-export function removeInvoice(
-  invoiceId
-) {
-
-  financialData.invoices =
-    financialData.invoices.filter(
-      (invoice) =>
-        invoice.id !== invoiceId
-    );
-}
-
-
-// ==========================================
-// TOTAL RECEIVABLES
-// ==========================================
-
-export function getTotalReceivables() {
-
-  return financialData.invoices
-
-    .filter(
-      (invoice) =>
-        invoice.status !== "Paid"
-    )
-
-    .reduce(
-      (
-        total,
-        invoice
-      ) =>
-        total +
-        Number(
-          invoice.amount || 0
-        ),
-
-      0
-    );
-}
-
-
-// ==========================================
-// TOTAL REVENUE
-// ==========================================
-
-export function getTotalRevenue() {
-
-  return financialData.invoices
-
-    .reduce(
-      (
-        total,
-        invoice
-      ) =>
-        total +
-        Number(
-          invoice.amount || 0
-        ),
-
-      0
-    );
-}
-
-
-// ==========================================
-// TOTAL EXPENSES
-// ==========================================
-
-export function getTotalExpenses() {
-
-  const recurringTotal =
-    financialData.recurringExpenses
-
-      .reduce(
-        (
-          total,
-          expense
-        ) =>
-          total +
-          Number(
-            expense.amount || 0
-          ),
-
-        0
-      );
-
-
-  const oneTimeTotal =
-    financialData.expenses
-
-      .reduce(
-        (
-          total,
-          expense
-        ) =>
-          total +
-          Number(
-            expense.amount || 0
-          ),
-
-        0
-      );
-
-
-  return (
-    recurringTotal +
-    oneTimeTotal
-  );
-}
-
-
-// ==========================================
-// RESET DATA
-// ==========================================
-
-export function resetFinancialData() {
-
-  financialData = {
-
-    business: {
-      ...sampleBusiness,
-    },
-
-    customers: [
-      ...sampleCustomers,
-    ],
-
-    invoices: [
-      ...sampleInvoices,
-    ],
-
-    payments: [
-      ...samplePayments,
-    ],
-
-    recurringExpenses: [
-      ...sampleRecurringExpenses,
-    ],
-
-    expenses: [
-      ...sampleExpenses,
-    ],
+  const newInvoice = {
+    id: invoice.id || `INV-${Math.floor(1000 + Math.random() * 9000)}`,
+    customerId: invoice.customerId || `CUS-${financialData.customers.length + 1}`,
+    customer: invoice.customer || "General Client",
+    amount: Number(invoice.amount) || 0,
+    invoiceDate: invoice.invoiceDate || new Date().toISOString().slice(0, 10),
+    dueDate: invoice.dueDate || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+    status: invoice.status || "Pending",
+    predictedDelayDays: Number(invoice.predictedDelayDays) || 5,
+    riskScore: invoice.riskScore || "Medium",
+    paymentDate: invoice.status === "Paid" ? new Date().toISOString().slice(0, 10) : null,
+    source: invoice.source || "user_upload",
   };
 
-
-  databaseConnected = false;
+  createInvoices([newInvoice]);
+  return newInvoice;
 }
 
-
-// ==========================================
-// DATA SOURCE SUMMARY
-// ==========================================
-
-export function getDataSources() {
-
-  const allRecords = [
-
-    ...financialData.invoices,
-
-    ...financialData.payments,
-
-    ...financialData.expenses,
-
-    ...financialData.recurringExpenses,
-  ];
-
-
-  const sources = {};
-
-
-  allRecords.forEach(
-    (record) => {
-
-      const source =
-        record.source ||
-        "unknown";
-
-
-      sources[source] =
-        (
-          sources[source] ||
-          0
-        ) + 1;
-
+export function updateInvoiceStatus(invoiceId, newStatus) {
+  financialData.invoices = financialData.invoices.map((inv) => {
+    if (inv.id === invoiceId) {
+      const isPaid = newStatus === "Paid";
+      return {
+        ...inv,
+        status: newStatus,
+        paymentDate: isPaid ? new Date().toISOString().slice(0, 10) : null,
+      };
     }
+    return inv;
+  });
+  notifySubscribers();
+}
+
+export function deleteInvoice(invoiceId) {
+  financialData.invoices = financialData.invoices.filter((i) => i.id !== invoiceId);
+  notifySubscribers();
+}
+
+// ==========================================
+// EXPENSE ACTIONS
+// ==========================================
+
+export function addExpense(expense) {
+  const isRec = Boolean(expense.recurring);
+  if (isRec) {
+    const newRec = {
+      id: expense.id || `REC-${Math.floor(100 + Math.random() * 900)}`,
+      businessId: financialData.business.id,
+      category: expense.category || "General",
+      description: expense.description || "Recurring Expense",
+      amount: Number(expense.amount) || 0,
+      frequency: expense.frequency || "Monthly",
+      dayOfMonth: Number(expense.dayOfMonth) || 1,
+      source: "user_entry",
+    };
+    financialData.recurringExpenses = [newRec, ...financialData.recurringExpenses];
+  } else {
+    const newExp = {
+      id: expense.id || `EXP-${Math.floor(100 + Math.random() * 900)}`,
+      businessId: financialData.business.id,
+      category: expense.category || "General",
+      description: expense.description || "One-time Expense",
+      amount: Number(expense.amount) || 0,
+      date: expense.date || new Date().toISOString().slice(0, 10),
+      recurring: false,
+      source: "user_entry",
+    };
+    financialData.expenses = [newExp, ...financialData.expenses];
+  }
+  notifySubscribers();
+}
+
+export function deleteExpense(id, isRecurring = false) {
+  if (isRecurring) {
+    financialData.recurringExpenses = financialData.recurringExpenses.filter((e) => e.id !== id);
+  } else {
+    financialData.expenses = financialData.expenses.filter((e) => e.id !== id);
+  }
+  notifySubscribers();
+}
+
+// ==========================================
+// CUSTOMER ACTIONS
+// ==========================================
+
+export function addCustomer(customer) {
+  const newCus = {
+    id: customer.id || `CUS-${financialData.customers.length + 1}`,
+    name: customer.name || "New Client",
+    industry: customer.industry || "General Industry",
+    contactEmail: customer.contactEmail || "",
+    creditScore: customer.creditScore || "Medium Risk",
+    paymentTermsDays: Number(customer.paymentTermsDays) || 30,
+    avgDelayDays: Number(customer.avgDelayDays) || 0,
+  };
+  financialData.customers = [...financialData.customers, newCus];
+  notifySubscribers();
+  return newCus;
+}
+
+export function updateCustomer(customerId, updatedFields) {
+  financialData.customers = financialData.customers.map((c) =>
+    c.id === customerId ? { ...c, ...updatedFields } : c
   );
+  notifySubscribers();
+}
 
+// ==========================================
+// REMOTE DATABASE SYNC (SAFE FALLBACK)
+// ==========================================
 
-  return sources;
+export async function loadFinancialData() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const res = await fetch(`${API_URL}/health`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      databaseConnected = true;
+      try {
+        const [bizRes, custRes, invRes] = await Promise.all([
+          fetch(`${API_URL}/api/business`),
+          fetch(`${API_URL}/api/customers`),
+          fetch(`${API_URL}/api/invoices`),
+        ]);
+        if (bizRes.ok) {
+          const biz = await bizRes.json();
+          if (biz && biz.name) financialData.business = { ...financialData.business, ...biz };
+        }
+        if (custRes.ok) {
+          const cust = await custRes.json();
+          if (Array.isArray(cust) && cust.length > 0) financialData.customers = cust;
+        }
+        if (invRes.ok) {
+          const inv = await invRes.json();
+          if (Array.isArray(inv) && inv.length > 0) financialData.invoices = inv;
+        }
+      } catch (err) {
+        console.warn("Partial sync:", err);
+      }
+    } else {
+      databaseConnected = false;
+    }
+  } catch (error) {
+    databaseConnected = false;
+  }
+  notifySubscribers();
+  return financialData;
 }

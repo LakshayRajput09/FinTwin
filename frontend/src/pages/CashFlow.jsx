@@ -1,376 +1,302 @@
+import React, { useState, useEffect } from "react";
 import {
-  ArrowDownRight,
-  ArrowUpRight,
-  AlertTriangle,
-  CheckCircle,
   Wallet,
   TrendingUp,
-  Receipt,
+  TrendingDown,
+  ArrowUpRight,
+  ArrowDownRight,
+  AlertTriangle,
+  CheckCircle2,
+  Calendar,
+  IndianRupee,
+  RefreshCw,
+  Landmark,
+  ShieldCheck,
 } from "lucide-react";
-
-import ModulePage from "../components/ModulePage";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 
 import {
-  getCashFlowSummary,
-} from "../engines/digitalTwin";
+  getFinancialData,
+  subscribeFinancialData,
+} from "../data/financialStore";
+import { getCashFlowSummary } from "../engines/digitalTwin";
 
-function CashFlow() {
-  const cashFlow = getCashFlowSummary();
+export default function CashFlow() {
+  const [summary, setSummary] = useState(getCashFlowSummary());
+  const [data, setData] = useState(getFinancialData());
 
-  const formatMoney = (amount) => {
-    return `₹${(amount / 100000).toFixed(2)} L`;
-  };
+  useEffect(() => {
+    const unsub = subscribeFinancialData(() => {
+      setSummary(getCashFlowSummary());
+      setData(getFinancialData());
+    });
+    return unsub;
+  }, []);
 
-  const isHealthy =
-    cashFlow.projectedCash >= 0;
+  const formatLakhs = (amt) => `₹${(Number(amt || 0) / 100000).toFixed(2)}L`;
+
+  // Waterfall Chart Data
+  const waterfallData = [
+    { name: "Opening Cash", amount: summary.currentCash, type: "start" },
+    { name: "+ Receivables", amount: summary.receivables, type: "inflow" },
+    { name: "- Fixed Burn", amount: -summary.recurringExpenses, type: "outflow" },
+    { name: "- Variable Exp", amount: -summary.oneTimeExpenses, type: "outflow" },
+    { name: "Projected Cash", amount: summary.projectedCash, type: "total" },
+  ];
 
   return (
-    <ModulePage
-      title="Cash Flow"
-      description="Track your current and projected business cash position."
-      type="cash"
-    >
-
-      {/* ================================
-          SUMMARY CARDS
-      ================================= */}
-
-      <div className="module-grid">
-
-        <div className="module-stat">
-
-          <span>
-            Current Cash
-          </span>
-
-          <strong>
-            {formatMoney(
-              cashFlow.currentCash
-            )}
-          </strong>
-
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* =================================================================
+          SUMMARY STAT CARDS
+          ================================================================= */}
+      <div className="grid-4">
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Current Cash</span>
+            <div className="card-icon-wrap emerald">
+              <Wallet size={18} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: "#34d399" }}>
+              {formatLakhs(summary.currentCash)}
+            </span>
+          </div>
+          <div className="kpi-trend positive">
+            <ShieldCheck size={14} />
+            <span>Liquid in Escrow & Current Account</span>
+          </div>
         </div>
 
-
-        <div className="module-stat">
-
-          <span>
-            Expected Receivables
-          </span>
-
-          <strong>
-            {formatMoney(
-              cashFlow.receivables
-            )}
-          </strong>
-
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Expected Inflows (Receivables)</span>
+            <div className="card-icon-wrap">
+              <TrendingUp size={18} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: "#60a5fa" }}>
+              {formatLakhs(summary.receivables)}
+            </span>
+          </div>
+          <div className="kpi-trend positive">
+            <ArrowUpRight size={14} />
+            <span>{data.invoices.filter((i) => i.status !== "Paid").length} Unsettled Invoices</span>
+          </div>
         </div>
 
-
-        <div className="module-stat">
-
-          <span>
-            Expected Expenses
-          </span>
-
-          <strong>
-            {formatMoney(
-              cashFlow.expenses
-            )}
-          </strong>
-
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Total Outflows (Burn)</span>
+            <div className="card-icon-wrap amber">
+              <TrendingDown size={18} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: "#fbbf24" }}>
+              {formatLakhs(summary.totalExpenses)}
+            </span>
+          </div>
+          <div className="kpi-trend negative">
+            <ArrowDownRight size={14} />
+            <span>Fixed: {formatLakhs(summary.recurringExpenses)}</span>
+          </div>
         </div>
 
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Projected Net Liquidity</span>
+            <div className="card-icon-wrap purple">
+              <Landmark size={18} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span
+              className="kpi-value"
+              style={{
+                color: summary.projectedCash >= 0 ? "#c4b5fd" : "#fb7185",
+              }}
+            >
+              {formatLakhs(summary.projectedCash)}
+            </span>
+          </div>
+          <div className="kpi-trend positive">
+            <span
+              style={{
+                color: summary.projectedCash >= 0 ? "#34d399" : "#fb7185",
+                fontWeight: 700,
+              }}
+            >
+              {summary.status}
+            </span>
+            <span style={{ marginLeft: "auto", color: "var(--text-muted)" }}>
+              {summary.runwayDays} Days Runway
+            </span>
+          </div>
+        </div>
       </div>
 
-
-      {/* ================================
-          PROJECTED CASH
-      ================================= */}
-
-      <div className="cash-position-card">
-
-        <div className="cash-position-icon">
-          <Wallet size={25} />
+      {/* =================================================================
+          WATERFALL RECONCILIATION
+          ================================================================= */}
+      <div className="glass-card">
+        <div className="card-header">
+          <div className="card-title-group">
+            <div className="card-icon-wrap">
+              <TrendingUp size={18} />
+            </div>
+            <div>
+              <div className="card-title">Cash Flow Bridge (Waterfall Analysis)</div>
+              <div className="card-subtitle">
+                Reconciliation from opening bank balance to projected month-end liquidity
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="cash-position-content">
-
-          <span>
-            PROJECTED CASH POSITION
-          </span>
-
-          <h2>
-            {formatMoney(
-              cashFlow.projectedCash
-            )}
-          </h2>
-
-          <p>
-            Current cash + expected receivables
-            − expected expenses
-          </p>
-
+        <div style={{ height: 280, width: "100%", marginTop: 10 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={waterfallData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} />
+              <YAxis
+                stroke="#64748b"
+                fontSize={11}
+                tickLine={false}
+                tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "rgba(13, 18, 31, 0.95)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+                formatter={(val) => [`₹${(Number(val) / 100000).toFixed(2)} Lakhs`, "Amount"]}
+              />
+              <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
+                {waterfallData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={
+                      entry.type === "start"
+                        ? "#3b82f6"
+                        : entry.type === "inflow"
+                        ? "#10b981"
+                        : entry.type === "outflow"
+                        ? "#f43f5e"
+                        : "#8b5cf6"
+                    }
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-
-        <div
-          className={
-            isHealthy
-              ? "cash-status healthy"
-              : "cash-status danger"
-          }
-        >
-
-          {isHealthy ? (
-            <>
-              <CheckCircle size={18} />
-              Healthy
-            </>
-          ) : (
-            <>
-              <AlertTriangle size={18} />
-              Liquidity Gap
-            </>
-          )}
-
-        </div>
-
       </div>
 
-
-      {/* ================================
-          NET CASH FLOW
-      ================================= */}
-
-      <div className="module-grid">
-
-        <div className="module-stat">
-
-          <span>
-            Net Cash Flow
-          </span>
-
-          <strong
-            className={
-              cashFlow.netCashFlow >= 0
-                ? "positive-number"
-                : "negative-number"
-            }
-          >
-            {formatMoney(
-              cashFlow.netCashFlow
-            )}
-          </strong>
-
-        </div>
-
-
-        <div className="module-stat">
-
-          <span>
-            Liquidity Gap
-          </span>
-
-          <strong
-            className={
-              cashFlow.liquidityGap > 0
-                ? "negative-number"
-                : "positive-number"
-            }
-          >
-            {formatMoney(
-              cashFlow.liquidityGap
-            )}
-          </strong>
-
-        </div>
-
-
-        <div className="module-stat">
-
-          <span>
-            Model Status
-          </span>
-
-          <strong>
-            Live
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      {/* ================================
-          EXPLANATION
-      ================================= */}
-
-      <div className="module-card">
-
-        <div className="section-heading">
-
-          <div className="section-heading-icon">
-            <TrendingUp size={19} />
+      {/* =================================================================
+          DETAILED INFLOWS VS OUTFLOWS TABLE
+          ================================================================= */}
+      <div className="grid-2">
+        {/* Scheduled Inflows */}
+        <div className="glass-card">
+          <div className="card-header">
+            <div className="card-title-group">
+              <div className="card-icon-wrap emerald">
+                <ArrowUpRight size={18} />
+              </div>
+              <div>
+                <div className="card-title">Scheduled Inflows</div>
+                <div className="card-subtitle">Pending collections from clients</div>
+              </div>
+            </div>
           </div>
 
-          <div>
+          <div className="table-responsive">
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th>Client</th>
+                  <th>Amount</th>
+                  <th>Expected Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.invoices
+                  .filter((i) => i.status !== "Paid")
+                  .map((inv) => (
+                    <tr key={inv.id}>
+                      <td style={{ fontWeight: 600, color: "#fff" }}>{inv.customer}</td>
+                      <td style={{ fontWeight: 700, color: "#34d399" }}>
+                        {formatLakhs(inv.amount)}
+                      </td>
+                      <td>{inv.dueDate}</td>
+                      <td>
+                        <span className={`status-badge ${inv.status === "Overdue" ? "overdue" : "pending"}`}>
+                          {inv.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-            <h2>
-              How the Digital Twin calculated this
-            </h2>
-
-            <p>
-              Every number below is calculated from
-              the centralized FinTwin financial store.
-            </p>
-
+        {/* Scheduled Outflows */}
+        <div className="glass-card">
+          <div className="card-header">
+            <div className="card-title-group">
+              <div className="card-icon-wrap rose">
+                <ArrowDownRight size={18} />
+              </div>
+              <div>
+                <div className="card-title">Committed Outflows</div>
+                <div className="card-subtitle">Payroll, rent & vendor obligations</div>
+              </div>
+            </div>
           </div>
 
+          <div className="table-responsive">
+            <table className="custom-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.recurringExpenses.map((rec) => (
+                  <tr key={rec.id}>
+                    <td style={{ fontWeight: 600, color: "#fff" }}>{rec.category}</td>
+                    <td>{rec.description}</td>
+                    <td style={{ fontWeight: 700, color: "#fb7185" }}>
+                      {formatLakhs(rec.amount)}
+                    </td>
+                    <td>
+                      <span className="status-badge" style={{ background: "rgba(139,92,246,0.15)", color: "#c4b5fd" }}>
+                        Monthly (Day {rec.dayOfMonth})
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-
-
-        <div className="calculation-flow">
-
-          <CalculationItem
-            icon={<Wallet size={18} />}
-            label="Current Cash"
-            value={formatMoney(
-              cashFlow.currentCash
-            )}
-          />
-
-          <span className="calculation-symbol">
-            +
-          </span>
-
-          <CalculationItem
-            icon={<ArrowUpRight size={18} />}
-            label="Receivables"
-            value={formatMoney(
-              cashFlow.receivables
-            )}
-          />
-
-          <span className="calculation-symbol">
-            −
-          </span>
-
-          <CalculationItem
-            icon={<Receipt size={18} />}
-            label="Expenses"
-            value={formatMoney(
-              cashFlow.expenses
-            )}
-          />
-
-          <span className="calculation-symbol">
-            =
-          </span>
-
-          <CalculationItem
-            icon={<Wallet size={18} />}
-            label="Projected Cash"
-            value={formatMoney(
-              cashFlow.projectedCash
-            )}
-            highlight
-          />
-
-        </div>
-
       </div>
-
-
-      {/* ================================
-          LIQUIDITY ALERT
-      ================================= */}
-
-      {cashFlow.liquidityGap > 0 ? (
-
-        <div className="module-alert">
-
-          <AlertTriangle size={20} />
-
-          <div>
-
-            <strong>
-              Potential liquidity gap detected
-            </strong>
-
-            <p>
-              The Digital Twin estimates a
-              {` ${formatMoney(
-                cashFlow.liquidityGap
-              )}`} shortfall based on the
-              current financial data.
-            </p>
-
-          </div>
-
-        </div>
-
-      ) : (
-
-        <div className="cash-success">
-
-          <CheckCircle size={20} />
-
-          <div>
-
-            <strong>
-              No immediate liquidity gap
-            </strong>
-
-            <p>
-              Based on the currently available
-              financial data, projected cash remains
-              positive.
-            </p>
-
-          </div>
-
-        </div>
-
-      )}
-
-    </ModulePage>
-  );
-}
-
-
-/* =========================================
-   CALCULATION ITEM
-========================================= */
-
-function CalculationItem({
-  icon,
-  label,
-  value,
-  highlight = false,
-}) {
-  return (
-    <div
-      className={
-        highlight
-          ? "calculation-item highlight"
-          : "calculation-item"
-      }
-    >
-
-      <div className="calculation-icon">
-        {icon}
-      </div>
-
-      <span>
-        {label}
-      </span>
-
-      <strong>
-        {value}
-      </strong>
-
     </div>
   );
 }
-
-export default CashFlow;

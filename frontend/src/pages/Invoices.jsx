@@ -1,1006 +1,658 @@
-import { useState } from "react";
-import Papa from "papaparse";
+import React, { useState, useEffect } from "react";
 import {
-  Upload,
   FileText,
-  CheckCircle,
+  Plus,
+  Upload,
+  Search,
+  CheckCircle2,
   AlertTriangle,
-  X,
+  Clock,
   Download,
-  Database,
-  RefreshCw,
+  Trash2,
+  Check,
+  Send,
+  Sparkles,
+  Filter,
+  FileSpreadsheet,
+  FileCode,
+  File,
+  Cpu,
 } from "lucide-react";
 
-import ModulePage from "../components/ModulePage";
 import {
-  replaceInvoices,
+  getInvoices,
+  getCustomers,
+  addInvoice,
+  createInvoices,
+  updateInvoiceStatus,
+  deleteInvoice,
+  subscribeFinancialData,
 } from "../data/financialStore";
+import { parseInvoiceFile } from "../utils/invoiceParser";
 
-function Invoices() {
-  const [invoices, setInvoices] = useState([]);
-
-  const [errors, setErrors] = useState([]);
-
-  const [importedFile, setImportedFile] = useState("");
-
+export default function Invoices() {
+  const [invoices, setInvoices] = useState(getInvoices());
+  const [customers, setCustomers] = useState(getCustomers());
+  const [activeTab, setActiveTab] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [notification, setNotification] = useState("");
 
-  const [isLoading, setIsLoading] = useState(false);
+  // Multi-Format Upload State
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [parsedPreview, setParsedPreview] = useState(null);
+  const [selectedFileType, setSelectedFileType] = useState("all");
 
-  /* =========================================
-     FORMAT MONEY
-  ========================================= */
+  // New Invoice Form
+  const [newCustomer, setNewCustomer] = useState(customers[0]?.name || "Customer A (Auto Corp)");
+  const [newAmount, setNewAmount] = useState("");
+  const [newDueDate, setNewDueDate] = useState("");
+  const [newStatus, setNewStatus] = useState("Pending");
 
-  const formatMoney = (amount) => {
-    const number = Number(amount);
+  useEffect(() => {
+    const unsub = subscribeFinancialData(() => {
+      setInvoices(getInvoices());
+      setCustomers(getCustomers());
+    });
+    return unsub;
+  }, []);
 
-    if (Number.isNaN(number)) {
-      return "₹0";
+  const formatLakhs = (amt) => `₹${(Number(amt || 0) / 100000).toFixed(2)}L`;
+
+  // Filter and search
+  const filteredInvoices = invoices.filter((inv) => {
+    if (activeTab === "pending" && inv.status !== "Pending") return false;
+    if (activeTab === "overdue" && inv.status !== "Overdue") return false;
+    if (activeTab === "paid" && inv.status !== "Paid") return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return (
+        inv.id.toLowerCase().includes(q) ||
+        inv.customer.toLowerCase().includes(q) ||
+        inv.status.toLowerCase().includes(q)
+      );
     }
-
-    return `₹${(number / 100000).toFixed(2)} L`;
-  };
-
-  /* =========================================
-     DATE VALIDATION
-  ========================================= */
-
-  const isValidDate = (date) => {
-    if (!date) return false;
-
-    const parsed = new Date(date);
-
-    return !Number.isNaN(parsed.getTime());
-  };
-
-  /* =========================================
-     CSV VALIDATION
-  ========================================= */
-
-  const validateInvoice = (invoice, index) => {
-    const problems = [];
-
-    const invoiceNumber =
-      invoice.invoice_number?.trim();
-
-    const customer =
-      invoice.customer?.trim();
-
-    const amount =
-      Number(invoice.amount);
-
-    const invoiceDate =
-      invoice.invoice_date?.trim();
-
-    const dueDate =
-      invoice.due_date?.trim();
-
-    const status =
-      invoice.status?.trim();
-
-    const paymentDate =
-      invoice.payment_date?.trim();
-
-
-    /* Invoice number */
-
-    if (!invoiceNumber) {
-      problems.push({
-        type: "Missing Invoice Number",
-        message: "Invoice number is missing.",
-        value: "Empty",
-      });
-    }
-
-
-    /* Customer */
-
-    if (!customer) {
-      problems.push({
-        type: "Missing Customer",
-        message: "Customer name is missing.",
-        value: "Empty",
-      });
-    }
-
-
-    /* Amount */
-
-    if (!invoice.amount) {
-      problems.push({
-        type: "Missing Amount",
-        message: "Invoice amount is missing.",
-        value: "Empty",
-      });
-    } else if (
-      Number.isNaN(amount) ||
-      amount <= 0
-    ) {
-      problems.push({
-        type: "Invalid Amount",
-        message:
-          "Invoice amount must be greater than zero.",
-        value: invoice.amount,
-      });
-    }
-
-
-    /* Invoice date */
-
-    if (!isValidDate(invoiceDate)) {
-      problems.push({
-        type: "Invalid Invoice Date",
-        message:
-          "Invoice date is missing or invalid.",
-        value: invoiceDate || "Empty",
-      });
-    }
-
-
-    /* Due date */
-
-    if (!isValidDate(dueDate)) {
-      problems.push({
-        type: "Invalid Due Date",
-        message:
-          "Due date is missing or invalid.",
-        value: dueDate || "Empty",
-      });
-    }
-
-
-    /* Due date before invoice date */
-
-    if (
-      isValidDate(invoiceDate) &&
-      isValidDate(dueDate)
-    ) {
-      const invoiceTime =
-        new Date(invoiceDate).getTime();
-
-      const dueTime =
-        new Date(dueDate).getTime();
-
-      if (dueTime < invoiceTime) {
-        problems.push({
-          type: "Invalid Date Sequence",
-          message:
-            "Due date occurs before the invoice date.",
-          value: `${invoiceDate} → ${dueDate}`,
-        });
-      }
-    }
-
-
-    /* Status */
-
-    const validStatuses = [
-      "Paid",
-      "Pending",
-      "Overdue",
-      "Cancelled",
-    ];
-
-    if (
-      !validStatuses.includes(status)
-    ) {
-      problems.push({
-        type: "Invalid Status",
-        message:
-          "Status must be Paid, Pending, Overdue or Cancelled.",
-        value: status || "Empty",
-      });
-    }
-
-
-    /* Paid invoice without payment date */
-
-    if (
-      status === "Paid" &&
-      !paymentDate
-    ) {
-      problems.push({
-        type: "Missing Payment Date",
-        message:
-          "Paid invoices should have a payment date.",
-        value: "Empty",
-      });
-    }
-
-
-    /* Pending invoice with payment date */
-
-    if (
-      status === "Pending" &&
-      paymentDate
-    ) {
-      problems.push({
-        type: "Payment Status Conflict",
-        message:
-          "Pending invoice contains a payment date.",
-        value: paymentDate,
-      });
-    }
-
-
-    /* Unusually large invoice */
-
-    if (
-      !Number.isNaN(amount) &&
-      amount > 1000000
-    ) {
-      problems.push({
-        type: "Unusually Large Invoice",
-        message:
-          "Invoice amount is unusually high compared with the prototype threshold.",
-        value: formatMoney(amount),
-      });
-    }
-
-
-    return problems.map((problem) => ({
-      id: `${index}-${problem.type}`,
-      row: index + 2,
-      invoice:
-        invoiceNumber ||
-        `Row ${index + 2}`,
-      ...problem,
-    }));
-  };
-
-
-  /* =========================================
-     FILE UPLOAD
-  ========================================= */
-
-  const handleFileUpload = (event) => {
-    const file =
-      event.target.files?.[0];
-
-    if (!file) return;
-
-    setIsLoading(true);
-
-    setImportedFile(file.name);
-
-    setErrors([]);
-
-    setNotification("");
-
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-
-      complete: (results) => {
-
-        const rows = results.data;
-
-        if (!rows.length) {
-          setNotification(
-            "The uploaded CSV does not contain any records."
-          );
-
-          setIsLoading(false);
-
-          return;
-        }
-
-
-        /* Required columns */
-
-        const requiredColumns = [
-          "invoice_number",
-          "customer",
-          "amount",
-          "invoice_date",
-          "due_date",
-          "status",
-          "payment_date",
-        ];
-
-        const headers =
-          results.meta.fields || [];
-
-        const missingColumns =
-          requiredColumns.filter(
-            (column) =>
-              !headers.includes(column)
-          );
-
-
-        if (missingColumns.length > 0) {
-
-          const columnErrors =
-            missingColumns.map(
-              (column, index) => ({
-                id: `column-${index}`,
-                row: 1,
-                invoice: "CSV Header",
-                type: "Missing Column",
-                message:
-                  `Required column "${column}" is missing from the CSV.`,
-                value: "Missing",
-              })
-            );
-
-          setErrors(columnErrors);
-
-          setInvoices([]);
-
-          setNotification(
-            "CSV structure needs correction."
-          );
-
-          setIsLoading(false);
-
-          return;
-        }
-
-
-        /* Validate rows */
-
-        const validationErrors =
-          [];
-
-        rows.forEach(
-          (invoice, index) => {
-
-            const problems =
-              validateInvoice(
-                invoice,
-                index
-              );
-
-            validationErrors.push(
-              ...problems
-            );
-
-          }
-        );
-
-
-        /* Store valid-looking records */
-
-        const parsedInvoices =
-  rows.map(
-    (invoice, index) => ({
-      id: invoice.invoice_number ||
-        `CSV-${index + 1}`,
-
-      customer:
-        invoice.customer,
-
-      amount:
-        Number(invoice.amount),
-
-      invoiceDate:
-        invoice.invoice_date,
-
-      dueDate:
-        invoice.due_date,
-
-      status:
-        invoice.status,
-
-      paymentDate:
-        invoice.payment_date || null,
-
-      source: "csv",
-    })
-  );
-  replaceInvoices(parsedInvoices);
-
-        setInvoices(
-          parsedInvoices
-        );
-
-        setErrors(
-          validationErrors
-        );
-
-
-        if (
-          validationErrors.length === 0
-        ) {
-          setNotification(
-            `Successfully imported ${rows.length} invoices. No data issues detected.`
-          );
-        } else {
-          setNotification(
-            `Imported ${rows.length} invoices. ${validationErrors.length} potential data issues detected.`
-          );
-        }
-
-        setIsLoading(false);
-      },
-
-      error: (error) => {
-        console.error(error);
-
-        setNotification(
-          "Unable to read the CSV file."
-        );
-
-        setIsLoading(false);
-      },
+    return true;
+  });
+
+  const totalInvoiced = invoices.reduce((s, i) => s + Number(i.amount || 0), 0);
+  const totalPending = invoices.filter((i) => i.status === "Pending").reduce((s, i) => s + Number(i.amount || 0), 0);
+  const totalOverdue = invoices.filter((i) => i.status === "Overdue").reduce((s, i) => s + Number(i.amount || 0), 0);
+  const totalPaid = invoices.filter((i) => i.status === "Paid").reduce((s, i) => s + Number(i.amount || 0), 0);
+
+  const handleCreateInvoice = (e) => {
+    e.preventDefault();
+    if (!newAmount) return;
+
+    addInvoice({
+      customer: newCustomer,
+      amount: Number(newAmount),
+      dueDate: newDueDate || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+      status: newStatus,
     });
 
-
-    /* Reset input so the same file
-       can be selected again. */
-
-    event.target.value = "";
+    setNewAmount("");
+    setShowCreateModal(false);
+    showNotice("Invoice created successfully!");
   };
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  /* =========================================
-     REMOVE VALIDATION ISSUE
-  ========================================= */
-
-  const handleResolveError = (
-    errorId,
-    action
-  ) => {
-
-    setErrors((previous) =>
-      previous.filter(
-        (error) =>
-          error.id !== errorId
-      )
-    );
-
-    if (action === "correct") {
-      setNotification(
-        "Issue marked for correction."
-      );
-    } else {
-      setNotification(
-        "Original value retained."
-      );
+    setIsProcessingFile(true);
+    try {
+      const result = await parseInvoiceFile(file);
+      setParsedPreview(result);
+    } catch (err) {
+      showNotice("Failed to parse invoice file. Please check file formatting.");
+    } finally {
+      setIsProcessingFile(false);
     }
   };
 
-
-  /* =========================================
-     CLEAR IMPORT
-  ========================================= */
-
-  const clearImport = () => {
-    setInvoices([]);
-
-    setErrors([]);
-
-    setImportedFile("");
-
-    setNotification("");
+  const handleConfirmImport = () => {
+    if (!parsedPreview || !parsedPreview.invoices.length) return;
+    createInvoices(parsedPreview.invoices);
+    const count = parsedPreview.invoices.length;
+    const formatName = parsedPreview.format;
+    setParsedPreview(null);
+    setShowUploadModal(false);
+    showNotice(`Successfully imported ${count} invoice(s) from ${formatName}!`);
   };
 
-
-  /* =========================================
-     EXPORT
-  ========================================= */
-
-  const exportInvoices = () => {
-
-    if (!invoices.length) {
-      setNotification(
-        "There are no invoice records to export."
-      );
-
-      return;
-    }
-
-    const csv =
-      Papa.unparse(
-        invoices.map(
-          (invoice) => ({
-            invoice_number:
-              invoice.invoice,
-
-            customer:
-              invoice.customer,
-
-            amount:
-              invoice.amount,
-
-            invoice_date:
-              invoice.invoiceDate,
-
-            due_date:
-              invoice.dueDate,
-
-            status:
-              invoice.status,
-
-            payment_date:
-              invoice.paymentDate,
-          })
-        )
-      );
-
-    const blob =
-      new Blob(
-        [csv],
-        {
-          type: "text/csv;charset=utf-8;",
-        }
-      );
-
-    const url =
-      URL.createObjectURL(blob);
-
-    const link =
-      document.createElement("a");
-
-    link.href = url;
-
-    link.download =
-      "fintwin_invoices.csv";
-
-    link.click();
-
-    URL.revokeObjectURL(url);
+  const showNotice = (msg) => {
+    setNotification(msg);
+    setTimeout(() => setNotification(""), 3500);
   };
-
-
-  /* =========================================
-     CALCULATIONS
-  ========================================= */
-
-  const outstanding =
-    invoices
-      .filter(
-        (invoice) =>
-          invoice.status !== "Paid"
-      )
-      .reduce(
-        (total, invoice) =>
-          total +
-          (Number(invoice.amount) || 0),
-        0
-      );
-
 
   return (
-    <ModulePage
-      title="Invoices"
-      description="Import, validate and manage business invoices."
-      type="invoices"
-    >
-
-      {/* =====================================
-          NOTIFICATION
-      ===================================== */}
-
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* Toast Notification */}
       {notification && (
-        <div className="invoice-notification">
-
-          <CheckCircle size={18} />
-
-          <span>
-            {notification}
-          </span>
-
-          <button
-            onClick={() =>
-              setNotification("")
-            }
-          >
-            <X size={16} />
-          </button>
-
+        <div
+          style={{
+            position: "fixed",
+            top: 85,
+            right: 36,
+            background: "linear-gradient(135deg, #10b981, #059669)",
+            color: "#fff",
+            padding: "12px 20px",
+            borderRadius: "var(--radius-md)",
+            fontWeight: 600,
+            fontSize: 13.5,
+            boxShadow: "var(--shadow-lg)",
+            zIndex: 300,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <CheckCircle2 size={16} />
+          <span>{notification}</span>
         </div>
       )}
 
-
-      {/* =====================================
-          SUMMARY
-      ===================================== */}
-
-      <div className="module-grid">
-
-        <div className="module-stat">
-          <span>
-            Imported Invoices
-          </span>
-
-          <strong>
-            {invoices.length}
-          </strong>
-        </div>
-
-
-        <div className="module-stat">
-
-          <span>
-            Outstanding
-          </span>
-
-          <strong>
-            {formatMoney(outstanding)}
-          </strong>
-
-        </div>
-
-
-        <div className="module-stat">
-
-          <span>
-            Data Issues
-          </span>
-
-          <strong
-            style={{
-              color:
-                errors.length
-                  ? "#dc2626"
-                  : "#16a34a",
-            }}
-          >
-            {errors.length}
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      {/* =====================================
-          IMPORT
-      ===================================== */}
-
-      <div className="invoice-import-card">
-
-        <div className="import-icon">
-          <Upload size={25} />
-        </div>
-
-        <div className="import-content">
-
-          <h2>
-            Import Financial Data
-          </h2>
-
-          <p>
-            Upload a CSV containing invoice
-            and payment information.
-          </p>
-
-          <label className="upload-button">
-
-            <Upload size={17} />
-
-            {isLoading
-              ? "Reading CSV..."
-              : "Upload CSV"}
-
-            <input
-              type="file"
-              accept=".csv"
-              onChange={
-                handleFileUpload
-              }
-              hidden
-              disabled={isLoading}
-            />
-
-          </label>
-
-
-          {importedFile && (
-            <div className="uploaded-file">
-
-              <FileText size={16} />
-
-              <span>
-                {importedFile}
-              </span>
-
-              <CheckCircle
-                size={15}
-                color="#16a34a"
-              />
-
-              <button
-                onClick={clearImport}
-                style={{
-                  border: "0",
-                  background: "transparent",
-                  color: "#dc2626",
-                  cursor: "pointer",
-                }}
-                title="Clear import"
-              >
-                <RefreshCw size={14} />
-              </button>
-
-            </div>
-          )}
-
-        </div>
-
-      </div>
-
-
-      {/* =====================================
-          VALIDATION
-      ===================================== */}
-
-      {errors.length > 0 && (
-
-        <div className="validation-card">
-
-          <div className="validation-header">
-
-            <div className="validation-title">
-
-              <div className="warning-icon">
-                <AlertTriangle size={20} />
-              </div>
-
-              <div>
-
-                <h2>
-                  Data Validation Required
-                </h2>
-
-                <p>
-                  We found{" "}
-                  {errors.length} possible
-                  issue
-                  {errors.length !== 1
-                    ? "s"
-                    : ""}{" "}
-                  in your imported data.
-                </p>
-
-              </div>
-
-            </div>
-
-            <span className="validation-count">
-              {errors.length} issues
+      {/* Top Metric Row */}
+      <div className="grid-4">
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Total Invoiced</span>
+            <FileText size={18} style={{ color: "#60a5fa" }} />
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: "#60a5fa" }}>
+              {formatLakhs(totalInvoiced)}
             </span>
+          </div>
+          <div className="kpi-trend neutral">{invoices.length} Total Invoices</div>
+        </div>
 
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Pending Collection</span>
+            <Clock size={18} style={{ color: "#fbbf24" }} />
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: "#fbbf24" }}>
+              {formatLakhs(totalPending)}
+            </span>
+          </div>
+          <div className="kpi-trend neutral">
+            {invoices.filter((i) => i.status === "Pending").length} Pending Invoices
+          </div>
+        </div>
+
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Overdue Trapped Cash</span>
+            <AlertTriangle size={18} style={{ color: "#fb7185" }} />
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: "#fb7185" }}>
+              {formatLakhs(totalOverdue)}
+            </span>
+          </div>
+          <div className="kpi-trend negative">
+            {invoices.filter((i) => i.status === "Overdue").length} Overdue Accounts
+          </div>
+        </div>
+
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Settled / Collected</span>
+            <CheckCircle2 size={18} style={{ color: "#34d399" }} />
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: "#34d399" }}>
+              {formatLakhs(totalPaid)}
+            </span>
+          </div>
+          <div className="kpi-trend positive">
+            {invoices.filter((i) => i.status === "Paid").length} Paid Invoices
+          </div>
+        </div>
+      </div>
+
+      {/* Filter, Search & Actions Bar */}
+      <div className="glass-card" style={{ padding: "18px 24px" }}>
+        <div className="filter-bar" style={{ margin: 0 }}>
+          {/* Tabs */}
+          <div className="tabs-container">
+            <button
+              className={`tab-btn ${activeTab === "all" ? "active" : ""}`}
+              onClick={() => setActiveTab("all")}
+            >
+              All Invoices ({invoices.length})
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "pending" ? "active" : ""}`}
+              onClick={() => setActiveTab("pending")}
+            >
+              Pending ({invoices.filter((i) => i.status === "Pending").length})
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "overdue" ? "active" : ""}`}
+              onClick={() => setActiveTab("overdue")}
+            >
+              Overdue ({invoices.filter((i) => i.status === "Overdue").length})
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "paid" ? "active" : ""}`}
+              onClick={() => setActiveTab("paid")}
+            >
+              Paid ({invoices.filter((i) => i.status === "Paid").length})
+            </button>
           </div>
 
+          {/* Search Box */}
+          <div style={{ position: "relative", minWidth: 260 }}>
+            <Search
+              size={15}
+              style={{
+                position: "absolute",
+                left: 12,
+                top: 12,
+                color: "var(--text-muted)",
+              }}
+            />
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Search by invoice ID or client..."
+              style={{ paddingLeft: 34, height: 38, fontSize: 13 }}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
 
-          <div className="validation-list">
+          {/* Action Buttons */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                setParsedPreview(null);
+                setShowUploadModal(true);
+              }}
+            >
+              <Upload size={14} />
+              <span>Import Invoices (CSV / Excel / PDF / JSON)</span>
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => setShowCreateModal(true)}
+            >
+              <Plus size={14} />
+              <span>Create Invoice</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
-            {errors.map(
-              (error) => (
-
-                <div
-                  className="validation-item"
-                  key={error.id}
-                >
-
-                  <div className="validation-item-icon">
-                    <AlertTriangle size={17} />
-                  </div>
-
-
-                  <div className="validation-item-content">
-
-                    <strong>
-                      {error.invoice}
-                    </strong>
-
-                    <p>
-                      <b>
-                        {error.type}:
-                      </b>{" "}
-                      {error.message}
-                    </p>
-
-                    <span>
-                      Row {error.row} · Imported value:{" "}
-                      <b>
-                        {error.value}
-                      </b>
+      {/* Invoices Data Table */}
+      <div className="glass-card">
+        <div className="table-responsive">
+          <table className="custom-table">
+            <thead>
+              <tr>
+                <th>Invoice ID</th>
+                <th>Customer / Client</th>
+                <th>Amount</th>
+                <th>Due Date</th>
+                <th>AI Delay Prediction</th>
+                <th>Risk Profile</th>
+                <th>Status</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredInvoices.map((inv) => (
+                <tr key={inv.id}>
+                  <td style={{ fontWeight: 700, color: "#fff", fontFamily: "var(--font-mono)" }}>
+                    {inv.id}
+                  </td>
+                  <td>
+                    <div style={{ fontWeight: 600, color: "#f8fafc" }}>{inv.customer}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                      Issued: {inv.invoiceDate || "2026-08-01"}
+                    </div>
+                  </td>
+                  <td style={{ fontWeight: 700, color: "#60a5fa", fontSize: 14 }}>
+                    {formatLakhs(inv.amount)}
+                  </td>
+                  <td>{inv.dueDate}</td>
+                  <td>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <Sparkles size={13} style={{ color: "#a78bfa" }} />
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color:
+                            inv.predictedDelayDays > 15
+                              ? "#fb7185"
+                              : inv.predictedDelayDays > 5
+                              ? "#fbbf24"
+                              : "#34d399",
+                        }}
+                      >
+                        +{inv.predictedDelayDays || 4} Days Delay
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "2px 8px",
+                        borderRadius: "var(--radius-full)",
+                        background:
+                          inv.riskScore === "High"
+                            ? "rgba(244,63,94,0.15)"
+                            : inv.riskScore === "Low"
+                            ? "rgba(16,185,129,0.15)"
+                            : "rgba(245,158,11,0.15)",
+                        color:
+                          inv.riskScore === "High"
+                            ? "#fb7185"
+                            : inv.riskScore === "Low"
+                            ? "#34d399"
+                            : "#fbbf24",
+                      }}
+                    >
+                      {inv.riskScore || "Medium"} Risk
                     </span>
-
-                  </div>
-
-
-                  <div className="validation-actions">
-
-                    <button
-                      className="correct-button"
-                      onClick={() =>
-                        handleResolveError(
-                          error.id,
-                          "correct"
-                        )
-                      }
+                  </td>
+                  <td>
+                    <span
+                      className={`status-badge ${
+                        inv.status === "Paid"
+                          ? "paid"
+                          : inv.status === "Overdue"
+                          ? "overdue"
+                          : "pending"
+                      }`}
                     >
-                      Correct
-                    </button>
+                      {inv.status}
+                    </span>
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+                      {inv.status !== "Paid" && (
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          style={{ padding: "4px 8px" }}
+                          onClick={() => {
+                            updateInvoiceStatus(inv.id, "Paid");
+                            showNotice(`Invoice ${inv.id} marked as Paid!`);
+                          }}
+                          title="Mark as Paid"
+                        >
+                          <Check size={13} style={{ color: "#34d399" }} />
+                        </button>
+                      )}
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        style={{ padding: "4px 8px" }}
+                        onClick={() => {
+                          deleteInvoice(inv.id);
+                          showNotice(`Invoice ${inv.id} deleted.`);
+                        }}
+                        title="Delete Invoice"
+                      >
+                        <Trash2 size={13} style={{ color: "#fb7185" }} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-                    <button
-                      className="keep-button"
-                      onClick={() =>
-                        handleResolveError(
-                          error.id,
-                          "keep"
-                        )
-                      }
-                    >
-                      Keep Original
-                    </button>
+      {/* Create Invoice Modal */}
+      {showCreateModal && (
+        <div className="modal-backdrop" onClick={() => setShowCreateModal(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">Create New Invoice</div>
+            </div>
+            <form onSubmit={handleCreateInvoice}>
+              <div className="form-group">
+                <label className="form-label">Client / Customer</label>
+                <select
+                  className="form-select"
+                  value={newCustomer}
+                  onChange={(e) => setNewCustomer(e.target.value)}
+                >
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name} ({c.industry})
+                    </option>
+                  ))}
+                </select>
+              </div>
 
+              <div className="form-group">
+                <label className="form-label">Invoice Amount (₹ INR)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  placeholder="e.g. 350000"
+                  value={newAmount}
+                  onChange={(e) => setNewAmount(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="grid-2">
+                <div className="form-group">
+                  <label className="form-label">Due Date</label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={newDueDate}
+                    onChange={(e) => setNewDueDate(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Status</label>
+                  <select
+                    className="form-select"
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Overdue">Overdue</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowCreateModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Save Invoice
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Multi-Format Upload Modal */}
+      {showUploadModal && (
+        <div className="modal-backdrop" onClick={() => setShowUploadModal(false)}>
+          <div className="modal-card wide" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">Universal Invoice Importer</div>
+                <div className="card-subtitle">
+                  Upload CSV, Excel (.xlsx/.xls), JSON, PDF Invoices, or Text statements
+                </div>
+              </div>
+            </div>
+
+            {/* Supported Format Chips */}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+              <span className="status-badge" style={{ background: "rgba(59,130,246,0.15)", color: "#60a5fa" }}>
+                <FileSpreadsheet size={13} /> .CSV / .TSV
+              </span>
+              <span className="status-badge" style={{ background: "rgba(16,185,129,0.15)", color: "#34d399" }}>
+                <FileSpreadsheet size={13} /> .XLSX / .XLS (Excel)
+              </span>
+              <span className="status-badge" style={{ background: "rgba(245,158,11,0.15)", color: "#fbbf24" }}>
+                <FileCode size={13} /> .JSON / GST e-Invoice
+              </span>
+              <span className="status-badge" style={{ background: "rgba(244,63,94,0.15)", color: "#fb7185" }}>
+                <File size={13} /> .PDF (AI OCR Scan)
+              </span>
+              <span className="status-badge" style={{ background: "rgba(139,92,246,0.15)", color: "#c4b5fd" }}>
+                <FileText size={13} /> .TXT / Delimited
+              </span>
+            </div>
+
+            {!parsedPreview ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "36px 24px",
+                  border: "2px dashed rgba(59,130,246,0.4)",
+                  borderRadius: "var(--radius-lg)",
+                  background: "rgba(59,130,246,0.03)",
+                  marginBottom: 20,
+                  position: "relative",
+                }}
+              >
+                {isProcessingFile ? (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                    <Cpu size={36} className="spin-animation" style={{ color: "#a78bfa" }} />
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>
+                      AI OCR Engine Scanning Document...
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                      Extracting invoice metadata, buyer GSTIN, line totals & due dates
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    <Upload size={38} style={{ color: "var(--accent-blue)", margin: "0 auto 12px" }} />
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>
+                      Drag & Drop Invoice File Here
+                    </div>
+                    <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 6 }}>
+                      Supports <strong>.csv, .xlsx, .xls, .json, .pdf, .txt</strong>
+                    </div>
 
+                    <input
+                      type="file"
+                      accept=".csv, .xlsx, .xls, .json, .pdf, .txt, .tsv"
+                      onChange={handleFileUpload}
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        opacity: 0,
+                        cursor: "pointer",
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+            ) : (
+              <div style={{ marginBottom: 20 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "12px 16px",
+                    borderRadius: "var(--radius-md)",
+                    background: "rgba(16,185,129,0.12)",
+                    border: "1px solid rgba(16,185,129,0.3)",
+                    marginBottom: 16,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <CheckCircle2 size={16} style={{ color: "#34d399" }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>
+                      Detected {parsedPreview.invoices.length} invoice(s) from <strong>{parsedPreview.fileName}</strong> ({parsedPreview.format})
+                    </span>
+                  </div>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setParsedPreview(null)}
+                  >
+                    Select Different File
+                  </button>
                 </div>
 
-              )
+                <div className="table-responsive" style={{ maxHeight: 240, overflowY: "auto" }}>
+                  <table className="custom-table">
+                    <thead>
+                      <tr>
+                        <th>Extracted ID</th>
+                        <th>Client</th>
+                        <th>Amount</th>
+                        <th>Due Date</th>
+                        <th>Predicted Delay</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parsedPreview.invoices.map((inv, idx) => (
+                        <tr key={idx}>
+                          <td style={{ fontWeight: 600, color: "#fff", fontFamily: "var(--font-mono)" }}>
+                            {inv.id}
+                          </td>
+                          <td>{inv.customer}</td>
+                          <td style={{ fontWeight: 700, color: "#60a5fa" }}>
+                            {formatLakhs(inv.amount)}
+                          </td>
+                          <td>{inv.dueDate}</td>
+                          <td>+{inv.predictedDelayDays || 3}d</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
 
-          </div>
-
-
-          <div className="validation-footer">
-
-            <Database size={16} />
-
-            <span>
-              FinTwin does not silently modify
-              imported financial data. You decide
-              how every issue is handled.
-            </span>
-
-          </div>
-
-        </div>
-      )}
-
-
-      {/* =====================================
-          INVOICE TABLE
-      ===================================== */}
-
-      {invoices.length > 0 && (
-
-        <div className="invoice-table-card">
-
-          <div className="invoice-table-header">
-
-            <div>
-
-              <h2>
-                Invoice Records
-              </h2>
-
-              <p>
-                Records read directly from your
-                uploaded CSV
-              </p>
-
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setParsedPreview(null);
+                  setShowUploadModal(false);
+                }}
+              >
+                Close
+              </button>
+              {parsedPreview && (
+                <button
+                  type="button"
+                  className="btn btn-emerald"
+                  onClick={handleConfirmImport}
+                >
+                  <Sparkles size={15} />
+                  <span>Commit {parsedPreview.invoices.length} Invoices to Digital Twin</span>
+                </button>
+              )}
             </div>
-
-
-            <button
-              className="export-button"
-              onClick={
-                exportInvoices
-              }
-            >
-
-              <Download size={16} />
-
-              Export
-
-            </button>
-
           </div>
-
-
-          <div className="table-wrapper">
-
-            <table>
-
-              <thead>
-
-                <tr>
-
-                  <th>
-                    Invoice
-                  </th>
-
-                  <th>
-                    Customer
-                  </th>
-
-                  <th>
-                    Amount
-                  </th>
-
-                  <th>
-                    Invoice Date
-                  </th>
-
-                  <th>
-                    Due Date
-                  </th>
-
-                  <th>
-                    Status
-                  </th>
-
-                </tr>
-
-              </thead>
-
-
-              <tbody>
-
-                {invoices.map(
-                  (invoice) => (
-
-                    <tr
-                      key={invoice.id}
-                    >
-
-                      <td>
-                        <strong>
-                          {invoice.invoice ||
-                            "—"}
-                        </strong>
-                      </td>
-
-                      <td>
-                        {invoice.customer ||
-                          "—"}
-                      </td>
-
-                      <td>
-                        {formatMoney(
-                          invoice.amount
-                        )}
-                      </td>
-
-                      <td>
-                        {invoice.invoiceDate ||
-                          "—"}
-                      </td>
-
-                      <td>
-                        {invoice.dueDate ||
-                          "—"}
-                      </td>
-
-                      <td>
-
-                        <span
-                          className={`invoice-status ${
-                            invoice.status ===
-                            "Paid"
-                              ? "paid"
-                              : "pending"
-                          }`}
-                        >
-                          {invoice.status ||
-                            "Unknown"}
-                        </span>
-
-                      </td>
-
-                    </tr>
-
-                  )
-                )}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
         </div>
       )}
-
-    </ModulePage>
+    </div>
   );
 }
-
-export default Invoices;

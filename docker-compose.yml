@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  # ==========================================
+  # POSTGRES DATABASE
+  # ==========================================
+  db:
+    image: postgres:15-alpine
+    container_name: fintwin-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fintwin
+      POSTGRES_PASSWORD: fintwin_secure_password
+      POSTGRES_DB: fintwin_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # ==========================================
+  # FASTAPI BACKEND & ML ENGINE
+  # ==========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fintwin-backend
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://fintwin:fintwin_secure_password@db:5432/fintwin_db
+      PORT: 8000
+    ports:
+      - "8000:8000"
+
+  # ==========================================
+  # REACT + VITE + NGINX FRONTEND
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fintwin-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:

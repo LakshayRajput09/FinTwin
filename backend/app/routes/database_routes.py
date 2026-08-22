@@ -1,50 +1,31 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from __future__ import annotations
+from datetime import date
+from typing import Optional, List, Dict
+
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
-from app.ml.predict import predict_payment_delay
-from app.services.forecast_service import generate_cash_forecast
-from app.services.risk_service import generate_risk_analysis
-from app.services.simulator_service import run_simulation
-from app.services.financing_service import generate_financing_analysis
+from app.database import get_db
 
-# Database routes
-from app.routes.database_routes import router as database_router
-
-
-# ==========================================
-# FASTAPI APPLICATION
-# ==========================================
-
-app = FastAPI(
-    title="FinTwin API",
-    description="AI-powered financial digital twin for MSMEs",
-    version="1.0.0",
+from app.models import (
+    Business,
+    Customer,
+    Invoice,
+    Payment,
+    Expense,
+    RecurringExpense,
 )
 
 
 # ==========================================
-# CORS
+# ROUTER
 # ==========================================
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://fin-twin.vercel.app",
-        "https://fin-twin-one.vercel.app",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+router = APIRouter(
+    prefix="/api",
+    tags=["Database"],
 )
-
-
-# ==========================================
-# DATABASE ROUTER
-# ==========================================
-
-app.include_router(database_router)
 
 
 # ==========================================
@@ -52,176 +33,1115 @@ app.include_router(database_router)
 # ==========================================
 
 
-class PaymentPredictionRequest(BaseModel):
-    invoice_amount: float
-    days_until_due: int
-    previous_avg_delay: float
-    previous_late_payments: int
-    customer_invoice_count: int
+# ------------------------------------------
+# Invoice
+# ------------------------------------------
+
+class InvoiceCreateRequest(BaseModel):
+    id: str
+    businessId: str
+    customerId: str
+    customer: Optional[str] = None
+    amount: float
+    invoiceDate: str
+    dueDate: str
+    status: str = "Pending"
+    paymentDate: Optional[str] = None
+    source: str = "manual"
 
 
-class ForecastRequest(BaseModel):
-    current_cash: float
-    invoices: list[dict]
-    payments: list[dict]
-    recurring_expenses: list[dict]
-    one_time_expenses: list[dict]
+class InvoiceUpdateRequest(BaseModel):
+    customerId: Optional[str] = None
+    customer: Optional[str] = None
+    amount: Optional[float] = None
+    invoiceDate: Optional[str] = None
+    dueDate: Optional[str] = None
+    status: Optional[str] = None
+    paymentDate: Optional[str] = None
+    source: Optional[str] = None
 
 
-class RiskRequest(BaseModel):
-    current_cash: float
-    invoices: list[dict]
-    recurring_expenses: list[dict]
-    one_time_expenses: list[dict]
-    forecast: dict
+# ------------------------------------------
+# Customer
+# ------------------------------------------
+
+class CustomerCreateRequest(BaseModel):
+    id: str
+    businessId: str
+    name: str
+    industry: Optional[str] = None
 
 
-class SimulationRequest(BaseModel):
-    current_cash: float
-    invoices: list[dict]
-    recurring_expenses: list[dict]
-    one_time_expenses: list[dict]
-
-    revenue_change_percent: float = 0
-    expense_change_percent: float = 0
-    payment_delay_days: int = 0
-
-
-class FinancingRequest(BaseModel):
-    liquidity_gap: float
-    outstanding_receivables: float
-    current_cash: float
-
-
-# ==========================================
-# ROOT
-# ==========================================
-
-@app.get("/")
-def root():
-    return {
-        "message": "FinTwin API is running",
-        "status": "healthy",
-    }
+class CustomerUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    industry: Optional[str] = None
 
 
 # ==========================================
-# HEALTH CHECK
+# DATE HELPER
 # ==========================================
 
-@app.get("/health")
-def health():
-    return {
-        "status": "healthy",
-        "service": "FinTwin Backend",
-    }
+def parse_date(value: Optional[str]):
+
+    if not value:
+        return None
+
+    try:
+
+        return date.fromisoformat(
+            value
+        )
+
+    except ValueError:
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Invalid date format: {value}. "
+                "Use YYYY-MM-DD."
+            ),
+        )
 
 
 # ==========================================
-# ML PAYMENT DELAY PREDICTION
+# BUSINESS
 # ==========================================
 
-@app.post("/api/ml/predict-payment-delay")
-def predict_payment(
-    request: PaymentPredictionRequest,
+@router.get("/business")
+def get_business(
+    db: Session = Depends(get_db),
 ):
-    result = predict_payment_delay(
-        invoice_amount=request.invoice_amount,
-        days_until_due=request.days_until_due,
-        previous_avg_delay=request.previous_avg_delay,
-        previous_late_payments=request.previous_late_payments,
-        customer_invoice_count=request.customer_invoice_count,
+
+    business = (
+        db.query(Business)
+        .first()
+    )
+
+    if not business:
+
+        return {
+            "success": False,
+            "message": "Business not found",
+        }
+
+    return {
+
+        "success": True,
+
+        "business": {
+
+            "id":
+                business.id,
+
+            "name":
+                business.name,
+
+            "industry":
+                business.industry,
+
+            "gstin":
+                business.gstin,
+
+            "currency":
+                business.currency,
+
+            "openingCash":
+                business.opening_cash,
+
+            "monthlyRevenue":
+                business.monthly_revenue,
+
+            "monthlyExpenses":
+                business.monthly_expenses,
+        },
+    }
+
+
+# ==========================================
+# CUSTOMERS - GET
+# ==========================================
+
+@router.get("/customers")
+def get_customers(
+    db: Session = Depends(get_db),
+):
+
+    customers = (
+        db.query(Customer)
+        .all()
     )
 
     return {
+
         "success": True,
-        "prediction": result,
+
+        "customers": [
+
+            {
+
+                "id":
+                    customer.id,
+
+                "name":
+                    customer.name,
+
+                "industry":
+                    customer.industry,
+
+                "businessId":
+                    customer.business_id,
+
+            }
+
+            for customer in customers
+        ],
     }
 
 
 # ==========================================
-# AI CASH FLOW FORECAST
+# CUSTOMERS - CREATE
 # ==========================================
 
-@app.post("/api/forecast")
-def create_forecast(
-    request: ForecastRequest,
+@router.post("/customers")
+def create_customer(
+    request: CustomerCreateRequest,
+    db: Session = Depends(get_db),
 ):
-    result = generate_cash_forecast(
-        current_cash=request.current_cash,
-        invoices=request.invoices,
-        payments=request.payments,
-        recurring_expenses=request.recurring_expenses,
-        one_time_expenses=request.one_time_expenses,
+
+    # --------------------------------------
+    # Check duplicate customer
+    # --------------------------------------
+
+    existing_customer = (
+        db.query(Customer)
+        .filter(
+            Customer.id ==
+            request.id
+        )
+        .first()
     )
 
+    if existing_customer:
+
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Customer with this ID "
+                "already exists."
+            ),
+        )
+
+
+    # --------------------------------------
+    # Check business exists
+    # --------------------------------------
+
+    business = (
+        db.query(Business)
+        .filter(
+            Business.id ==
+            request.businessId
+        )
+        .first()
+    )
+
+    if not business:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Business not found.",
+        )
+
+
+    # --------------------------------------
+    # Create customer
+    # --------------------------------------
+
+    customer = Customer(
+
+        id=request.id,
+
+        business_id=
+            request.businessId,
+
+        name=request.name,
+
+        industry=
+            request.industry,
+    )
+
+
+    db.add(customer)
+
+    db.commit()
+
+    db.refresh(customer)
+
+
     return {
+
         "success": True,
-        "forecast": result,
+
+        "customer": {
+
+            "id":
+                customer.id,
+
+            "name":
+                customer.name,
+
+            "industry":
+                customer.industry,
+
+            "businessId":
+                customer.business_id,
+        },
     }
 
 
 # ==========================================
-# AI RISK ANALYSIS
+# CUSTOMERS - UPDATE
 # ==========================================
 
-@app.post("/api/risk")
-def create_risk_analysis(
-    request: RiskRequest,
+@router.put("/customers/{customer_id}")
+def update_customer(
+    customer_id: str,
+    request: CustomerUpdateRequest,
+    db: Session = Depends(get_db),
 ):
-    result = generate_risk_analysis(
-        current_cash=request.current_cash,
-        invoices=request.invoices,
-        recurring_expenses=request.recurring_expenses,
-        one_time_expenses=request.one_time_expenses,
-        forecast=request.forecast,
+
+    customer = (
+        db.query(Customer)
+        .filter(
+            Customer.id ==
+            customer_id
+        )
+        .first()
     )
 
+
+    if not customer:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Customer not found.",
+        )
+
+
+    # --------------------------------------
+    # Update name
+    # --------------------------------------
+
+    if request.name is not None:
+
+        customer.name = (
+            request.name
+        )
+
+
+    # --------------------------------------
+    # Update industry
+    # --------------------------------------
+
+    if request.industry is not None:
+
+        customer.industry = (
+            request.industry
+        )
+
+
+    db.commit()
+
+    db.refresh(customer)
+
+
     return {
+
         "success": True,
-        "risk": result,
+
+        "customer": {
+
+            "id":
+                customer.id,
+
+            "name":
+                customer.name,
+
+            "industry":
+                customer.industry,
+
+            "businessId":
+                customer.business_id,
+        },
     }
 
 
 # ==========================================
-# FINANCIAL SHOCK SIMULATOR
+# CUSTOMERS - DELETE
 # ==========================================
 
-@app.post("/api/simulator")
-def create_simulation(
-    request: SimulationRequest,
+@router.delete("/customers/{customer_id}")
+def delete_customer(
+    customer_id: str,
+    db: Session = Depends(get_db),
 ):
-    result = run_simulation(
-        current_cash=request.current_cash,
-        invoices=request.invoices,
-        recurring_expenses=request.recurring_expenses,
-        one_time_expenses=request.one_time_expenses,
-        revenue_change_percent=request.revenue_change_percent,
-        expense_change_percent=request.expense_change_percent,
-        payment_delay_days=request.payment_delay_days,
+
+    customer = (
+        db.query(Customer)
+        .filter(
+            Customer.id ==
+            customer_id
+        )
+        .first()
     )
 
+
+    if not customer:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Customer not found.",
+        )
+
+
+    # --------------------------------------
+    # Check invoice references
+    # --------------------------------------
+
+    invoice_count = (
+        db.query(Invoice)
+        .filter(
+            Invoice.customer_id ==
+            customer_id
+        )
+        .count()
+    )
+
+
+    if invoice_count > 0:
+
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Customer cannot be deleted "
+                "because "
+                f"{invoice_count} invoice(s) "
+                "reference this customer."
+            ),
+        )
+
+
+    # --------------------------------------
+    # Delete customer
+    # --------------------------------------
+
+    db.delete(customer)
+
+    db.commit()
+
+
     return {
+
         "success": True,
-        "simulation": result,
+
+        "message":
+            "Customer deleted successfully.",
+
+        "customerId":
+            customer_id,
     }
 
 
 # ==========================================
-# FINANCING OPTIONS
+# INVOICES - GET
 # ==========================================
 
-@app.post("/api/financing")
-def create_financing_analysis(
-    request: FinancingRequest,
+@router.get("/invoices")
+def get_invoices(
+    db: Session = Depends(get_db),
 ):
-    result = generate_financing_analysis(
-        liquidity_gap=request.liquidity_gap,
-        outstanding_receivables=request.outstanding_receivables,
-        current_cash=request.current_cash,
+
+    invoices = (
+        db.query(Invoice)
+        .all()
     )
 
+
     return {
+
         "success": True,
-        "financing": result,
+
+        "invoices": [
+
+            {
+
+                "id":
+                    invoice.id,
+
+                "customerId":
+                    invoice.customer_id,
+
+                "customer":
+                    invoice.customer,
+
+                "amount":
+                    invoice.amount,
+
+                "invoiceDate": (
+
+                    invoice.invoice_date.isoformat()
+
+                    if invoice.invoice_date
+
+                    else None
+                ),
+
+                "dueDate": (
+
+                    invoice.due_date.isoformat()
+
+                    if invoice.due_date
+
+                    else None
+                ),
+
+                "status":
+                    invoice.status,
+
+                "paymentDate": (
+
+                    invoice.payment_date.isoformat()
+
+                    if invoice.payment_date
+
+                    else None
+                ),
+
+                "source":
+                    invoice.source,
+
+                "businessId":
+                    invoice.business_id,
+            }
+
+            for invoice in invoices
+        ],
+    }
+
+
+# ==========================================
+# INVOICES - CREATE
+# ==========================================
+
+@router.post("/invoices")
+def create_invoice(
+    request: InvoiceCreateRequest,
+    db: Session = Depends(get_db),
+):
+
+    # --------------------------------------
+    # Check duplicate invoice
+    # --------------------------------------
+
+    existing_invoice = (
+        db.query(Invoice)
+        .filter(
+            Invoice.id ==
+            request.id
+        )
+        .first()
+    )
+
+
+    if existing_invoice:
+
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Invoice with this ID "
+                "already exists."
+            ),
+        )
+
+
+    # --------------------------------------
+    # Check business
+    # --------------------------------------
+
+    business = (
+        db.query(Business)
+        .filter(
+            Business.id ==
+            request.businessId
+        )
+        .first()
+    )
+
+
+    if not business:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Business not found.",
+        )
+
+
+    # --------------------------------------
+    # Check customer
+    # --------------------------------------
+
+    customer = (
+        db.query(Customer)
+        .filter(
+            Customer.id ==
+            request.customerId
+        )
+        .first()
+    )
+
+
+    if not customer:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Customer not found.",
+        )
+
+
+    # --------------------------------------
+    # Create invoice
+    # --------------------------------------
+
+    invoice = Invoice(
+
+        id=request.id,
+
+        business_id=
+            request.businessId,
+
+        customer_id=
+            request.customerId,
+
+        customer=
+            request.customer,
+
+        amount=
+            request.amount,
+
+        invoice_date=
+            parse_date(
+                request.invoiceDate
+            ),
+
+        due_date=
+            parse_date(
+                request.dueDate
+            ),
+
+        status=
+            request.status,
+
+        payment_date=
+            parse_date(
+                request.paymentDate
+            ),
+
+        source=
+            request.source,
+    )
+
+
+    db.add(invoice)
+
+    db.commit()
+
+    db.refresh(invoice)
+
+
+    return {
+
+        "success": True,
+
+        "invoice": {
+
+            "id":
+                invoice.id,
+
+            "customerId":
+                invoice.customer_id,
+
+            "customer":
+                invoice.customer,
+
+            "amount":
+                invoice.amount,
+
+            "invoiceDate": (
+
+                invoice.invoice_date.isoformat()
+
+                if invoice.invoice_date
+
+                else None
+            ),
+
+            "dueDate": (
+
+                invoice.due_date.isoformat()
+
+                if invoice.due_date
+
+                else None
+            ),
+
+            "status":
+                invoice.status,
+
+            "paymentDate": (
+
+                invoice.payment_date.isoformat()
+
+                if invoice.payment_date
+
+                else None
+            ),
+
+            "source":
+                invoice.source,
+
+            "businessId":
+                invoice.business_id,
+        },
+    }
+
+
+# ==========================================
+# INVOICES - UPDATE
+# ==========================================
+
+@router.put("/invoices/{invoice_id}")
+def update_invoice(
+    invoice_id: str,
+    request: InvoiceUpdateRequest,
+    db: Session = Depends(get_db),
+):
+
+    invoice = (
+        db.query(Invoice)
+        .filter(
+            Invoice.id ==
+            invoice_id
+        )
+        .first()
+    )
+
+
+    if not invoice:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Invoice not found.",
+        )
+
+
+    # --------------------------------------
+    # Customer
+    # --------------------------------------
+
+    if request.customerId is not None:
+
+        customer = (
+            db.query(Customer)
+            .filter(
+                Customer.id ==
+                request.customerId
+            )
+            .first()
+        )
+
+
+        if not customer:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Customer not found.",
+            )
+
+
+        invoice.customer_id = (
+            request.customerId
+        )
+
+
+    # --------------------------------------
+    # Customer name
+    # --------------------------------------
+
+    if request.customer is not None:
+
+        invoice.customer = (
+            request.customer
+        )
+
+
+    # --------------------------------------
+    # Amount
+    # --------------------------------------
+
+    if request.amount is not None:
+
+        invoice.amount = (
+            request.amount
+        )
+
+
+    # --------------------------------------
+    # Invoice date
+    # --------------------------------------
+
+    if request.invoiceDate is not None:
+
+        invoice.invoice_date = (
+            parse_date(
+                request.invoiceDate
+            )
+        )
+
+
+    # --------------------------------------
+    # Due date
+    # --------------------------------------
+
+    if request.dueDate is not None:
+
+        invoice.due_date = (
+            parse_date(
+                request.dueDate
+            )
+        )
+
+
+    # --------------------------------------
+    # Status
+    # --------------------------------------
+
+    if request.status is not None:
+
+        invoice.status = (
+            request.status
+        )
+
+
+    # --------------------------------------
+    # Payment date
+    # --------------------------------------
+
+    if request.paymentDate is not None:
+
+        invoice.payment_date = (
+            parse_date(
+                request.paymentDate
+            )
+        )
+
+    elif request.status == "Pending":
+
+        invoice.payment_date = None
+
+
+    # --------------------------------------
+    # Source
+    # --------------------------------------
+
+    if request.source is not None:
+
+        invoice.source = (
+            request.source
+        )
+
+
+    db.commit()
+
+    db.refresh(invoice)
+
+
+    return {
+
+        "success": True,
+
+        "invoice": {
+
+            "id":
+                invoice.id,
+
+            "customerId":
+                invoice.customer_id,
+
+            "customer":
+                invoice.customer,
+
+            "amount":
+                invoice.amount,
+
+            "invoiceDate": (
+
+                invoice.invoice_date.isoformat()
+
+                if invoice.invoice_date
+
+                else None
+            ),
+
+            "dueDate": (
+
+                invoice.due_date.isoformat()
+
+                if invoice.due_date
+
+                else None
+            ),
+
+            "status":
+                invoice.status,
+
+            "paymentDate": (
+
+                invoice.payment_date.isoformat()
+
+                if invoice.payment_date
+
+                else None
+            ),
+
+            "source":
+                invoice.source,
+
+            "businessId":
+                invoice.business_id,
+        },
+    }
+
+
+# ==========================================
+# INVOICES - DELETE
+# ==========================================
+
+@router.delete("/invoices/{invoice_id}")
+def delete_invoice(
+    invoice_id: str,
+    db: Session = Depends(get_db),
+):
+
+    invoice = (
+        db.query(Invoice)
+        .filter(
+            Invoice.id ==
+            invoice_id
+        )
+        .first()
+    )
+
+
+    if not invoice:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Invoice not found.",
+        )
+
+
+    db.delete(invoice)
+
+    db.commit()
+
+
+    return {
+
+        "success": True,
+
+        "message":
+            "Invoice deleted successfully.",
+
+        "invoiceId":
+            invoice_id,
+    }
+
+
+# ==========================================
+# PAYMENTS - GET
+# ==========================================
+
+@router.get("/payments")
+def get_payments(
+    db: Session = Depends(get_db),
+):
+
+    payments = (
+        db.query(Payment)
+        .all()
+    )
+
+
+    return {
+
+        "success": True,
+
+        "payments": [
+
+            {
+
+                "id":
+                    payment.id,
+
+                "invoiceId":
+                    payment.invoice_id,
+
+                "customerId":
+                    payment.customer_id,
+
+                "amount":
+                    payment.amount,
+
+                "expectedDate": (
+
+                    payment.expected_date.isoformat()
+
+                    if payment.expected_date
+
+                    else None
+                ),
+
+                "actualDate": (
+
+                    payment.actual_date.isoformat()
+
+                    if payment.actual_date
+
+                    else None
+                ),
+
+                "daysDelayed":
+                    payment.days_delayed,
+
+                "source":
+                    payment.source,
+
+                "businessId":
+                    payment.business_id,
+            }
+
+            for payment in payments
+        ],
+    }
+
+
+# ==========================================
+# EXPENSES - GET
+# ==========================================
+
+@router.get("/expenses")
+def get_expenses(
+    db: Session = Depends(get_db),
+):
+
+    expenses = (
+        db.query(Expense)
+        .all()
+    )
+
+
+    return {
+
+        "success": True,
+
+        "expenses": [
+
+            {
+
+                "id":
+                    expense.id,
+
+                "category":
+                    expense.category,
+
+                "description":
+                    expense.description,
+
+                "amount":
+                    expense.amount,
+
+                "date": (
+
+                    expense.date.isoformat()
+
+                    if expense.date
+
+                    else None
+                ),
+
+                "recurring":
+                    expense.recurring,
+
+                "source":
+                    expense.source,
+
+                "businessId":
+                    expense.business_id,
+            }
+
+            for expense in expenses
+        ],
+    }
+
+
+# ==========================================
+# RECURRING EXPENSES - GET
+# ==========================================
+
+@router.get("/recurring-expenses")
+def get_recurring_expenses(
+    db: Session = Depends(get_db),
+):
+
+    expenses = (
+        db.query(RecurringExpense)
+        .all()
+    )
+
+
+    return {
+
+        "success": True,
+
+        "recurringExpenses": [
+
+            {
+
+                "id":
+                    expense.id,
+
+                "category":
+                    expense.category,
+
+                "description":
+                    expense.description,
+
+                "amount":
+                    expense.amount,
+
+                "frequency":
+                    expense.frequency,
+
+                "dayOfMonth":
+                    expense.day_of_month,
+
+                "source":
+                    expense.source,
+
+                "businessId":
+                    expense.business_id,
+            }
+
+            for expense in expenses
+        ],
     }

@@ -1,160 +1,166 @@
+import React, { useEffect } from "react";
 import {
   BrowserRouter,
   Routes,
   Route,
+  Navigate,
 } from "react-router-dom";
 
-import { useEffect } from "react";
+import { AuthProvider } from "./context/AuthContext";
+import { loadFinancialData } from "./data/financialStore";
 
-import {
-  loadFinancialData,
-} from "./data/financialStore";
+// Master Layout
+import AppLayout from "./components/AppLayout";
 
+// Pages
+import LandingPage from "./pages/LandingPage";
+import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import CashFlow from "./pages/CashFlow";
 import Invoices from "./pages/Invoices";
 import Expenses from "./pages/Expenses";
 import Customers from "./pages/Customers";
 import Forecast from "./pages/Forecast";
-import RiskAnalysis from "./pages/RiskAnalysis";
-import Risk from "./pages/Risk";
 import Simulator from "./pages/Simulator";
 import Financing from "./pages/Financing";
+import Reports from "./pages/Reports";
+import Integrations from "./pages/Integrations";
 import Settings from "./pages/Settings";
 
-
 function App() {
-
-  // ==========================================
-  // LOAD DATABASE DATA
-  // ==========================================
-
   useEffect(() => {
-
+    // Initiate background sync with backend / local store
     loadFinancialData();
-
   }, []);
 
-
   return (
-    <BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Landing Page */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/landing" element={<LandingPage />} />
 
-      <Routes>
+          {/* Authentication */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Login />} />
 
-        {/* =================================
-            DASHBOARD
-        ================================= */}
+          {/* Dashboard */}
+          <Route
+            path="/dashboard"
+            element={
+              <AppLayout>
+                <Dashboard />
+              </AppLayout>
+            }
+          />
 
-        <Route
-          path="/"
-          element={<Dashboard />}
-        />
+          {/* Cash Flow */}
+          <Route
+            path="/cash-flow"
+            element={
+              <AppLayout>
+                <CashFlow />
+              </AppLayout>
+            }
+          />
 
+          {/* Invoices */}
+          <Route
+            path="/invoices"
+            element={
+              <AppLayout>
+                <Invoices />
+              </AppLayout>
+            }
+          />
 
-        {/* =================================
-            CASH FLOW
-        ================================= */}
+          {/* Expenses */}
+          <Route
+            path="/expenses"
+            element={
+              <AppLayout>
+                <Expenses />
+              </AppLayout>
+            }
+          />
 
-        <Route
-          path="/cash-flow"
-          element={<CashFlow />}
-        />
+          {/* Customers */}
+          <Route
+            path="/customers"
+            element={
+              <AppLayout>
+                <Customers />
+              </AppLayout>
+            }
+          />
 
+          {/* Forecast */}
+          <Route
+            path="/forecast"
+            element={
+              <AppLayout>
+                <Forecast />
+              </AppLayout>
+            }
+          />
 
-        {/* =================================
-            INVOICES
-        ================================= */}
+          {/* Simulator */}
+          <Route
+            path="/simulator"
+            element={
+              <AppLayout>
+                <Simulator />
+              </AppLayout>
+            }
+          />
 
-        <Route
-          path="/invoices"
-          element={<Invoices />}
-        />
+          {/* Financing */}
+          <Route
+            path="/financing"
+            element={
+              <AppLayout>
+                <Financing />
+              </AppLayout>
+            }
+          />
 
+          {/* Financial Reports */}
+          <Route
+            path="/reports"
+            element={
+              <AppLayout>
+                <Reports />
+              </AppLayout>
+            }
+          />
 
-        {/* =================================
-            EXPENSES
-        ================================= */}
+          {/* Accounting Integrations */}
+          <Route
+            path="/integrations"
+            element={
+              <AppLayout>
+                <Integrations />
+              </AppLayout>
+            }
+          />
 
-        <Route
-          path="/expenses"
-          element={<Expenses />}
-        />
+          {/* Settings */}
+          <Route
+            path="/settings"
+            element={
+              <AppLayout>
+                <Settings />
+              </AppLayout>
+            }
+          />
 
-
-        {/* =================================
-            CUSTOMERS
-        ================================= */}
-
-        <Route
-          path="/customers"
-          element={<Customers />}
-        />
-
-
-        {/* =================================
-            FORECAST
-        ================================= */}
-
-        <Route
-          path="/forecast"
-          element={<Forecast />}
-        />
-
-
-        {/* =================================
-            RISK ANALYSIS
-        ================================= */}
-
-        <Route
-          path="/risk-analysis"
-          element={<RiskAnalysis />}
-        />
-
-
-        {/* =================================
-            AI RISK DASHBOARD
-        ================================= */}
-
-        <Route
-          path="/risk"
-          element={<Risk />}
-        />
-
-
-        {/* =================================
-            SHOCK SIMULATOR
-        ================================= */}
-
-        <Route
-          path="/simulator"
-          element={<Simulator />}
-        />
-
-
-        {/* =================================
-            FINANCING OPTIONS
-        ================================= */}
-
-        <Route
-          path="/financing"
-          element={<Financing />}
-        />
-
-
-        {/* =================================
-            SETTINGS
-        ================================= */}
-
-        <Route
-          path="/settings"
-          element={<Settings />}
-        />
-
-      </Routes>
-
-    </BrowserRouter>
+          {/* Fallback Catch-All */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
-
 
 export default App;

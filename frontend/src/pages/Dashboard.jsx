@@ -1,801 +1,538 @@
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
   Wallet,
   FileText,
-  Receipt,
-  Users,
   TrendingUp,
   AlertTriangle,
-  FlaskConical,
-  Settings,
-  Bell,
-  ChevronDown,
   ArrowUpRight,
   ArrowDownRight,
-  IndianRupee,
-  Activity,
+  ShieldAlert,
+  Zap,
+  Users,
+  FlaskConical,
+  CreditCard,
+  CheckCircle2,
+  Clock,
+  Sparkles,
+  ArrowRight,
+  Upload,
+  Plus,
 } from "lucide-react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
-import { Link, useLocation } from "react-router-dom";
-import "../index.css";
+import {
+  getFinancialData,
+  getBusiness,
+  getInvoices,
+  getCustomers,
+  loadDemoData,
+  subscribeFinancialData,
+} from "../data/financialStore";
+import {
+  getCashFlowSummary,
+  calculateAgingBreakdown,
+  generateLocalForecast,
+} from "../engines/digitalTwin";
 
-function Dashboard() {
-  const location = useLocation();
+const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
-  const menu = [
-    {
-      title: "Dashboard",
-      icon: LayoutDashboard,
-      path: "/",
-    },
-    {
-      title: "Cash Flow",
-      icon: Wallet,
-      path: "/cash-flow",
-    },
-    {
-      title: "Invoices",
-      icon: FileText,
-      path: "/invoices",
-    },
-    {
-      title: "Expenses",
-      icon: Receipt,
-      path: "/expenses",
-    },
-    {
-      title: "Customers",
-      icon: Users,
-      path: "/customers",
-    },
-  ];
+export default function Dashboard() {
+  const navigate = useNavigate();
+  const [data, setData] = useState(getFinancialData());
+  const [summary, setSummary] = useState(getCashFlowSummary());
+  const [aging, setAging] = useState(calculateAgingBreakdown());
+  const [forecast, setForecast] = useState(generateLocalForecast(30));
 
-  const analysisMenu = [
-    {
-      title: "Forecast",
-      icon: TrendingUp,
-      path: "/forecast",
-    },
-    {
-      title: "Risk Analysis",
-      icon: AlertTriangle,
-      path: "/risk-analysis",
-    },
-    {
-      title: "What-If Simulator",
-      icon: FlaskConical,
-      path: "/simulator",
-    },
+  useEffect(() => {
+    const unsub = subscribeFinancialData(() => {
+      setData(getFinancialData());
+      setSummary(getCashFlowSummary());
+      setAging(calculateAgingBreakdown());
+      setForecast(generateLocalForecast(30));
+    });
+    return unsub;
+  }, []);
+
+  const formatLakhs = (amt) => `₹${(Number(amt || 0) / 100000).toFixed(2)}L`;
+
+  const pendingInvoices = data.invoices.filter((i) => i.status !== "Paid");
+  const isEmptyState = data.invoices.length === 0 && summary.currentCash === 0 && data.expenses.length === 0;
+
+  // Chart data for Aging Breakdown
+  const agingData = [
+    { name: "0-30 Days", value: aging["0-30 Days"] || 0 },
+    { name: "31-60 Days", value: aging["31-60 Days"] || 0 },
+    { name: "61-90 Days", value: aging["61-90 Days"] || 0 },
+    { name: "90+ Days", value: aging["90+ Days"] || 0 },
   ];
 
   return (
-    <div className="app">
-
-      {/* SIDEBAR */}
-      <aside className="sidebar">
-
-        <div className="logo-section">
-          <div className="logo-icon">
-            FT
-          </div>
-
-          <div>
-            <h2>FinTwin</h2>
-            <span>MSME Finance</span>
-          </div>
-        </div>
-
-        <div className="business-selector">
-          <div className="business-avatar">
-            A
-          </div>
-
-          <div className="business-info">
-            <strong>ABC Manufacturing</strong>
-            <span>Business Account</span>
-          </div>
-
-          <ChevronDown size={16} />
-        </div>
-
-        <nav className="navigation">
-
-          <p className="nav-title">
-            MAIN
-          </p>
-
-          {menu.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`nav-item ${
-                  location.pathname === item.path
-                    ? "active"
-                    : ""
-                }`}
-              >
-                <Icon size={19} />
-                {item.title}
-              </Link>
-            );
-          })}
-
-          <p className="nav-title">
-            ANALYSIS
-          </p>
-
-          {analysisMenu.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`nav-item ${
-                  location.pathname === item.path
-                    ? "active"
-                    : ""
-                }`}
-              >
-                <Icon size={19} />
-                {item.title}
-              </Link>
-            );
-          })}
-
-          <p className="nav-title">
-            SYSTEM
-          </p>
-
-          <Link
-            to="/settings"
-            className={`nav-item ${
-              location.pathname === "/settings"
-                ? "active"
-                : ""
-            }`}
-          >
-            <Settings size={19} />
-            Settings
-          </Link>
-
-        </nav>
-
-        <div className="sidebar-bottom">
-          <div className="help-box">
-            <Activity size={20} />
-
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* =================================================================
+          EMPTY / ONBOARDING PROMPT (WHEN STARTING CLEAN)
+          ================================================================= */}
+      {isEmptyState && (
+        <div
+          className="glass-card"
+          style={{
+            background: "linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(16,185,129,0.08) 100%)",
+            border: "1px solid rgba(59,130,246,0.35)",
+            padding: "28px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
             <div>
-              <strong>
-                Financial Health
-              </strong>
-
-              <span>
-                Good condition
-              </span>
-            </div>
-          </div>
-        </div>
-
-      </aside>
-
-      {/* MAIN */}
-      <main className="main-content">
-
-        {/* TOPBAR */}
-        <header className="topbar">
-
-          <div>
-            <h1>
-              Financial Overview
-            </h1>
-
-            <p>
-              Here's what's happening with your business today.
-            </p>
-          </div>
-
-          <div className="topbar-actions">
-
-            <button className="notification-btn">
-              <Bell size={20} />
-              <span></span>
-            </button>
-
-            <div className="profile">
-
-              <div className="profile-avatar">
-                BO
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <div className="card-icon-wrap emerald" style={{ width: 32, height: 32 }}>
+                  <Sparkles size={16} />
+                </div>
+                <h2 style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>
+                  Ready for Your Real Financial Data
+                </h2>
               </div>
-
-              <div className="profile-info">
-                <strong>
-                  Business Owner
-                </strong>
-
-                <span>
-                  Administrator
-                </span>
-              </div>
-
-              <ChevronDown size={16} />
-
+              <p style={{ color: "var(--text-secondary)", fontSize: 13.5, maxWidth: 680, lineHeight: 1.6 }}>
+                All pre-filled numbers have been removed. Upload your company's invoices (CSV, Excel, PDF, or JSON) and log your expenses to see your live Digital Twin cash flow, AI delay predictions, and 90-day runway.
+              </p>
             </div>
 
-          </div>
-
-        </header>
-
-        <section className="dashboard">
-
-          {/* HEALTH BANNER */}
-          <div className="health-banner">
-
-            <div className="health-left">
-
-              <div className="health-icon">
-                <Activity size={22} />
-              </div>
-
-              <div>
-                <span className="health-label">
-                  FINANCIAL HEALTH
-                </span>
-
-                <h3>
-                  Your business is in a healthy position
-                </h3>
-
-                <p>
-                  Cash flow is stable, but receivables
-                  concentration needs attention.
-                </p>
-              </div>
-
-            </div>
-
-            <div className="health-score">
-              <strong>78</strong>
-              <span>/100</span>
-            </div>
-
-          </div>
-
-          {/* STATS */}
-          <div className="stats-grid">
-
-            <StatCard
-              title="Current Cash"
-              value="₹8.40 L"
-              change="8.4% from last month"
-              icon={<Wallet size={19} />}
-              type="green"
-              positive
-            />
-
-            <StatCard
-              title="Receivables"
-              value="₹17.20 L"
-              change="5.2% from last month"
-              icon={<IndianRupee size={19} />}
-              type="blue"
-              positive
-            />
-
-            <StatCard
-              title="Monthly Revenue"
-              value="₹12.00 L"
-              change="11.8% from last month"
-              icon={<TrendingUp size={19} />}
-              type="purple"
-              positive
-            />
-
-            <StatCard
-              title="Monthly Expenses"
-              value="₹8.00 L"
-              change="3.1% from last month"
-              icon={<Receipt size={19} />}
-              type="orange"
-              positive={false}
-            />
-
-          </div>
-
-          {/* MAIN GRID */}
-          <div className="content-grid">
-
-            <CashFlowChart />
-
-            <RiskAlerts />
-
-          </div>
-
-          {/* BOTTOM */}
-          <div className="bottom-grid">
-
-            <Receivables />
-
-            <QuickActions />
-
-          </div>
-
-        </section>
-
-      </main>
-
-    </div>
-  );
-}
-
-
-/* ================================
-   STAT CARD
-================================ */
-
-function StatCard({
-  title,
-  value,
-  change,
-  icon,
-  type,
-  positive,
-}) {
-  return (
-    <div className="stat-card">
-
-      <div className="stat-top">
-
-        <span>
-          {title}
-        </span>
-
-        <div className={`stat-icon ${type}`}>
-          {icon}
-        </div>
-
-      </div>
-
-      <h2>
-        {value}
-      </h2>
-
-      <div
-        className={`stat-change ${
-          positive ? "positive" : "negative"
-        }`}
-      >
-        {positive ? (
-          <ArrowUpRight size={15} />
-        ) : (
-          <ArrowDownRight size={15} />
-        )}
-
-        {change}
-      </div>
-
-    </div>
-  );
-}
-
-
-/* ================================
-   CASH FLOW CHART
-================================ */
-
-function CashFlowChart() {
-  return (
-    <div className="card cash-card">
-
-      <div className="card-header">
-
-        <div>
-          <h3>
-            Cash Flow Forecast
-          </h3>
-
-          <p>
-            Projected cash position for the next 6 months
-          </p>
-        </div>
-
-        <select>
-          <option>
-            6 Months
-          </option>
-
-          <option>
-            3 Months
-          </option>
-
-          <option>
-            12 Months
-          </option>
-        </select>
-
-      </div>
-
-      <div className="chart-area">
-
-        <div className="y-axis">
-          <span>₹12L</span>
-          <span>₹9L</span>
-          <span>₹6L</span>
-          <span>₹3L</span>
-          <span>₹0</span>
-        </div>
-
-        <div className="chart">
-
-          <div className="grid-line line1" />
-          <div className="grid-line line2" />
-          <div className="grid-line line3" />
-          <div className="grid-line line4" />
-          <div className="grid-line line5" />
-
-          <svg
-            viewBox="0 0 600 220"
-            preserveAspectRatio="none"
-          >
-
-            <defs>
-
-              <linearGradient
-                id="cashGradient"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <button
+                className="btn btn-primary"
+                onClick={() => navigate("/invoices")}
               >
+                <Upload size={14} />
+                <span>Upload Invoices</span>
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => navigate("/settings")}
+              >
+                <span>Set Opening Balance</span>
+              </button>
+              <button
+                className="btn btn-secondary"
+                style={{ fontSize: 12, color: "#a78bfa" }}
+                onClick={() => loadDemoData()}
+              >
+                <span>⚡ Load Demo Data</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-                <stop
-                  offset="0%"
-                  stopColor="#2563eb"
-                  stopOpacity="0.22"
-                />
+      {/* =================================================================
+          TOP KPI ROW
+          ================================================================= */}
+      <div className="grid-4">
+        {/* Current Cash */}
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Liquid Cash Reserve</span>
+            <div className="card-icon-wrap emerald">
+              <Wallet size={18} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: "#34d399" }}>
+              {formatLakhs(summary.currentCash)}
+            </span>
+          </div>
+          <div className="kpi-trend positive">
+            <ArrowUpRight size={14} />
+            <span>{summary.runwayDays} Days Buffer</span>
+            <span style={{ color: "var(--text-muted)", marginLeft: "auto" }}>
+              Target: ₹{(Number(data.business.minCashReserve || 0) / 100000).toFixed(1)}L
+            </span>
+          </div>
+        </div>
 
-                <stop
-                  offset="100%"
-                  stopColor="#2563eb"
-                  stopOpacity="0"
-                />
+        {/* Total Receivables */}
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Outstanding Receivables</span>
+            <div className="card-icon-wrap">
+              <FileText size={18} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: "#60a5fa" }}>
+              {formatLakhs(summary.receivables)}
+            </span>
+          </div>
+          <div className="kpi-trend neutral">
+            <Clock size={14} />
+            <span>{pendingInvoices.length} Pending Invoices</span>
+            <span style={{ color: "var(--text-muted)", marginLeft: "auto" }}>
+              DSO: {summary.dso} Days
+            </span>
+          </div>
+        </div>
 
-              </linearGradient>
+        {/* Monthly Burn */}
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Monthly Burn Velocity</span>
+            <div className="card-icon-wrap amber">
+              <CreditCard size={18} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: "#fbbf24" }}>
+              {formatLakhs(summary.totalExpenses)}
+            </span>
+          </div>
+          <div className="kpi-trend negative">
+            <ArrowDownRight size={14} />
+            <span>{formatLakhs(summary.recurringExpenses)} Fixed</span>
+            <span style={{ color: "var(--text-muted)", marginLeft: "auto" }}>
+              +{formatLakhs(summary.oneTimeExpenses)} Variable
+            </span>
+          </div>
+        </div>
 
-            </defs>
+        {/* 30-Day Net Liquidity */}
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">30-Day Net Runway</span>
+            <div className="card-icon-wrap purple">
+              <TrendingUp size={18} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span
+              className="kpi-value"
+              style={{
+                color: summary.projectedCash >= 0 ? "#c4b5fd" : "#fb7185",
+              }}
+            >
+              {formatLakhs(summary.projectedCash)}
+            </span>
+          </div>
+          <div className="kpi-trend positive">
+            <Zap size={14} />
+            <span>Working Cap: {summary.workingCapitalRatio}x</span>
+            <span
+              style={{
+                marginLeft: "auto",
+                color: summary.status === "Healthy" ? "#34d399" : summary.status === "Moderate" ? "#fbbf24" : "var(--text-muted)",
+                fontWeight: 700,
+              }}
+            >
+              {summary.status}
+            </span>
+          </div>
+        </div>
+      </div>
 
-            <path
-              d="
-                M0,80
-                C50,75 70,90 110,78
-                C150,65 165,95 210,88
-                C250,82 270,70 310,78
-                C350,88 370,115 410,108
-                C450,100 470,135 505,145
-                C540,155 560,150 600,170
-                L600,220
-                L0,220
-                Z
-              "
-              fill="url(#cashGradient)"
-            />
-
-            <path
-              d="
-                M0,80
-                C50,75 70,90 110,78
-                C150,65 165,95 210,88
-                C250,82 270,70 310,78
-                C350,88 370,115 410,108
-                C450,100 470,135 505,145
-                C540,155 560,150 600,170
-              "
-              fill="none"
-              stroke="#2563eb"
-              strokeWidth="3"
-            />
-
-          </svg>
-
-          <div className="warning-point">
-            <AlertTriangle size={15} />
+      {/* =================================================================
+          PRIMARY CHARTS & DIGITAL TWIN TELEMETRY
+          ================================================================= */}
+      <div className="grid-12">
+        {/* Cash Flow Forecast Trajectory */}
+        <div className="col-span-8 glass-card">
+          <div className="card-header">
+            <div className="card-title-group">
+              <div className="card-icon-wrap">
+                <TrendingUp size={18} />
+              </div>
+              <div>
+                <div className="card-title">30-Day AI Cash Velocity Trajectory</div>
+                <div className="card-subtitle">
+                  Monte Carlo simulation of expected collections vs operating burn
+                </div>
+              </div>
+            </div>
+            <Link to="/forecast" className="btn btn-secondary btn-sm">
+              <span>90-Day Radar</span>
+              <ArrowRight size={13} />
+            </Link>
           </div>
 
+          <div style={{ height: 260, width: "100%", marginTop: 10 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={forecast.timeline}>
+                <defs>
+                  <linearGradient id="colorExpected" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
+                  </linearGradient>
+                  <linearGradient id="colorWorst" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="day" stroke="#64748b" fontSize={11} tickLine={false} />
+                <YAxis
+                  stroke="#64748b"
+                  fontSize={11}
+                  tickLine={false}
+                  tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "rgba(13, 18, 31, 0.95)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                  formatter={(val) => [`₹${(Number(val) / 100000).toFixed(2)}L`, ""]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="expected"
+                  stroke="#3b82f6"
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill="url(#colorExpected)"
+                  name="Expected Cash"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="worstCase"
+                  stroke="#f43f5e"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
+                  fillOpacity={1}
+                  fill="url(#colorWorst)"
+                  name="Worst-Case Stress"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
+        {/* Receivables Aging Breakdown */}
+        <div className="col-span-4 glass-card">
+          <div className="card-header">
+            <div className="card-title-group">
+              <div className="card-icon-wrap amber">
+                <Clock size={18} />
+              </div>
+              <div>
+                <div className="card-title">Receivables Aging</div>
+                <div className="card-subtitle">Breakdown by maturity bracket</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 10 }}>
+            {agingData.map((item, idx) => {
+              const total = aging.total || 1;
+              const pct = aging.total > 0 ? Math.round((item.value / total) * 100) : 0;
+              return (
+                <div key={item.name}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 5 }}>
+                    <span style={{ color: "var(--text-secondary)" }}>{item.name}</span>
+                    <span style={{ fontWeight: 700, color: "#fff" }}>
+                      {formatLakhs(item.value)} ({pct}%)
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      height: 6,
+                      background: "rgba(255,255,255,0.06)",
+                      borderRadius: 3,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${pct}%`,
+                        background: COLORS[idx % COLORS.length],
+                        borderRadius: 3,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <button
+            className="btn btn-secondary btn-sm"
+            style={{ width: "100%", marginTop: 24, justifyContent: "center" }}
+            onClick={() => navigate("/invoices")}
+          >
+            <span>Manage Collections</span>
+            <ArrowRight size={13} />
+          </button>
+        </div>
       </div>
 
-      <div className="chart-labels">
-        <span>Aug</span>
-        <span>Sep</span>
-        <span>Oct</span>
-        <span>Nov</span>
-        <span>Dec</span>
-        <span>Jan</span>
-      </div>
+      {/* =================================================================
+          BOTTOM SECTION: INVOICES & QUICK ACTIONS
+          ================================================================= */}
+      <div className="grid-12">
+        {/* Active Invoices with Delay Prediction */}
+        <div className="col-span-8 glass-card">
+          <div className="card-header">
+            <div className="card-title-group">
+              <div className="card-icon-wrap emerald">
+                <FileText size={18} />
+              </div>
+              <div>
+                <div className="card-title">Active Invoices & AI Delay Predictions</div>
+                <div className="card-subtitle">Real-time payment probability scores</div>
+              </div>
+            </div>
+            <Link to="/invoices" className="btn btn-secondary btn-sm">
+              View All ({data.invoices.length})
+            </Link>
+          </div>
 
-    </div>
-  );
-}
-
-
-/* ================================
-   RISK ALERTS
-================================ */
-
-function RiskAlerts() {
-  return (
-    <div className="card risk-card">
-
-      <div className="card-header">
-
-        <div>
-          <h3>
-            Risk Alerts
-          </h3>
-
-          <p>
-            Issues that need your attention
-          </p>
+          {data.invoices.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "36px 20px" }}>
+              <FileText size={32} style={{ color: "var(--text-dim)", margin: "0 auto 10px" }} />
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>No Invoices Yet</div>
+              <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4, marginBottom: 16 }}>
+                Upload your first invoice file (CSV, Excel, PDF, or JSON) to activate AI delay predictions.
+              </div>
+              <button className="btn btn-primary btn-sm" onClick={() => navigate("/invoices")}>
+                <Upload size={14} />
+                <span>Import Invoices</span>
+              </button>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <table className="custom-table">
+                <thead>
+                  <tr>
+                    <th>Invoice ID</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Due Date</th>
+                    <th>AI Predicted Delay</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.invoices.slice(0, 5).map((inv) => (
+                    <tr key={inv.id}>
+                      <td style={{ fontWeight: 600, color: "#fff", fontFamily: "var(--font-mono)" }}>
+                        {inv.id}
+                      </td>
+                      <td>{inv.customer}</td>
+                      <td style={{ fontWeight: 700, color: "#60a5fa" }}>
+                        {formatLakhs(inv.amount)}
+                      </td>
+                      <td>{inv.dueDate}</td>
+                      <td>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color:
+                              inv.predictedDelayDays > 15
+                                ? "#fb7185"
+                                : inv.predictedDelayDays > 5
+                                ? "#fbbf24"
+                                : "#34d399",
+                          }}
+                        >
+                          +{inv.predictedDelayDays || 3} Days Delay
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`status-badge ${
+                            inv.status === "Paid"
+                              ? "paid"
+                              : inv.status === "Overdue"
+                              ? "overdue"
+                              : "pending"
+                          }`}
+                        >
+                          {inv.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
-        <Link
-          to="/risk-analysis"
-          className="view-btn"
-        >
-          View all
-        </Link>
+        {/* Quick Stress Test Launchers */}
+        <div className="col-span-4 glass-card">
+          <div className="card-header">
+            <div className="card-title-group">
+              <div className="card-icon-wrap purple">
+                <FlaskConical size={18} />
+              </div>
+              <div>
+                <div className="card-title">Instant Actions</div>
+                <div className="card-subtitle">Tools to simulate and manage cash</div>
+              </div>
+            </div>
+          </div>
 
-      </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div
+              className="glass-card interactive"
+              style={{ padding: 14 }}
+              onClick={() => navigate("/simulator")}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ fontWeight: 600, fontSize: 13, color: "#fff" }}>
+                  🧪 What-If Shock Simulator
+                </div>
+                <ArrowRight size={14} style={{ color: "#60a5fa" }} />
+              </div>
+              <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 4 }}>
+                Stress test revenue drops and client payment stalls.
+              </div>
+            </div>
 
-      <div className="risk-list">
+            <div
+              className="glass-card interactive"
+              style={{ padding: 14 }}
+              onClick={() => navigate("/financing")}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ fontWeight: 600, fontSize: 13, color: "#fff" }}>
+                  🏦 Invoice Discounting
+                </div>
+                <ArrowRight size={14} style={{ color: "#34d399" }} />
+              </div>
+              <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 4 }}>
+                Unlock working capital from your uploaded invoices.
+              </div>
+            </div>
 
-        <RiskItem
-          type="high"
-          title="Customer Concentration"
-          description="Customer A represents 58.8% of total receivables."
-          label="HIGH RISK"
-        />
-
-        <RiskItem
-          type="medium"
-          title="Delayed Payments"
-          description="Average payment delay increased by 12 days."
-          label="MEDIUM RISK"
-        />
-
-        <RiskItem
-          type="low"
-          title="Expense Growth"
-          description="Operating expenses remain within expected range."
-          label="LOW RISK"
-        />
-
-      </div>
-
-    </div>
-  );
-}
-
-
-function RiskItem({
-  type,
-  title,
-  description,
-  label,
-}) {
-  return (
-    <div className={`risk-item ${type}`}>
-
-      <div className="risk-symbol">
-        <AlertTriangle size={18} />
-      </div>
-
-      <div className="risk-content">
-
-        <strong>
-          {title}
-        </strong>
-
-        <p>
-          {description}
-        </p>
-
-        <span>
-          {label}
-        </span>
-
-      </div>
-
-    </div>
-  );
-}
-
-
-/* ================================
-   RECEIVABLES
-================================ */
-
-function Receivables() {
-  return (
-    <div className="card">
-
-      <div className="card-header">
-
-        <div>
-          <h3>
-            Receivables Overview
-          </h3>
-
-          <p>
-            Outstanding customer payments
-          </p>
+            <div
+              className="glass-card interactive"
+              style={{ padding: 14 }}
+              onClick={() => navigate("/reports")}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ fontWeight: 600, fontSize: 13, color: "#fff" }}>
+                  📑 P&L & Cash Statements
+                </div>
+                <ArrowRight size={14} style={{ color: "#a78bfa" }} />
+              </div>
+              <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 4 }}>
+                Export monthly financial statements and aging CSVs.
+              </div>
+            </div>
+          </div>
         </div>
-
-        <Link
-          to="/invoices"
-          className="view-btn"
-        >
-          View invoices
-        </Link>
-
       </div>
-
-      <div className="receivable-list">
-
-        <Customer
-          letter="A"
-          name="Customer A"
-          invoices="8 invoices outstanding"
-          amount="₹10.10 L"
-          status="High"
-          statusClass="danger"
-        />
-
-        <Customer
-          letter="B"
-          name="Customer B"
-          invoices="4 invoices outstanding"
-          amount="₹4.20 L"
-          status="Medium"
-          statusClass="warning"
-        />
-
-        <Customer
-          letter="C"
-          name="Customer C"
-          invoices="2 invoices outstanding"
-          amount="₹2.10 L"
-          status="Low"
-          statusClass="safe"
-        />
-
-      </div>
-
     </div>
   );
 }
-
-
-function Customer({
-  letter,
-  name,
-  invoices,
-  amount,
-  status,
-  statusClass,
-}) {
-  return (
-    <div className="customer-row">
-
-      <div className="customer-avatar">
-        {letter}
-      </div>
-
-      <div className="customer-details">
-
-        <strong>
-          {name}
-        </strong>
-
-        <span>
-          {invoices}
-        </span>
-
-      </div>
-
-      <strong>
-        {amount}
-      </strong>
-
-      <span className={`status ${statusClass}`}>
-        {status}
-      </span>
-
-    </div>
-  );
-}
-
-
-/* ================================
-   QUICK ACTIONS
-================================ */
-
-function QuickActions() {
-  return (
-    <div className="card quick-card">
-
-      <div className="card-header">
-
-        <div>
-          <h3>
-            Quick Actions
-          </h3>
-
-          <p>
-            Manage your financial data
-          </p>
-        </div>
-
-      </div>
-
-      <div className="quick-actions">
-
-        <Link to="/invoices">
-          <FileText size={20} />
-
-          <span>
-            <strong>
-              Add Invoice
-            </strong>
-
-            <small>
-              Record a new invoice
-            </small>
-          </span>
-
-          <ArrowUpRight size={17} />
-        </Link>
-
-        <Link to="/expenses">
-          <Receipt size={20} />
-
-          <span>
-            <strong>
-              Add Expense
-            </strong>
-
-            <small>
-              Record a business expense
-            </small>
-          </span>
-
-          <ArrowUpRight size={17} />
-        </Link>
-
-        <Link to="/simulator">
-          <FlaskConical size={20} />
-
-          <span>
-            <strong>
-              Run Simulation
-            </strong>
-
-            <small>
-              Test a financial scenario
-            </small>
-          </span>
-
-          <ArrowUpRight size={17} />
-        </Link>
-
-      </div>
-
-    </div>
-  );
-}
-
-export default Dashboard;

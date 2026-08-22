@@ -1,9 +1,11 @@
+from __future__ import annotations
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.database import get_db, init_db
+from app.routes import database_routes
 
 from app.models.business import Business
 from app.models.customer import Customer
@@ -36,10 +38,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://fin-twin01.vercel.app",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -454,3 +453,20 @@ def create_financing_analysis(
         "success": True,
         "financing": result,
     }
+
+
+# ==========================================
+# INCLUDE DATABASE CRUD ROUTER
+# ==========================================
+app.include_router(database_routes.router)
+
+
+# ==========================================
+# STARTUP INITIALIZATION
+# ==========================================
+@app.on_event("startup")
+def on_startup():
+    try:
+        init_db()
+    except Exception as e:
+        print(f"Warning during DB init: {e}")

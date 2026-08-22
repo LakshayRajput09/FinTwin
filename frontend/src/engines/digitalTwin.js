@@ -1,21 +1,6 @@
 // ==========================================
-// FinTwin Digital Twin Engine
+// FinTwin Digital Twin Engine & Analytics Layer
 // ==========================================
-//
-// Converts raw financial data into a
-// business-level financial picture.
-//
-// This is the first version of the
-// Digital Twin calculation layer.
-//
-// Future versions can add:
-// - ML forecasting
-// - Customer payment probability
-// - GST data
-// - Account Aggregator data
-// - Seasonal patterns
-// ==========================================
-
 
 import {
   getBusiness,
@@ -23,8 +8,7 @@ import {
   getPayments,
   getExpenses,
   getRecurringExpenses,
-}from "../data/financialStore";
-
+} from "../data/financialStore";
 
 // ==========================================
 // CURRENT CASH POSITION
@@ -32,33 +16,53 @@ import {
 
 export function calculateCurrentCash() {
   const business = getBusiness();
-
-  return Number(
-    business.openingCash || 0
-  );
+  return Number(business.openingCash || 0);
 }
 
-
 // ==========================================
-// TOTAL RECEIVABLES
+// TOTAL RECEIVABLES & AGING
 // ==========================================
 
 export function calculateReceivables() {
   const invoices = getInvoices();
-
   return invoices
-    .filter(
-      (invoice) =>
-        invoice.status !== "Paid"
-    )
-    .reduce(
-      (total, invoice) =>
-        total +
-        Number(invoice.amount || 0),
-      0
-    );
+    .filter((invoice) => invoice.status !== "Paid")
+    .reduce((total, invoice) => total + Number(invoice.amount || 0), 0);
 }
 
+export function calculateAgingBreakdown() {
+  const invoices = getInvoices().filter((inv) => inv.status !== "Paid");
+  const now = new Date();
+
+  let b0_30 = 0;
+  let b31_60 = 0;
+  let b61_90 = 0;
+  let b90_plus = 0;
+
+  invoices.forEach((inv) => {
+    const due = new Date(inv.dueDate || now);
+    const diffDays = Math.floor((now - due) / (1000 * 60 * 60 * 24));
+    const amt = Number(inv.amount || 0);
+
+    if (diffDays <= 30) {
+      b0_30 += amt;
+    } else if (diffDays <= 60) {
+      b31_60 += amt;
+    } else if (diffDays <= 90) {
+      b61_90 += amt;
+    } else {
+      b90_plus += amt;
+    }
+  });
+
+  return {
+    "0-30 Days": b0_30,
+    "31-60 Days": b31_60,
+    "61-90 Days": b61_90,
+    "90+ Days": b90_plus,
+    total: b0_30 + b31_60 + b61_90 + b90_plus,
+  };
+}
 
 // ==========================================
 // TOTAL REVENUE
@@ -66,435 +70,189 @@ export function calculateReceivables() {
 
 export function calculateRevenue() {
   const invoices = getInvoices();
-
-  return invoices.reduce(
-    (total, invoice) =>
-      total +
-      Number(invoice.amount || 0),
-    0
-  );
+  return invoices.reduce((total, invoice) => total + Number(invoice.amount || 0), 0);
 }
 
-
 // ==========================================
-// MONTHLY RECURRING EXPENSES
+// EXPENSE METRICS
 // ==========================================
 
 export function calculateRecurringExpenses() {
-  const expenses =
-    getRecurringExpenses();
-
-  return expenses.reduce(
-    (total, expense) =>
-      total +
-      Number(expense.amount || 0),
-    0
-  );
+  const expenses = getRecurringExpenses();
+  return expenses.reduce((total, expense) => total + Number(expense.amount || 0), 0);
 }
-
-
-// ==========================================
-// ONE-TIME EXPENSES
-// ==========================================
 
 export function calculateOneTimeExpenses() {
-  const expenses =
-    getExpenses();
-
-  return expenses.reduce(
-    (total, expense) =>
-      total +
-      Number(expense.amount || 0),
-    0
-  );
+  const expenses = getExpenses();
+  return expenses.reduce((total, expense) => total + Number(expense.amount || 0), 0);
 }
 
-
-// ==========================================
-// TOTAL EXPENSES
-// ==========================================
-
-export function calculateTotalExpenses() {
-
-  const recurring =
-    calculateRecurringExpenses();
-
-  const oneTime =
-    calculateOneTimeExpenses();
-
-  return recurring + oneTime;
+export function calculateTotalMonthlyBurn() {
+  const recurring = calculateRecurringExpenses();
+  const oneTime = calculateOneTimeExpenses();
+  return recurring + Math.round(oneTime / 2);
 }
 
-
 // ==========================================
-// PROJECTED CASH POSITION
-// ==========================================
-//
-// Basic model:
-//
-// Current Cash
-// + Expected Receivables
-// - Expected Expenses
-//
+// DAYS SALES OUTSTANDING (DSO) & HEALTH METRICS
 // ==========================================
 
-export function calculateProjectedCash() {
-
-  const currentCash =
-    calculateCurrentCash();
-
-  const receivables =
-    calculateReceivables();
-
-  const expenses =
-    calculateTotalExpenses();
-
-  return (
-    currentCash +
-    receivables -
-    expenses
-  );
+export function calculateDSO() {
+  const receivables = calculateReceivables();
+  const revenue = calculateRevenue();
+  if (revenue <= 0) return 0;
+  return Math.round((receivables / revenue) * 90);
 }
 
-
-// ==========================================
-// NET CASH FLOW
-// ==========================================
-
-export function calculateNetCashFlow() {
-
-  const revenue =
-    calculateRevenue();
-
-  const expenses =
-    calculateTotalExpenses();
-
-  return revenue - expenses;
-}
-
-
-// ==========================================
-// LIQUIDITY GAP
-// ==========================================
-//
-// If projected cash becomes negative,
-// we have a liquidity gap.
-//
-// ==========================================
-
-export function calculateLiquidityGap() {
-
-  const projectedCash =
-    calculateProjectedCash();
-
-  if (projectedCash >= 0) {
-    return 0;
+export function calculateRunwayDays() {
+  const cash = calculateCurrentCash();
+  const monthlyBurn = calculateTotalMonthlyBurn();
+  if (monthlyBurn <= 0) {
+    return cash > 0 ? 180 : 0;
   }
-
-  return Math.abs(
-    projectedCash
-  );
+  const dailyBurn = monthlyBurn / 30;
+  return Math.max(0, Math.round(cash / dailyBurn));
 }
 
-
-// ==========================================
-// FINANCIAL HEALTH SCORE
-// ==========================================
-//
-// Prototype scoring model.
-//
-// This is NOT a credit score.
-// It is an internal financial-health
-// indicator for the business owner.
-//
-// ==========================================
-
-export function calculateHealthScore() {
-
-  let score = 100;
-
-
-  // ------------------------------
-  // Receivables concentration
-  // ------------------------------
-
-  const concentration =
-    calculateCustomerConcentration();
-
-  if (concentration > 0.6) {
-    score -= 20;
-  } else if (
-    concentration > 0.4
-  ) {
-    score -= 10;
-  }
-
-
-  // ------------------------------
-  // Liquidity
-  // ------------------------------
-
-  const gap =
-    calculateLiquidityGap();
-
-  if (gap > 0) {
-    score -= 25;
-  }
-
-
-  // ------------------------------
-  // Payment delays
-  // ------------------------------
-
-  const averageDelay =
-    calculateAveragePaymentDelay();
-
-  if (averageDelay > 30) {
-    score -= 20;
-  } else if (
-    averageDelay > 15
-  ) {
-    score -= 10;
-  }
-
-
-  return Math.max(
-    0,
-    Math.min(100, score)
-  );
+export function calculateWorkingCapitalRatio() {
+  const cash = calculateCurrentCash();
+  const receivables = calculateReceivables();
+  const monthlyBurn = calculateTotalMonthlyBurn();
+  const currentAssets = cash + receivables;
+  const currentLiabilities = monthlyBurn;
+  if (currentLiabilities <= 0) return currentAssets > 0 ? 3.0 : 0.0;
+  return Number((currentAssets / currentLiabilities).toFixed(2));
 }
 
-
 // ==========================================
-// CUSTOMER CONCENTRATION
-// ==========================================
-//
-// Returns the largest customer's share
-// of total outstanding receivables.
-//
-// Example:
-//
-// Customer A = ₹10L
-// Total = ₹17L
-//
-// Concentration = 58.8%
-//
-// ==========================================
-
-export function calculateCustomerConcentration() {
-
-  const invoices =
-    getInvoices().filter(
-      (invoice) =>
-        invoice.status !== "Paid"
-    );
-
-
-  const total =
-    invoices.reduce(
-      (sum, invoice) =>
-        sum +
-        Number(invoice.amount || 0),
-      0
-    );
-
-
-  if (total === 0) {
-    return 0;
-  }
-
-
-  const customerTotals = {};
-
-
-  invoices.forEach(
-    (invoice) => {
-
-      const customer =
-        invoice.customer ||
-        "Unknown";
-
-      customerTotals[customer] =
-        (customerTotals[customer] || 0) +
-        Number(invoice.amount || 0);
-
-    }
-  );
-
-
-  const largest =
-    Math.max(
-      ...Object.values(
-        customerTotals
-      )
-    );
-
-
-  return largest / total;
-}
-
-
-// ==========================================
-// AVERAGE PAYMENT DELAY
-// ==========================================
-
-export function calculateAveragePaymentDelay() {
-
-  const payments =
-    getPayments();
-
-
-  if (!payments.length) {
-    return 0;
-  }
-
-
-  const totalDelay =
-    payments.reduce(
-      (total, payment) =>
-        total +
-        Number(
-          payment.daysDelayed || 0
-        ),
-      0
-    );
-
-
-  return (
-    totalDelay /
-    payments.length
-  );
-}
-
-
-// ==========================================
-// CASH FLOW SUMMARY
+// COMPREHENSIVE CASH FLOW SUMMARY
 // ==========================================
 
 export function getCashFlowSummary() {
+  const currentCash = calculateCurrentCash();
+  const receivables = calculateReceivables();
+  const recurringExpenses = calculateRecurringExpenses();
+  const oneTimeExpenses = calculateOneTimeExpenses();
+  const totalExpenses = recurringExpenses + oneTimeExpenses;
+  const projectedCash = currentCash + receivables - totalExpenses;
+  const runwayDays = calculateRunwayDays();
+  const dso = calculateDSO();
+  const workingCapitalRatio = calculateWorkingCapitalRatio();
 
-  const currentCash =
-    calculateCurrentCash();
-
-  const receivables =
-    calculateReceivables();
-
-  const expenses =
-    calculateTotalExpenses();
-
-  const projectedCash =
-    calculateProjectedCash();
-
-  const netCashFlow =
-    calculateNetCashFlow();
-
-  const liquidityGap =
-    calculateLiquidityGap();
-
+  let status = "Awaiting Data";
+  if (currentCash > 0 || receivables > 0 || totalExpenses > 0) {
+    status = projectedCash >= 300000 ? "Healthy" : projectedCash >= 0 ? "Moderate" : "Critical Deficit";
+  }
 
   return {
-
     currentCash,
-
     receivables,
-
-    expenses,
-
+    recurringExpenses,
+    oneTimeExpenses,
+    totalExpenses,
     projectedCash,
-
-    netCashFlow,
-
-    liquidityGap,
-
-    hasLiquidityGap:
-      liquidityGap > 0,
-
+    runwayDays,
+    dso,
+    workingCapitalRatio,
+    netChange: projectedCash - currentCash,
+    status,
   };
 }
 
-
 // ==========================================
-// RISK SUMMARY
+// LOCAL AI 90-DAY FORECAST ENGINE
 // ==========================================
 
-export function getRiskSummary() {
+export function generateLocalForecast(days = 90) {
+  const currentCash = calculateCurrentCash();
+  const monthlyBurn = calculateTotalMonthlyBurn();
+  const dailyBurn = monthlyBurn / 30;
+  const revenue = calculateRevenue();
 
-  const concentration =
-    calculateCustomerConcentration();
+  const timeline = [];
+  const step = 5;
+  let breachDay = null;
 
-  const averageDelay =
-    calculateAveragePaymentDelay();
+  for (let d = 0; d <= days; d += step) {
+    const dailyInflowExpected = revenue > 0 ? (d / 30) * (revenue / 3) : 0;
+    const dailyInflowWorst = dailyInflowExpected * 0.7;
+    const dailyInflowBest = dailyInflowExpected * 1.25;
 
-  let concentrationRisk =
-    "LOW";
+    const cumulativeBurn = dailyBurn * d;
 
-  let delayRisk =
-    "LOW";
+    const expectedVal = Math.round(currentCash + dailyInflowExpected - cumulativeBurn);
+    const worstVal = Math.round(currentCash + dailyInflowWorst - cumulativeBurn * 1.15);
+    const bestVal = Math.round(currentCash + dailyInflowBest - cumulativeBurn * 0.9);
 
+    if (worstVal < 0 && breachDay === null && currentCash > 0) {
+      breachDay = d;
+    }
 
-  if (concentration > 0.6) {
-    concentrationRisk =
-      "HIGH";
-  } else if (
-    concentration > 0.4
-  ) {
-    concentrationRisk =
-      "MEDIUM";
+    timeline.push({
+      day: `Day ${d}`,
+      dayNum: d,
+      expected: expectedVal,
+      worstCase: worstVal,
+      bestCase: bestVal,
+      burnRate: Math.round(cumulativeBurn),
+    });
   }
-
-
-  if (averageDelay > 30) {
-    delayRisk =
-      "HIGH";
-  } else if (
-    averageDelay > 15
-  ) {
-    delayRisk =
-      "MEDIUM";
-  }
-
 
   return {
-
-    concentration:
-      concentration * 100,
-
-    concentrationRisk,
-
-    averageDelay,
-
-    delayRisk,
-
+    timeline,
+    initialCash: currentCash,
+    lowestProjectedCash: Math.min(...timeline.map((t) => t.worstCase)),
+    breachDay: breachDay ? `Day ${breachDay}` : currentCash > 0 ? "No breach (Safe)" : "N/A",
+    recommendation:
+      currentCash === 0 && revenue === 0
+        ? "Upload your invoices (CSV/Excel/PDF/JSON) or set opening cash to generate live predictive runway."
+        : breachDay && breachDay <= 45
+        ? "Early warning: Consider invoice discounting or short-term credit line to avoid liquidity crunch."
+        : "Liquidity stable: Cash reserves remain above minimum safety threshold.",
   };
 }
 
-
 // ==========================================
-// COMPLETE DIGITAL TWIN
+// SHOCK SIMULATOR CALCULATION
 // ==========================================
 
-export function getDigitalTwin() {
+export function calculateShockSimulation({
+  revenueChangePercent = 0,
+  expenseChangePercent = 0,
+  paymentDelayDays = 0,
+}) {
+  const base = getCashFlowSummary();
+  const baseRevenue = calculateRevenue();
+  const baseExpense = calculateTotalMonthlyBurn();
 
-  const cashFlow =
-    getCashFlowSummary();
+  const adjustedRevenue = baseRevenue * (1 + revenueChangePercent / 100);
+  const adjustedExpense = baseExpense * (1 + expenseChangePercent / 100);
+  const adjustedDelayImpact = base.receivables * (paymentDelayDays / 60);
 
-  const risk =
-    getRiskSummary();
+  const stressedProjectedCash = Math.round(
+    base.currentCash + (adjustedRevenue * 0.8) - adjustedExpense - adjustedDelayImpact
+  );
 
-  const healthScore =
-    calculateHealthScore();
+  const stressedRunway = adjustedExpense > 0
+    ? Math.max(0, Math.round((base.currentCash / (adjustedExpense / 30))))
+    : base.currentCash > 0 ? 120 : 0;
 
+  const runwayDiff = stressedRunway - base.runwayDays;
 
   return {
-
-    cashFlow,
-
-    risk,
-
-    healthScore,
-
-    generatedAt:
-      new Date().toISOString(),
-
+    baselineCash: base.projectedCash,
+    stressedCash: stressedProjectedCash,
+    cashVariance: stressedProjectedCash - base.projectedCash,
+    baselineRunway: base.runwayDays,
+    stressedRunway,
+    runwayDiff,
+    riskLevel:
+      base.currentCash === 0 && baseRevenue === 0
+        ? "Awaiting Data"
+        : stressedProjectedCash < 0
+        ? "Critical Deficit"
+        : stressedProjectedCash < 200000
+        ? "High Warning"
+        : "Manageable",
   };
 }

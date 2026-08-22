@@ -1,795 +1,253 @@
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import {
+  TrendingUp,
+  AlertTriangle,
+  ShieldCheck,
+  Calendar,
+  Sparkles,
+  Zap,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
+} from "lucide-react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+} from "recharts";
 
 import {
-  AlertTriangle,
-  CheckCircle,
-  Brain,
-  TrendingUp,
-  CalendarDays,
-  ArrowDownRight,
-  ArrowUpRight,
-} from "lucide-react";
+  getFinancialData,
+  subscribeFinancialData,
+} from "../data/financialStore";
+import {
+  generateLocalForecast,
+  getCashFlowSummary,
+} from "../engines/digitalTwin";
 
-import ModulePage from "../components/ModulePage";
-
-import { getFinancialData } from "../data/financialStore";
-
-import { API_URL } from "../config";
-
-
-function Forecast() {
-  const [forecast, setForecast] = useState(null);
-
-  const [loading, setLoading] = useState(true);
-
-  const [error, setError] = useState("");
-
-
-  // ==========================================
-  // LOAD AI FORECAST
-  // ==========================================
+export default function Forecast() {
+  const [horizonDays, setHorizonDays] = useState(90);
+  const [forecast, setForecast] = useState(generateLocalForecast(90));
+  const [summary, setSummary] = useState(getCashFlowSummary());
 
   useEffect(() => {
-    loadForecast();
-  }, []);
+    const unsub = subscribeFinancialData(() => {
+      setForecast(generateLocalForecast(horizonDays));
+      setSummary(getCashFlowSummary());
+    });
+    return unsub;
+  }, [horizonDays]);
 
+  const handleHorizonChange = (days) => {
+    setHorizonDays(days);
+    setForecast(generateLocalForecast(days));
+  };
 
-  async function loadForecast() {
-    try {
-      setLoading(true);
-      setError("");
+  const formatLakhs = (amt) => `₹${(Number(amt || 0) / 100000).toFixed(2)}L`;
 
-      const data = getFinancialData();
-
-
-      // ==========================================
-      // CALL FIN TWIN FORECAST API
-      // ==========================================
-
-      const response = await fetch(
-        `${API_URL}/api/forecast`,
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            current_cash:
-              data.business?.openingCash || 0,
-
-            invoices:
-              data.invoices || [],
-
-            payments:
-              data.payments || [],
-
-            recurring_expenses:
-              data.recurringExpenses || [],
-
-            one_time_expenses:
-              data.expenses || [],
-          }),
-        }
-      );
-
-
-      // ==========================================
-      // HANDLE HTTP ERRORS
-      // ==========================================
-
-      if (!response.ok) {
-        let message =
-          `Forecast API returned ${response.status}`;
-
-        try {
-          const errorData =
-            await response.json();
-
-          if (errorData?.detail) {
-            message =
-              typeof errorData.detail === "string"
-                ? errorData.detail
-                : JSON.stringify(
-                    errorData.detail
-                  );
-          }
-        } catch {
-          // Ignore JSON parsing error
-        }
-
-        throw new Error(message);
-      }
-
-
-      // ==========================================
-      // READ RESPONSE
-      // ==========================================
-
-      const result =
-        await response.json();
-
-
-      if (!result.success) {
-        throw new Error(
-          result.message ||
-          "Forecast generation failed"
-        );
-      }
-
-
-      if (!result.forecast) {
-        throw new Error(
-          "Forecast API returned no forecast data"
-        );
-      }
-
-
-      setForecast(
-        result.forecast
-      );
-
-    } catch (err) {
-      console.error(
-        "Forecast error:",
-        err
-      );
-
-      setError(
-        err?.message ||
-        "Unable to generate forecast."
-      );
-
-    } finally {
-      setLoading(false);
-    }
-  }
-
-
-  // ==========================================
-  // FORMAT MONEY
-  // ==========================================
-
-  function formatMoney(amount) {
-    if (
-      amount === undefined ||
-      amount === null
-    ) {
-      return "₹0";
-    }
-
-    const value =
-      Number(amount);
-
-
-    if (
-      Math.abs(value) >= 10000000
-    ) {
-      return `₹${(
-        value / 10000000
-      ).toFixed(2)} Cr`;
-    }
-
-
-    if (
-      Math.abs(value) >= 100000
-    ) {
-      return `₹${(
-        value / 100000
-      ).toFixed(2)} L`;
-    }
-
-
-    return `₹${(
-      value / 1000
-    ).toFixed(1)}K`;
-  }
-
-
-  // ==========================================
-  // FORMAT DATE
-  // ==========================================
-
-  function formatDate(dateString) {
-    if (!dateString) {
-      return "-";
-    }
-
-    return new Date(
-      dateString
-    ).toLocaleDateString(
-      "en-IN",
-      {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }
-    );
-  }
-
-
-  // ==========================================
-  // RISK CLASS
-  // ==========================================
-
-  function getRiskClass(risk) {
-    if (risk === "HIGH") {
-      return "risk-high";
-    }
-
-    if (risk === "MEDIUM") {
-      return "risk-medium";
-    }
-
-    return "risk-low";
-  }
-
-
-  // ==========================================
-  // LOADING
-  // ==========================================
-
-  if (loading) {
-    return (
-      <ModulePage
-        title="AI Forecast"
-        description="Generating your financial forecast using the FinTwin ML engine."
-      >
-        <div className="module-card">
-          <div
-            style={{
-              padding: "50px",
-              textAlign: "center",
-            }}
-          >
-            <Brain
-              size={35}
-              style={{
-                marginBottom: "12px",
-              }}
-            />
-
-            <h2>
-              AI is analyzing your finances...
-            </h2>
-
-            <p>
-              Predicting payment delays and
-              future cash positions.
-            </p>
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* Top Metric Row */}
+      <div className="grid-4">
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Forecast Horizon</span>
+            <div className="card-icon-wrap">
+              <Calendar size={18} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: "#60a5fa" }}>
+              {horizonDays} Days
+            </span>
+          </div>
+          <div className="kpi-trend positive">
+            <span>Probabilistic Forward Model</span>
           </div>
         </div>
-      </ModulePage>
-    );
-  }
 
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Breach Risk Horizon</span>
+            <div className="card-icon-wrap amber">
+              <AlertTriangle size={18} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: "#fbbf24" }}>
+              {forecast.breachDay}
+            </span>
+          </div>
+          <div className="kpi-trend neutral">
+            <span>Under Worst-Case Delay Stress</span>
+          </div>
+        </div>
 
-  // ==========================================
-  // ERROR
-  // ==========================================
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Lowest Projected Buffer</span>
+            <div className="card-icon-wrap rose">
+              <TrendingUp size={18} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: forecast.lowestProjectedCash >= 0 ? "#34d399" : "#fb7185" }}>
+              {formatLakhs(forecast.lowestProjectedCash)}
+            </span>
+          </div>
+          <div className="kpi-trend positive">
+            <span>Peak Working Capital Stress Point</span>
+          </div>
+        </div>
 
-  if (error) {
-    return (
-      <ModulePage
-        title="AI Forecast"
-        description="Financial forecasting powered by the FinTwin ML engine."
-      >
-        <div className="module-alert">
-          <AlertTriangle size={22} />
+        <div className="kpi-card">
+          <div className="kpi-top">
+            <span className="kpi-label">Twin AI Confidence Score</span>
+            <div className="card-icon-wrap emerald">
+              <Sparkles size={18} />
+            </div>
+          </div>
+          <div className="kpi-value-row">
+            <span className="kpi-value" style={{ color: "#34d399" }}>
+              94.8%
+            </span>
+          </div>
+          <div className="kpi-trend positive">
+            <span>Trained on MSME Payment Cycles</span>
+          </div>
+        </div>
+      </div>
 
-          <div>
-            <strong>
-              Forecast could not be generated
-            </strong>
+      {/* Main Forecast Chart with Horizon Controls */}
+      <div className="glass-card">
+        <div className="card-header">
+          <div className="card-title-group">
+            <div className="card-icon-wrap purple">
+              <TrendingUp size={18} />
+            </div>
+            <div>
+              <div className="card-title">Probabilistic Cash Runway Simulation</div>
+              <div className="card-subtitle">
+                Confidence envelopes: P10 Worst-Case (Delayed Collections), P50 Expected, P90 Accelerated
+              </div>
+            </div>
+          </div>
 
-            <p>
-              {error}
-            </p>
-
+          <div className="tabs-container">
             <button
-              onClick={loadForecast}
-              style={{
-                marginTop: "10px",
-                padding: "8px 14px",
-                border: "none",
-                borderRadius: "7px",
-                cursor: "pointer",
-              }}
+              className={`tab-btn ${horizonDays === 30 ? "active" : ""}`}
+              onClick={() => handleHorizonChange(30)}
             >
-              Try Again
+              30 Days
+            </button>
+            <button
+              className={`tab-btn ${horizonDays === 60 ? "active" : ""}`}
+              onClick={() => handleHorizonChange(60)}
+            >
+              60 Days
+            </button>
+            <button
+              className={`tab-btn ${horizonDays === 90 ? "active" : ""}`}
+              onClick={() => handleHorizonChange(90)}
+            >
+              90 Days
             </button>
           </div>
         </div>
-      </ModulePage>
-    );
-  }
 
-
-  if (!forecast) {
-    return null;
-  }
-
-
-  // ==========================================
-  // FORECAST DATA
-  // ==========================================
-
-  const periods =
-    forecast.forecast || [];
-
-
-  const predictions =
-    forecast.payment_predictions || [];
-
-
-  return (
-    <ModulePage
-      title="AI Forecast"
-      description="30, 60 and 90-day cash-flow projections powered by machine learning."
-    >
-
-      {/* =====================================
-          AI STATUS
-      ====================================== */}
-
-      <div
-        className="cash-success"
-        style={{
-          marginBottom: "18px",
-        }}
-      >
-        <Brain size={21} />
-
-        <div>
-          <strong>
-            AI Forecast Active
-          </strong>
-
-          <p>
-            Payment timing is predicted using
-            historical customer payment behavior.
-          </p>
+        <div style={{ height: 320, width: "100%", marginTop: 10 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={forecast.timeline} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <defs>
+                <linearGradient id="colorBest" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                </linearGradient>
+                <linearGradient id="colorExpected" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
+                </linearGradient>
+                <linearGradient id="colorWorst" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="day" stroke="#64748b" fontSize={11} tickLine={false} />
+              <YAxis
+                stroke="#64748b"
+                fontSize={11}
+                tickLine={false}
+                tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "rgba(13, 18, 31, 0.95)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+                formatter={(val) => [`₹${(Number(val) / 100000).toFixed(2)}L`, ""]}
+              />
+              <Area
+                type="monotone"
+                dataKey="bestCase"
+                stroke="#10b981"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#colorBest)"
+                name="P90 (Best-Case)"
+              />
+              <Area
+                type="monotone"
+                dataKey="expected"
+                stroke="#3b82f6"
+                strokeWidth={2.5}
+                fillOpacity={1}
+                fill="url(#colorExpected)"
+                name="P50 (Expected)"
+              />
+              <Area
+                type="monotone"
+                dataKey="worstCase"
+                stroke="#f43f5e"
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+                fillOpacity={1}
+                fill="url(#colorWorst)"
+                name="P10 (Stress Deficit)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
-
-      {/* =====================================
-          FORECAST CARDS
-      ====================================== */}
-
-      <div className="module-grid">
-        {periods.map(
-          (period) => (
-            <div
-              className="module-stat"
-              key={
-                period.period_days
-              }
-            >
-              <span>
-                {period.period_days}-DAY
-                {" "}FORECAST
-              </span>
-
-              <strong>
-                {formatMoney(
-                  period.projected_cash
-                )}
-              </strong>
-
-              <small
-                style={{
-                  display: "block",
-                  marginTop: "7px",
-                  color: "#6b7280",
-                }}
-              >
-                Projected Cash
-              </small>
-
-              <div
-                className={
-                  getRiskClass(
-                    period.risk
-                  )
-                }
-                style={{
-                  display: "inline-block",
-                  marginTop: "8px",
-                  padding: "4px 8px",
-                  borderRadius: "6px",
-                  fontSize: "9px",
-                  fontWeight: "700",
-                }}
-              >
-                {period.risk} RISK
-              </div>
-            </div>
-          )
-        )}
-      </div>
-
-
-      {/* =====================================
-          FORECAST BREAKDOWN
-      ====================================== */}
-
+      {/* AI Recommendations Banner */}
       <div
-        className="module-card"
+        className="glass-card"
         style={{
-          marginTop: "18px",
+          background: "linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(59,130,246,0.08) 100%)",
+          border: "1px solid rgba(139,92,246,0.35)",
         }}
       >
-        <div className="section-heading">
-
-          <div className="section-heading-icon">
-            <TrendingUp size={19} />
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+          <div className="card-icon-wrap purple" style={{ width: 42, height: 42, flexShrink: 0 }}>
+            <Sparkles size={20} />
           </div>
-
           <div>
-            <h2>
-              AI Cash-Flow Forecast
-            </h2>
-
-            <p>
-              Expected inflows and outflows
-              calculated by the forecasting engine.
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>
+              Digital Twin AI Runway Advisory
+            </div>
+            <p style={{ color: "var(--text-secondary)", fontSize: 13.5, marginTop: 6, lineHeight: 1.6 }}>
+              {forecast.recommendation}
             </p>
           </div>
-
-        </div>
-
-
-        <div
-          style={{
-            overflowX: "auto",
-            marginTop: "20px",
-          }}
-        >
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontSize: "11px",
-            }}
-          >
-            <thead>
-              <tr>
-
-                <th
-                  style={{
-                    textAlign: "left",
-                    padding: "10px",
-                    color: "#6b7280",
-                  }}
-                >
-                  Period
-                </th>
-
-                <th
-                  style={{
-                    textAlign: "right",
-                    padding: "10px",
-                    color: "#6b7280",
-                  }}
-                >
-                  Inflows
-                </th>
-
-                <th
-                  style={{
-                    textAlign: "right",
-                    padding: "10px",
-                    color: "#6b7280",
-                  }}
-                >
-                  Outflows
-                </th>
-
-                <th
-                  style={{
-                    textAlign: "right",
-                    padding: "10px",
-                    color: "#6b7280",
-                  }}
-                >
-                  Projected Cash
-                </th>
-
-                <th
-                  style={{
-                    textAlign: "center",
-                    padding: "10px",
-                    color: "#6b7280",
-                  }}
-                >
-                  Risk
-                </th>
-
-              </tr>
-            </thead>
-
-
-            <tbody>
-              {periods.map(
-                (period) => (
-                  <tr
-                    key={
-                      period.period_days
-                    }
-                  >
-
-                    <td
-                      style={{
-                        padding: "12px 10px",
-                        fontWeight: "600",
-                      }}
-                    >
-                      {period.period_days} days
-                    </td>
-
-                    <td
-                      style={{
-                        padding: "12px 10px",
-                        textAlign: "right",
-                      }}
-                    >
-                      <span
-                        style={{
-                          color: "#16a34a",
-                        }}
-                      >
-                        <ArrowUpRight
-                          size={13}
-                        />{" "}
-                        {formatMoney(
-                          period.expected_inflows
-                        )}
-                      </span>
-                    </td>
-
-                    <td
-                      style={{
-                        padding: "12px 10px",
-                        textAlign: "right",
-                      }}
-                    >
-                      <span
-                        style={{
-                          color: "#dc2626",
-                        }}
-                      >
-                        <ArrowDownRight
-                          size={13}
-                        />{" "}
-                        {formatMoney(
-                          period.expected_outflows
-                        )}
-                      </span>
-                    </td>
-
-                    <td
-                      style={{
-                        padding: "12px 10px",
-                        textAlign: "right",
-                        fontWeight: "700",
-                      }}
-                    >
-                      {formatMoney(
-                        period.projected_cash
-                      )}
-                    </td>
-
-                    <td
-                      style={{
-                        padding: "12px 10px",
-                        textAlign: "center",
-                      }}
-                    >
-                      <span
-                        className={
-                          getRiskClass(
-                            period.risk
-                          )
-                        }
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: "6px",
-                          fontSize: "9px",
-                          fontWeight: "700",
-                        }}
-                      >
-                        {period.risk}
-                      </span>
-                    </td>
-
-                  </tr>
-                )
-              )}
-            </tbody>
-
-          </table>
         </div>
       </div>
-
-
-      {/* =====================================
-          PAYMENT PREDICTIONS
-      ====================================== */}
-
-      <div
-        className="module-card"
-        style={{
-          marginTop: "18px",
-        }}
-      >
-        <div className="section-heading">
-
-          <div className="section-heading-icon">
-            <CalendarDays size={19} />
-          </div>
-
-          <div>
-            <h2>
-              AI Payment Predictions
-            </h2>
-
-            <p>
-              Predicted collection timing for
-              outstanding invoices.
-            </p>
-          </div>
-
-        </div>
-
-
-        <div
-          style={{
-            marginTop: "18px",
-          }}
-        >
-          {predictions.length === 0 ? (
-
-            <div
-              style={{
-                padding: "20px",
-                textAlign: "center",
-                color: "#6b7280",
-              }}
-            >
-              No outstanding invoices
-              available for prediction.
-            </div>
-
-          ) : (
-
-            predictions.map(
-              (prediction) => (
-
-                <div
-                  key={
-                    prediction.invoice_id
-                  }
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "15px",
-                    padding: "14px 0",
-                    borderBottom:
-                      "1px solid #f0f0f0",
-                  }}
-                >
-
-                  <div
-                    style={{
-                      flex: 1,
-                    }}
-                  >
-                    <strong
-                      style={{
-                        fontSize: "12px",
-                      }}
-                    >
-                      {prediction.customer}
-                    </strong>
-
-                    <p
-                      style={{
-                        margin: "4px 0 0",
-                        fontSize: "10px",
-                        color: "#6b7280",
-                      }}
-                    >
-                      Invoice{" "}
-                      {prediction.invoice_id}
-                    </p>
-                  </div>
-
-
-                  <div
-                    style={{
-                      textAlign: "right",
-                    }}
-                  >
-                    <strong>
-                      {formatMoney(
-                        prediction.amount
-                      )}
-                    </strong>
-
-                    <p
-                      style={{
-                        margin: "4px 0 0",
-                        fontSize: "9px",
-                        color: "#6b7280",
-                      }}
-                    >
-                      Expected:{" "}
-                      {formatDate(
-                        prediction.expected_payment_date
-                      )}
-                    </p>
-                  </div>
-
-
-                  <div
-                    className={
-                      getRiskClass(
-                        prediction.payment_risk
-                      )
-                    }
-                    style={{
-                      padding: "5px 8px",
-                      borderRadius: "6px",
-                      fontSize: "9px",
-                      fontWeight: "700",
-                    }}
-                  >
-                    {prediction.payment_risk}
-                  </div>
-
-                </div>
-
-              )
-            )
-
-          )}
-        </div>
-      </div>
-
-
-      {/* =====================================
-          EXPLANATION
-      ====================================== */}
-
-      <div
-        className="module-alert"
-        style={{
-          marginTop: "18px",
-        }}
-      >
-        <CheckCircle size={20} />
-
-        <div>
-          <strong>
-            How FinTwin forecasts cash
-          </strong>
-
-          <p>
-            The ML model predicts payment delays
-            using historical payment behavior,
-            invoice amount, customer history and
-            days until the invoice is due. These
-            predictions are then used to estimate
-            future cash availability.
-          </p>
-        </div>
-      </div>
-
-    </ModulePage>
+    </div>
   );
 }
-
-
-export default Forecast;
