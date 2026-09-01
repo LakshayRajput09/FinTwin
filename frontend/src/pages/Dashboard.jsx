@@ -127,7 +127,7 @@ export default function Dashboard() {
                 </h2>
               </div>
               <p style={{ color: "var(--text-secondary)", fontSize: 13.5, maxWidth: 640, lineHeight: 1.6 }}>
-                FinTwin starts with a clean slate ready for your business data. Enter your current liquid cash balance below and upload your invoices to calculate your real cash runway, delay predictions, and working capital.
+                NexFin starts with a clean slate ready for your business data. Enter your current liquid cash balance below and upload your invoices to calculate your real cash runway, delay predictions, and working capital.
               </p>
 
               {/* Inline Quick Cash Setup */}

@@ -108,7 +108,7 @@ export default function Gst() {
     const csvContent =
       "data:text/csv;charset=utf-8," +
       [
-        "GSTR Return Summary Report - FinTwin Digital Twin",
+        "GSTR Return Summary Report - NexFin Digital Twin",
         `Business Name,${business.name || "My Business"}`,
         `GSTIN,${business.gstin || "Unspecified"}`,
         `Generated Date,${new Date().toISOString().slice(0, 10)}`,

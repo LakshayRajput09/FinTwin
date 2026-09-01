@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AlertTriangle,
   Brain,
@@ -28,7 +28,7 @@ import {
 } from "recharts";
 
 import ModulePage from "../components/ModulePage";
-import { getFinancialData } from "../data/financialStore";
+import { getFinancialData, subscribeFinancialData } from "../data/financialStore";
 import { API_URL } from "../config";
 
 function buildLocalSimulation(data, revenueChange, expenseChange, paymentDelay) {
@@ -141,6 +141,17 @@ function Simulator() {
   const [activeChartTab, setActiveChartTab] = useState("bar"); // "bar" | "trajectory" | "cards"
 
   // ==========================================
+  // AUTO-SYNC WITH STORE & PARAMETERS
+  // ==========================================
+  useEffect(() => {
+    runSimulation();
+    const unsub = subscribeFinancialData(() => {
+      runSimulation();
+    });
+    return unsub;
+  }, [revenueChange, expenseChange, paymentDelay]);
+
+  // ==========================================
   // FORMAT MONEY
   // ==========================================
   function formatMoney(amount) {
@@ -225,7 +236,6 @@ function Simulator() {
     setRevenueChange(0);
     setExpenseChange(0);
     setPaymentDelay(0);
-    setSimulation(null);
     setError("");
   }
 
@@ -260,26 +270,41 @@ function Simulator() {
     };
   }) || [];
 
-  // Generate 90-Day Trajectory Curve
+  // Generate Granular 90-Day Trajectory Curve using real uploaded invoice dates
   const trajectoryData = [];
   if (simulation) {
+    const data = getFinancialData();
     const currentCash = Number(simulation.base?.current_cash || 0);
-    const receivables = Number(simulation.base?.receivables || 0);
+    const pendingInvoices = (data.invoices || []).filter((i) => i.status !== "Paid");
     const totalExpenses = Number(simulation.base?.total_expenses || 0);
     const dailyBaseBurn = totalExpenses / 30;
 
-    const adjRev = receivables * (1 + revenueChange / 100);
     const adjExp = totalExpenses * (1 + expenseChange / 100);
     const dailyStressedBurn = adjExp / 30;
+    const now = new Date();
+
+    const invoiceSchedules = pendingInvoices.map((inv) => {
+      const amt = Number(inv.amount || 0);
+      const due = new Date(inv.dueDate || now);
+      const daysUntilDue = Math.max(0, Math.round((due - now) / (1000 * 60 * 60 * 24)));
+      const delay = Number(inv.predictedDelayDays || 5);
+      return {
+        amount: amt,
+        baseArrivalDay: daysUntilDue + delay,
+        stressedArrivalDay: daysUntilDue + delay + Number(paymentDelay || 0),
+      };
+    });
 
     for (let d = 0; d <= 90; d += 5) {
-      // Baseline trajectory
-      const baseInflow = receivables > 0 ? (d / 60) * receivables : 0;
-      const baseCash = Math.round(currentCash + baseInflow - dailyBaseBurn * d);
+      const baseInflow = invoiceSchedules
+        .filter((s) => s.baseArrivalDay <= d)
+        .reduce((sum, s) => sum + s.amount, 0);
 
-      // Stressed trajectory
-      const delayOffset = Math.max(0, d - paymentDelay);
-      const stressedInflow = adjRev > 0 ? (delayOffset / 60) * adjRev : 0;
+      const stressedInflow = invoiceSchedules
+        .filter((s) => s.stressedArrivalDay <= d)
+        .reduce((sum, s) => sum + Math.round(s.amount * (1 + revenueChange / 100)), 0);
+
+      const baseCash = Math.round(currentCash + baseInflow - dailyBaseBurn * d);
       const stressedCash = Math.round(currentCash + stressedInflow - dailyStressedBurn * d);
 
       trajectoryData.push({

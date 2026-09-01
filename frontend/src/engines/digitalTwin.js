@@ -166,31 +166,59 @@ export function getCashFlowSummary() {
 }
 
 // ==========================================
-// LOCAL AI 90-DAY FORECAST ENGINE
+// LOCAL AI 90-DAY FORECAST ENGINE (100% IN SYNC WITH UPLOADED DATA)
 // ==========================================
 
 export function generateLocalForecast(days = 90) {
   const currentCash = calculateCurrentCash();
-  const monthlyBurn = calculateTotalMonthlyBurn();
-  const dailyBurn = monthlyBurn / 30;
-  const revenue = calculateRevenue();
+  const invoices = getInvoices();
+  const pendingInvoices = invoices.filter((i) => i.status !== "Paid");
+  const totalMonthlyBurn = calculateTotalMonthlyBurn();
+  const dailyBurn = totalMonthlyBurn / 30;
+
+  const now = new Date();
+
+  // Map each individual uploaded invoice to timeline offsets
+  const invoiceSchedules = pendingInvoices.map((inv) => {
+    const amt = Number(inv.amount || 0);
+    const due = new Date(inv.dueDate || now);
+    const daysUntilDue = Math.max(0, Math.round((due - now) / (1000 * 60 * 60 * 24)));
+    const delay = Number(inv.predictedDelayDays || 5);
+
+    return {
+      amount: amt,
+      bestDay: daysUntilDue,
+      expectedDay: daysUntilDue + delay,
+      worstDay: daysUntilDue + delay + 25,
+    };
+  });
 
   const timeline = [];
   const step = 5;
   let breachDay = null;
 
   for (let d = 0; d <= days; d += step) {
-    const dailyInflowExpected = revenue > 0 ? (d / 30) * (revenue / 3) : 0;
-    const dailyInflowWorst = dailyInflowExpected * 0.7;
-    const dailyInflowBest = dailyInflowExpected * 1.25;
+    // Calculate cumulative inflows realized up to day d
+    const bestInflow = invoiceSchedules
+      .filter((s) => s.bestDay <= d)
+      .reduce((sum, s) => sum + s.amount, 0);
 
+    const expectedInflow = invoiceSchedules
+      .filter((s) => s.expectedDay <= d)
+      .reduce((sum, s) => sum + s.amount, 0);
+
+    const worstInflow = invoiceSchedules
+      .filter((s) => s.worstDay <= d)
+      .reduce((sum, s) => sum + Math.round(s.amount * 0.75), 0);
+
+    // Cumulative operational burn
     const cumulativeBurn = dailyBurn * d;
 
-    const expectedVal = Math.round(currentCash + dailyInflowExpected - cumulativeBurn);
-    const worstVal = Math.round(currentCash + dailyInflowWorst - cumulativeBurn * 1.15);
-    const bestVal = Math.round(currentCash + dailyInflowBest - cumulativeBurn * 0.9);
+    const expectedVal = Math.round(currentCash + expectedInflow - cumulativeBurn);
+    const worstVal = Math.round(currentCash + worstInflow - (cumulativeBurn * 1.1));
+    const bestVal = Math.round(currentCash + bestInflow - (cumulativeBurn * 0.9));
 
-    if (worstVal < 0 && breachDay === null && currentCash > 0) {
+    if (worstVal < 0 && breachDay === null && (currentCash > 0 || invoiceSchedules.length > 0)) {
       breachDay = d;
     }
 
@@ -204,17 +232,19 @@ export function generateLocalForecast(days = 90) {
     });
   }
 
+  const lowestProjected = timeline.length > 0 ? Math.min(...timeline.map((t) => t.worstCase)) : 0;
+
   return {
     timeline,
     initialCash: currentCash,
-    lowestProjectedCash: Math.min(...timeline.map((t) => t.worstCase)),
+    lowestProjectedCash: lowestProjected,
     breachDay: breachDay ? `Day ${breachDay}` : currentCash > 0 ? "No breach (Safe)" : "N/A",
     recommendation:
-      currentCash === 0 && revenue === 0
+      currentCash === 0 && invoiceSchedules.length === 0
         ? "Upload your invoices (CSV/Excel/PDF/JSON) or set opening cash to generate live predictive runway."
         : breachDay && breachDay <= 45
-        ? "Early warning: Consider invoice discounting or short-term credit line to avoid liquidity crunch."
-        : "Liquidity stable: Cash reserves remain above minimum safety threshold.",
+        ? `Early warning: Cash deficit projected around Day ${breachDay}. Consider invoice discounting or short-term credit line.`
+        : "Liquidity stable: Cash reserves and collection schedule remain above minimum safety threshold.",
   };
 }
 

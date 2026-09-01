@@ -50,7 +50,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
   const [invoices, setInvoices] = useState(getInvoices());
 
   const currentInfo = titles[location.pathname] || {
-    title: "FinTwin MSME Platform",
+    title: "NexFin MSME Platform",
     sub: "AI Financial Intelligence & Digital Twin",
   };
 

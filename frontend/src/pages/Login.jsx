@@ -94,11 +94,11 @@ export default function Login() {
       {/* Brand Header */}
       <Link to="/" style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
         <div className="brand-logo-icon" style={{ width: 42, height: 42, fontSize: 18 }}>
-          FT
+          NF
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5, color: "#fff" }}>
-            FinTwin
+            NexFin
           </span>
           <span style={{ fontSize: 11, fontWeight: 600, color: "#34d399", letterSpacing: 1, textTransform: "uppercase" }}>
             AI Financial Digital Twin

@@ -33,7 +33,7 @@ export default function AiCopilotModal({ isOpen, onClose }) {
     {
       id: "m1",
       role: "assistant",
-      text: "Hello! I am your FinTwin AI Financial Copilot. I continuously simulate your business cash flow, customer payment delays, and working capital risk. How can I assist you today?",
+      text: "Hello! I am your NexFin AI Financial Copilot. I continuously simulate your business cash flow, customer payment delays, and working capital risk. How can I assist you today?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -121,7 +121,7 @@ Would you like me to simulate a what-if stress scenario or check working capital
           </div>
           <div>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: "#fff" }}>
-              FinTwin Copilot
+              NexFin Copilot
             </div>
             <div style={{ fontSize: 10.5, color: "#a78bfa" }}>
               Active Twin Diagnostic
@@ -146,7 +146,7 @@ Would you like me to simulate a what-if stress scenario or check working capital
 
         {isTyping && (
           <div className="copilot-msg assistant" style={{ fontStyle: "italic", color: "var(--text-muted)" }}>
-            FinTwin is running simulation calculations...
+            NexFin is running simulation calculations...
           </div>
         )}
 

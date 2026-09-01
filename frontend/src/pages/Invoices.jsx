@@ -29,6 +29,16 @@ import {
   subscribeFinancialData,
 } from "../data/financialStore";
 import { parseInvoiceFile } from "../utils/invoiceParser";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  CartesianGrid,
+} from "recharts";
 
 export default function Invoices() {
   const [invoices, setInvoices] = useState(getInvoices());
@@ -214,6 +224,70 @@ export default function Invoices() {
           </div>
         </div>
       </div>
+
+      {/* Visual Invoices Status Chart */}
+      {invoices.length > 0 && (
+        <div className="glass-card" style={{ padding: "20px 24px" }}>
+          <div className="card-header" style={{ marginBottom: 10 }}>
+            <div className="card-title-group">
+              <div className="card-icon-wrap emerald">
+                <FileText size={18} />
+              </div>
+              <div>
+                <div className="card-title">Live Receivables Portfolio Breakdown</div>
+                <div className="card-subtitle">
+                  Synchronized with uploaded invoices — Pending, Overdue, and Settled Cash
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ height: 160, width: "100%", marginTop: 8 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                layout="vertical"
+                data={[
+                  { name: "Pending", amount: totalPending, count: invoices.filter((i) => i.status === "Pending").length, fill: "#fbbf24" },
+                  { name: "Overdue", amount: totalOverdue, count: invoices.filter((i) => i.status === "Overdue").length, fill: "#fb7185" },
+                  { name: "Collected", amount: totalPaid, count: invoices.filter((i) => i.status === "Paid").length, fill: "#34d399" },
+                ]}
+                margin={{ top: 10, right: 30, left: 10, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis
+                  type="number"
+                  stroke="#94a3b8"
+                  fontSize={11}
+                  tickLine={false}
+                  tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
+                />
+                <YAxis dataKey="name" type="category" stroke="#cbd5e1" fontSize={12} tickLine={false} width={80} />
+                <Tooltip
+                  contentStyle={{
+                    background: "rgba(15, 23, 42, 0.95)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                  formatter={(val, name, props) => [
+                    `₹${Number(val).toLocaleString("en-IN")} (${props.payload.count} invoices)`,
+                    "Total Amount",
+                  ]}
+                />
+                <Bar dataKey="amount" radius={[0, 6, 6, 0]} maxBarSize={24}>
+                  {[
+                    { fill: "#fbbf24" },
+                    { fill: "#fb7185" },
+                    { fill: "#34d399" },
+                  ].map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       {/* Filter, Search & Actions Bar */}
       <div className="glass-card" style={{ padding: "18px 24px" }}>

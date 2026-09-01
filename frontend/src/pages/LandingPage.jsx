@@ -52,10 +52,10 @@ export default function LandingPage() {
       <header className="landing-nav">
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div className="brand-logo-icon" style={{ width: 36, height: 36, fontSize: 15 }}>
-            FT
+            NF
           </div>
           <span style={{ fontSize: 19, fontWeight: 800, letterSpacing: -0.5 }}>
-            FinTwin
+            NexFin
           </span>
           <span
             style={{
@@ -146,7 +146,7 @@ export default function LandingPage() {
         </h1>
 
         <p className="landing-hero-subtitle">
-          Eliminate surprise cash deficits. FinTwin builds an AI replica of your business finances —
+          Eliminate surprise cash deficits. NexFin builds an AI replica of your business finances —
           predicting customer payment delays, stress-testing shocks, and unlocking instant working capital.
         </p>
 
@@ -374,7 +374,7 @@ export default function LandingPage() {
             Engineered for High-Growth Businesses
           </h2>
           <p style={{ color: "var(--text-secondary)", fontSize: 15, maxWidth: 640, margin: "8px auto 0" }}>
-            From predictive invoices to scenario stress tests, FinTwin delivers end-to-end liquidity control.
+            From predictive invoices to scenario stress tests, NexFin delivers end-to-end liquidity control.
           </p>
         </div>
 
@@ -435,7 +435,7 @@ export default function LandingPage() {
             </div>
             <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Tally, Zoho & GSTN Sync</h3>
             <p style={{ color: "var(--text-secondary)", fontSize: 13.5, lineHeight: 1.6 }}>
-              Zero manual data entry. FinTwin connects to your existing accounting stack and e-invoice registries seamlessly.
+              Zero manual data entry. NexFin connects to your existing accounting stack and e-invoice registries seamlessly.
             </p>
           </div>
         </div>
@@ -451,7 +451,7 @@ export default function LandingPage() {
               Financial ROI Estimator
             </span>
             <h2 style={{ fontSize: 32, fontWeight: 800, marginTop: 6 }}>
-              How Much Working Capital Can FinTwin Unlock?
+              How Much Working Capital Can NexFin Unlock?
             </h2>
           </div>
 
@@ -591,7 +591,7 @@ export default function LandingPage() {
                 <CheckCircle2 size={15} style={{ color: "#34d399" }} /> Multi-Format Invoices (Excel, PDF, CSV)
               </li>
               <li style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <CheckCircle2 size={15} style={{ color: "#34d399" }} /> FinTwin AI Copilot Assistant
+                <CheckCircle2 size={15} style={{ color: "#34d399" }} /> NexFin AI Copilot Assistant
               </li>
             </ul>
             <button className="btn btn-primary" style={{ width: "100%" }} onClick={() => navigate(isAuthenticated ? "/dashboard" : "/signup")}>
@@ -637,7 +637,7 @@ export default function LandingPage() {
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <h2 style={{ fontSize: 30, fontWeight: 800 }}>Frequently Asked Questions</h2>
           <p style={{ color: "var(--text-secondary)", fontSize: 14, marginTop: 6 }}>
-            Everything you need to know about FinTwin and financial digital twins.
+            Everything you need to know about NexFin and financial digital twins.
           </p>
         </div>
 
@@ -649,10 +649,10 @@ export default function LandingPage() {
             },
             {
               q: "What file formats are supported for adding invoices?",
-              a: "FinTwin supports CSV, Microsoft Excel (.xlsx and .xls), JSON (including GST e-invoice formats), PDF invoices with automated AI OCR extraction, and plain text/TSV files.",
+              a: "NexFin supports CSV, Microsoft Excel (.xlsx and .xls), JSON (including GST e-invoice formats), PDF invoices with automated AI OCR extraction, and plain text/TSV files.",
             },
             {
-              q: "How does FinTwin predict customer payment delays?",
+              q: "How does NexFin predict customer payment delays?",
               a: "Our machine learning models analyze historical customer payment habits, invoice amounts, invoice due dates, and macro industry patterns to forecast the expected collection date with over 94% accuracy.",
             },
             {
@@ -687,11 +687,11 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1240, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div className="brand-logo-icon" style={{ width: 30, height: 30, fontSize: 13 }}>
-              FT
+              NF
             </div>
-            <span style={{ fontSize: 16, fontWeight: 800 }}>FinTwin</span>
+            <span style={{ fontSize: 16, fontWeight: 800 }}>NexFin</span>
             <span style={{ fontSize: 12, color: "var(--text-muted)", marginLeft: 12 }}>
-              © 2026 FinTwin Technologies Inc. All rights reserved.
+              © 2026 NexFin Technologies Inc. All rights reserved.
             </span>
           </div>
 

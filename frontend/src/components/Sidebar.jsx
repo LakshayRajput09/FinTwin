@@ -82,10 +82,10 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
       {/* Brand Header */}
       <div className="sidebar-header">
         <Link to="/landing" className="brand-logo-wrap" onClick={handleNavClick}>
-          <div className="brand-logo-icon">FT</div>
+          <div className="brand-logo-icon">NF</div>
           {!collapsed && (
             <div className="brand-text">
-              <span className="brand-title">FinTwin</span>
+              <span className="brand-title">NexFin</span>
               <span className="brand-subtitle">
                 <Sparkles size={11} /> AI Digital Twin
               </span>

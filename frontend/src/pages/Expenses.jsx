@@ -10,6 +10,9 @@ import {
   PieChart as PieIcon,
   ShieldCheck,
   Zap,
+  BarChart3,
+  RefreshCw,
+  FolderPlus,
 } from "lucide-react";
 import {
   PieChart,
@@ -21,6 +24,8 @@ import {
   Bar,
   XAxis,
   YAxis,
+  CartesianGrid,
+  Legend,
 } from "recharts";
 
 import {
@@ -48,10 +53,19 @@ const COLORS = [
   "#64748b",
 ];
 
+const DEFAULT_EXPENSE_PRESETS = [
+  { category: "Payroll & Salaries", description: "Monthly Core Team Payroll", amount: 240000, recurring: true, dayOfMonth: 1 },
+  { category: "Facility & Rent", description: "Office & Warehouse Facility Lease", amount: 75000, recurring: true, dayOfMonth: 5 },
+  { category: "Raw Materials", description: "Production Batch Consumables", amount: 120000, recurring: false, date: new Date().toISOString().slice(0, 10) },
+  { category: "Software & SaaS", description: "ERP, Cloud Infrastructure & Tools", amount: 35000, recurring: true, dayOfMonth: 10 },
+  { category: "Logistics & Freight", description: "Interstate Freight Shipments", amount: 45000, recurring: false, date: new Date().toISOString().slice(0, 10) },
+];
+
 export default function Expenses() {
   const [data, setData] = useState(getFinancialData());
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
+  const [chartViewMode, setChartViewMode] = useState("pie"); // "pie" | "bar"
 
   // Form State
   const [category, setCategory] = useState("Payroll & Salaries");
@@ -68,6 +82,7 @@ export default function Expenses() {
   }, []);
 
   const formatLakhs = (amt) => `₹${(Number(amt || 0) / 100000).toFixed(2)}L`;
+  const formatMoney = (amt) => `₹${Number(amt || 0).toLocaleString("en-IN")}`;
 
   const totalRecurring = calculateRecurringExpenses();
   const totalOneTime = calculateOneTimeExpenses();
@@ -75,17 +90,24 @@ export default function Expenses() {
 
   // Category breakdown data for charts
   const categoryMap = {};
-  data.recurringExpenses.forEach((r) => {
-    categoryMap[r.category] = (categoryMap[r.category] || 0) + Number(r.amount || 0);
+  (data.recurringExpenses || []).forEach((r) => {
+    const cat = r.category || "General";
+    categoryMap[cat] = (categoryMap[cat] || 0) + Number(r.amount || 0);
   });
-  data.expenses.forEach((e) => {
-    categoryMap[e.category] = (categoryMap[e.category] || 0) + Number(e.amount || 0);
+  (data.expenses || []).forEach((e) => {
+    const cat = e.category || "General";
+    categoryMap[cat] = (categoryMap[cat] || 0) + Number(e.amount || 0);
   });
 
-  const chartData = Object.keys(categoryMap).map((k) => ({
-    name: k,
-    value: categoryMap[k],
-  }));
+  const chartData = Object.keys(categoryMap)
+    .filter((k) => categoryMap[k] > 0)
+    .map((k) => ({
+      name: k,
+      value: categoryMap[k],
+      amount: categoryMap[k],
+    }));
+
+  const totalExpensesSum = chartData.reduce((s, c) => s + c.value, 0);
 
   const handleAddExpense = (e) => {
     e.preventDefault();
@@ -102,6 +124,12 @@ export default function Expenses() {
     setDescription("");
     setAmount("");
     setShowAddModal(false);
+  };
+
+  const handleLoadSamplePresets = () => {
+    DEFAULT_EXPENSE_PRESETS.forEach((item) => {
+      addExpense(item);
+    });
   };
 
   return (
@@ -161,26 +189,26 @@ export default function Expenses() {
 
         <div className="kpi-card">
           <div className="kpi-top">
-            <span className="kpi-label">Burn Optimization Potential</span>
+            <span className="kpi-label">Active Cost Centers</span>
             <div className="card-icon-wrap emerald">
               <Sparkles size={18} />
             </div>
           </div>
           <div className="kpi-value-row">
             <span className="kpi-value" style={{ color: "#34d399" }}>
-              ₹0.85L
+              {chartData.length} Categories
             </span>
           </div>
           <div className="kpi-trend positive">
-            <span>AI identified 3 reducible cost centers</span>
+            <span>{chartData.length > 0 ? "Categorized & Tracked" : "Awaiting Data Entry"}</span>
           </div>
         </div>
       </div>
 
       {/* Expense Analytics & Category Breakdown */}
       <div className="grid-12">
-        {/* Pie Breakdown */}
-        <div className="col-span-6 glass-card">
+        {/* Pie / Donut Breakdown */}
+        <div className="col-span-6 glass-card" style={{ display: "flex", flexDirection: "column" }}>
           <div className="card-header">
             <div className="card-title-group">
               <div className="card-icon-wrap purple">
@@ -188,39 +216,204 @@ export default function Expenses() {
               </div>
               <div>
                 <div className="card-title">Expense Distribution by Category</div>
-                <div className="card-subtitle">Aggregated fixed & variable expenditure</div>
+                <div className="card-subtitle">Aggregated fixed & variable operational expenditure</div>
               </div>
             </div>
+
+            {/* View Mode Toggle */}
+            {chartData.length > 0 && (
+              <div style={{ display: "flex", gap: 4, background: "rgba(15,23,42,0.6)", padding: 2, borderRadius: 6 }}>
+                <button
+                  onClick={() => setChartViewMode("pie")}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    border: "none",
+                    background: chartViewMode === "pie" ? "#3b82f6" : "transparent",
+                    color: chartViewMode === "pie" ? "#fff" : "var(--text-muted)",
+                    fontSize: 11,
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                  title="Donut Chart View"
+                >
+                  <PieIcon size={13} style={{ verticalAlign: "middle" }} />
+                </button>
+                <button
+                  onClick={() => setChartViewMode("bar")}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    border: "none",
+                    background: chartViewMode === "bar" ? "#3b82f6" : "transparent",
+                    color: chartViewMode === "bar" ? "#fff" : "var(--text-muted)",
+                    fontSize: 11,
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                  title="Bar Chart View"
+                >
+                  <BarChart3 size={13} style={{ verticalAlign: "middle" }} />
+                </button>
+              </div>
+            )}
           </div>
 
-          <div style={{ height: 260, width: "100%" }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={95}
-                  paddingAngle={4}
-                  dataKey="value"
+          {/* Render Active Chart or Empty State */}
+          {chartData.length > 0 ? (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 300 }}>
+              {chartViewMode === "pie" ? (
+                <div style={{ height: 220, width: "100%", position: "relative" }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={90}
+                        paddingAngle={4}
+                        dataKey="value"
+                        animationDuration={600}
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          background: "rgba(15, 23, 42, 0.95)",
+                          border: "1px solid rgba(255,255,255,0.15)",
+                          borderRadius: 8,
+                          fontSize: 12,
+                        }}
+                        formatter={(val) => [`${formatMoney(val)} (${totalExpensesSum > 0 ? ((Number(val) / totalExpensesSum) * 100).toFixed(1) : 0}%)`, "Expenditure"]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div style={{ height: 220, width: "100%" }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} layout="vertical" margin={{ top: 10, right: 25, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                      <XAxis
+                        type="number"
+                        stroke="#94a3b8"
+                        fontSize={11}
+                        tickLine={false}
+                        tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
+                      />
+                      <YAxis dataKey="name" type="category" stroke="#cbd5e1" fontSize={11} tickLine={false} width={90} />
+                      <Tooltip
+                        contentStyle={{
+                          background: "rgba(15, 23, 42, 0.95)",
+                          border: "1px solid rgba(255,255,255,0.15)",
+                          borderRadius: 8,
+                          fontSize: 12,
+                        }}
+                        formatter={(val) => [formatMoney(val), "Amount"]}
+                      />
+                      <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={20}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Categorical Color Legend Grid */}
+              <div
+                style={{
+                  marginTop: "auto",
+                  paddingTop: 12,
+                  borderTop: "1px solid rgba(255,255,255,0.08)",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                  gap: "8px 12px",
+                }}
+              >
+                {chartData.map((entry, index) => {
+                  const pct = totalExpensesSum > 0 ? ((entry.value / totalExpensesSum) * 100).toFixed(1) : 0;
+                  return (
+                    <div key={entry.name} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11.5 }}>
+                      <div
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: 3,
+                          background: COLORS[index % COLORS.length],
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span style={{ color: "#cbd5e1", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                        {entry.name}
+                      </span>
+                      <strong style={{ color: "#fff", marginLeft: "auto" }}>
+                        {pct}%
+                      </strong>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            /* Informative Zero State */
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "36px 20px",
+                textAlign: "center",
+                background: "rgba(255,255,255,0.02)",
+                borderRadius: "var(--radius-md)",
+                margin: "10px 0",
+              }}
+            >
+              <div
+                style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: "50%",
+                  background: "rgba(139,92,246,0.12)",
+                  border: "2px dashed rgba(139,92,246,0.4)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#a78bfa",
+                  marginBottom: 14,
+                }}
+              >
+                <PieIcon size={24} />
+              </div>
+              <strong style={{ fontSize: 14, color: "#fff" }}>No Itemized Expenses Logged Yet</strong>
+              <p style={{ color: "var(--text-muted)", fontSize: 12, maxWidth: 300, margin: "6px 0 16px" }}>
+                Log your recurring liabilities (payroll, rent, SaaS) to visualize your cost centers.
+              </p>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowAddModal(true)}
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
                 >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: "rgba(13, 18, 31, 0.95)",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    borderRadius: 8,
-                    fontSize: 12,
-                  }}
-                  formatter={(val) => [`₹${(Number(val) / 100000).toFixed(2)} Lakhs`, ""]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+                  <Plus size={14} />
+                  <span>Log First Expense</span>
+                </button>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleLoadSamplePresets}
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                >
+                  <FolderPlus size={14} />
+                  <span>Load MSME Preset Categories</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* AI Cost Optimization Insights */}
@@ -372,6 +565,14 @@ export default function Expenses() {
                     </td>
                   </tr>
                 ))}
+
+              {data.recurringExpenses.length === 0 && data.expenses.length === 0 && (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "28px", color: "var(--text-muted)" }}>
+                    No expenses recorded. Click "Log Expense" or "Load MSME Preset Categories" above to initialize.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
