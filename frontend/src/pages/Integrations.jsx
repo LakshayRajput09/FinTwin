@@ -32,6 +32,7 @@ import {
   updateBusinessProfile,
   subscribeFinancialData,
 } from "../data/financialStore";
+import SetuVerificationModal from "../components/SetuVerificationModal";
 
 const initialConnectors = [
   {
@@ -44,6 +45,17 @@ const initialConnectors = [
     records: "2 Linked Banks (₹8.4L)",
     badge: "Official RBI",
     isAa: true,
+  },
+  {
+    id: "setu_kyc",
+    name: "Setu KYC & Entity Verification Suite",
+    category: "Identity & Enterprise Verification",
+    desc: "Complete 6-channel verification: PAN (NSDL), Aadhaar OKYC (UIDAI), IMPS Penny Drop, GSTIN, Udyam MSME & CKYC Registry.",
+    status: "Verified",
+    lastSync: "Today, 11:15 AM",
+    records: "6 Channels Verified",
+    badge: "Setu / ReBIT",
+    isSetuKyc: true,
   },
   {
     id: "tally",
@@ -98,9 +110,10 @@ export default function Integrations() {
   const [toast, setToast] = useState("");
 
   // ==========================================
-  // RBI ACCOUNT AGGREGATOR MODAL & WIZARD STATE
+  // RBI ACCOUNT AGGREGATOR & SETU KYC MODAL STATE
   // ==========================================
   const [showAaModal, setShowAaModal] = useState(false);
+  const [showSetuKycModal, setShowSetuKycModal] = useState(false);
   const [aaStep, setAaStep] = useState(1); // 1: Setup | 2: Consent Approval | 3: Fetching | 4: Live Data
   const [mobileNumber, setMobileNumber] = useState("9820144521");
   const [selectedHandle, setSelectedHandle] = useState("@setu");
@@ -413,6 +426,15 @@ export default function Integrations() {
               </button>
 
               <button
+                className="btn btn-emerald btn-sm"
+                onClick={() => setShowSetuKycModal(true)}
+                style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700 }}
+              >
+                <ShieldCheck size={14} />
+                <span>Setu KYC & Verification Suite</span>
+              </button>
+
+              <button
                 className="btn btn-secondary btn-sm"
                 onClick={() => setShowConfigDrawer(true)}
                 style={{ display: "flex", alignItems: "center", gap: 6 }}
@@ -511,16 +533,43 @@ export default function Integrations() {
 
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {c.isAa ? (
+                    <div style={{ display: "flex", gap: 8, width: "100%" }}>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        style={{ flex: 1.2, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                        onClick={() => {
+                          setAaStep(1);
+                          setShowAaModal(true);
+                        }}
+                      >
+                        <Landmark size={14} />
+                        <span>Manage AA Banks</span>
+                      </button>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        style={{
+                          flex: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 5,
+                          color: "var(--accent-emerald)",
+                          borderColor: "rgba(16, 185, 129, 0.3)",
+                        }}
+                        onClick={() => setShowSetuKycModal(true)}
+                      >
+                        <ShieldCheck size={13} />
+                        <span>Setu KYC</span>
+                      </button>
+                    </div>
+                  ) : c.isSetuKyc ? (
                     <button
-                      className="btn btn-primary btn-sm"
-                      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                      onClick={() => {
-                        setAaStep(1);
-                        setShowAaModal(true);
-                      }}
+                      className="btn btn-emerald btn-sm"
+                      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontWeight: 700 }}
+                      onClick={() => setShowSetuKycModal(true)}
                     >
-                      <Landmark size={14} />
-                      <span>Manage RBI AA Banks</span>
+                      <ShieldCheck size={14} />
+                      <span>Launch Setu Verification Suite</span>
                     </button>
                   ) : isConnected ? (
                     <>
@@ -657,6 +706,55 @@ export default function Integrations() {
                 ------------------------------------------------------------- */}
             {aaStep === 1 && (
               <div>
+                {/* Setu KYC & Verification Stack Callout */}
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    borderRadius: "var(--radius-md)",
+                    background: "rgba(16, 185, 129, 0.08)",
+                    border: "1px solid rgba(16, 185, 129, 0.3)",
+                    marginBottom: 18,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 10,
+                  }}
+                >
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <ShieldCheck size={16} style={{ color: "var(--accent-emerald)" }} />
+                      <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>
+                        Setu Identity & Full KYC Verification Stack
+                      </strong>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          padding: "1px 6px",
+                          borderRadius: 4,
+                          background: "rgba(16, 185, 129, 0.2)",
+                          color: "var(--accent-emerald)",
+                          fontWeight: 700,
+                        }}
+                      >
+                        6 Checks Available
+                      </span>
+                    </div>
+                    <span style={{ fontSize: 11.5, color: "var(--text-secondary)", display: "block", marginTop: 2 }}>
+                      Verify Director PAN, Aadhaar OKYC, IMPS Penny Drop, GSTIN, Udyam MSME, and CKYC before consent linking.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-emerald btn-sm"
+                    onClick={() => setShowSetuKycModal(true)}
+                    style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700 }}
+                  >
+                    <Sparkles size={13} />
+                    <span>Launch Setu KYC Verification</span>
+                  </button>
+                </div>
+
                 <div className="form-group">
                   <label className="form-label">Customer Mobile Number (Linked to Bank Accounts)</label>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1039,6 +1137,17 @@ export default function Integrations() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Setu KYC & Full Verification Suite Modal */}
+      {showSetuKycModal && (
+        <SetuVerificationModal
+          onClose={() => setShowSetuKycModal(false)}
+          onVerified={() => {
+            setToast("✓ Setu KYC Verification completed and saved to your Digital Twin!");
+            setTimeout(() => setToast(""), 4000);
+          }}
+        />
       )}
     </div>
   );

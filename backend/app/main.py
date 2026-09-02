@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -23,6 +24,19 @@ from app.services.gst_service import (
     calculate_transaction_gst,
     reconcile_overall_gst,
     validate_gstin,
+)
+from app.services.setu_aa_service import (
+    create_aa_consent,
+    approve_aa_consent,
+    fetch_aa_fi_data,
+    verify_pan_card,
+    send_aadhaar_okyc_otp,
+    verify_aadhaar_okyc_otp,
+    verify_bank_account_penny_drop,
+    verify_gstin_entity,
+    verify_udyam_msme,
+    verify_ckyc_registry,
+    generate_full_setu_compliance_audit,
 )
 
 
@@ -511,6 +525,117 @@ def get_gstin_validation(gstin: str):
         "success": True,
         "validation": result,
     }
+
+
+# ==========================================
+# SETU ACCOUNT AGGREGATOR & KYC VERIFICATION ROUTES
+# ==========================================
+
+class AaConsentRequest(BaseModel):
+    mobile_number: str
+    aa_handle: str = "@setu"
+    fip_ids: Optional[list[str]] = None
+    customer_name: str = "Enterprise Director"
+    data_life_months: int = 12
+
+
+class AaApproveRequest(BaseModel):
+    accounts: Optional[list[dict]] = None
+
+
+class PanVerifyRequest(BaseModel):
+    pan_number: str
+    expected_name: Optional[str] = None
+
+
+class AadhaarOtpRequest(BaseModel):
+    aadhaar_number: str
+
+
+class AadhaarVerifyRequest(BaseModel):
+    request_id: str
+    otp: str
+    expected_name: Optional[str] = None
+
+
+class BankVerifyRequest(BaseModel):
+    account_number: str
+    ifsc: str
+    entity_name: Optional[str] = None
+
+
+class GstinVerifyRequest(BaseModel):
+    gstin: str
+
+
+class UdyamVerifyRequest(BaseModel):
+    udyam_number: str
+
+
+class CkycVerifyRequest(BaseModel):
+    query: str
+
+
+@app.post("/api/aa/consent")
+def post_aa_consent(req: AaConsentRequest):
+    return create_aa_consent(
+        mobile_number=req.mobile_number,
+        aa_handle=req.aa_handle,
+        fip_ids=req.fip_ids,
+        customer_name=req.customer_name,
+        data_life_months=req.data_life_months,
+    )
+
+
+@app.post("/api/aa/consent/{consent_id}/approve")
+def post_aa_approve(consent_id: str, req: Optional[AaApproveRequest] = None):
+    accounts = req.accounts if req else None
+    return approve_aa_consent(consent_id=consent_id, accounts=accounts)
+
+
+@app.get("/api/aa/consent/{consent_id}/data")
+def get_aa_fi_data(consent_id: str):
+    return fetch_aa_fi_data(consent_id=consent_id)
+
+
+@app.post("/api/aa/kyc/pan")
+def post_kyc_pan(req: PanVerifyRequest):
+    return verify_pan_card(pan_number=req.pan_number, expected_name=req.expected_name)
+
+
+@app.post("/api/aa/kyc/aadhaar/otp")
+def post_kyc_aadhaar_otp(req: AadhaarOtpRequest):
+    return send_aadhaar_okyc_otp(aadhaar_number=req.aadhaar_number)
+
+
+@app.post("/api/aa/kyc/aadhaar/verify")
+def post_kyc_aadhaar_verify(req: AadhaarVerifyRequest):
+    return verify_aadhaar_okyc_otp(request_id=req.request_id, otp=req.otp, expected_name=req.expected_name)
+
+
+@app.post("/api/aa/kyc/bank-account")
+def post_kyc_bank(req: BankVerifyRequest):
+    return verify_bank_account_penny_drop(account_number=req.account_number, ifsc=req.ifsc, entity_name=req.entity_name)
+
+
+@app.post("/api/aa/kyc/gstin")
+def post_kyc_gstin(req: GstinVerifyRequest):
+    return verify_gstin_entity(gstin=req.gstin)
+
+
+@app.post("/api/aa/kyc/udyam")
+def post_kyc_udyam(req: UdyamVerifyRequest):
+    return verify_udyam_msme(udyam_number=req.udyam_number)
+
+
+@app.post("/api/aa/kyc/ckyc")
+def post_kyc_ckyc(req: CkycVerifyRequest):
+    return verify_ckyc_registry(ckyc_number_or_pan=req.query)
+
+
+@app.get("/api/aa/kyc/full-audit")
+def get_kyc_full_audit():
+    return generate_full_setu_compliance_audit()
 
 
 # ==========================================
