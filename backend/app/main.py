@@ -101,6 +101,20 @@ class SimulationRequest(BaseModel):
     revenue_change_percent: float = 0
     expense_change_percent: float = 0
     payment_delay_days: int = 0
+    customer_default_percent: float = 0
+    raw_material_inflation_percent: float = 0
+    payroll_hike_percent: float = 0
+    tax_outflow_amount: float = 0
+    loan_emi_amount: float = 0
+    treds_discount_percent: float = 0
+    govt_subsidy_amount: float = 0
+    sec43b_overdue_days: int = 0
+    repo_rate_hike_bps: float = 0
+    capex_outflow_amount: float = 0
+    itc_reversal_amount: float = 0
+    cash_recovery_percent: float = 0
+    supplier_discount_percent: float = 0
+    export_surge_percent: float = 0
 
 
 class FinancingRequest(BaseModel):
@@ -458,6 +472,20 @@ def create_simulation(
         revenue_change_percent=request.revenue_change_percent,
         expense_change_percent=request.expense_change_percent,
         payment_delay_days=request.payment_delay_days,
+        customer_default_percent=request.customer_default_percent,
+        raw_material_inflation_percent=request.raw_material_inflation_percent,
+        payroll_hike_percent=request.payroll_hike_percent,
+        tax_outflow_amount=request.tax_outflow_amount,
+        loan_emi_amount=request.loan_emi_amount,
+        treds_discount_percent=request.treds_discount_percent,
+        govt_subsidy_amount=request.govt_subsidy_amount,
+        sec43b_overdue_days=request.sec43b_overdue_days,
+        repo_rate_hike_bps=request.repo_rate_hike_bps,
+        capex_outflow_amount=request.capex_outflow_amount,
+        itc_reversal_amount=request.itc_reversal_amount,
+        cash_recovery_percent=request.cash_recovery_percent,
+        supplier_discount_percent=request.supplier_discount_percent,
+        export_surge_percent=request.export_surge_percent,
     )
 
     return {

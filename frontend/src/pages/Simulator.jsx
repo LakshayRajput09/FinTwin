@@ -57,7 +57,14 @@ function buildLocalSimulation(
   taxOutflow,
   loanEmi,
   tredsDiscount,
-  govtSubsidy
+  govtSubsidy,
+  sec43bOverdue = 0,
+  repoRateHike = 0,
+  capexOutflow = 0,
+  itcReversal = 0,
+  cashRecoveryRelief = 0,
+  supplierDiscount = 0,
+  exportSurge = 0
 ) {
   const currentCash = Number(data.business?.openingCash || 0);
   const receivables = (data.invoices || [])
@@ -115,16 +122,47 @@ function buildLocalSimulation(
   const emiQuarterly = Number(loanEmi || 0) * 3;
   const loanCash = netPosition - emiQuarterly;
 
-  // 9. TReDS Early Invoice Discounting (Relief)
+  // 9. Section 43B(h) Delay & 3x RBI Penal Compound Interest Shock
+  const overdueRatio = sec43bOverdue <= 0 ? 0 : Math.min(1.0, 0.35 + (sec43bOverdue / 100));
+  const overdue43bAmt = receivables * overdueRatio;
+  const sec43bPenalInterest = Math.round(overdue43bAmt * 0.195 * (Math.max(15, sec43bOverdue) / 365));
+  const sec43bTaxDisallowance = sec43bOverdue > 45 ? Math.round(overdue43bAmt * 0.30 * 0.25) : 0;
+  const sec43bTotalHit = sec43bOverdue > 0 ? (sec43bPenalInterest + sec43bTaxDisallowance) : 0;
+  const sec43bCash = netPosition - sec43bTotalHit;
+
+  // 10. RBI Repo Rate Hike on Bank OD/CC (+bps)
+  const repoQuarterlySurge = Math.round(2000000 * ((repoRateHike || 0) / 10000) * (3 / 12));
+  const repoRateCash = netPosition - repoQuarterlySurge;
+
+  // 11. Capex Machinery & Tooling Outflow
+  const capexCash = netPosition - Number(capexOutflow || 0);
+
+  // 12. GST ITC Reversal & GSTR-2B Lockup
+  const itcCash = netPosition - Number(itcReversal || 0);
+
+  // 13. Export Bulk Order Working Capital Strain
+  const exportUpfrontCost = Math.round((totalExpenses * 0.45) * ((exportSurge || 0) / 100));
+  const exportNetCash = netPosition - exportUpfrontCost;
+
+  // 14. Autonomous WhatsApp & Email Cash Recovery (Relief)
+  const trappedForRecovery = delayedAmt > 0 ? delayedAmt : (receivables * 0.65);
+  const recoveredCash = Math.round((trappedForRecovery * (cashRecoveryRelief || 0)) / 100);
+  const recoveryCash = netPosition + recoveredCash;
+
+  // 15. Early Supplier Cash Discount (2/10 Net 30 Relief)
+  const discountSavings = Math.round((totalExpenses * 0.45) * ((supplierDiscount || 0) / 100));
+  const discountCash = netPosition + discountSavings;
+
+  // 16. TReDS Early Invoice Discounting (Relief)
   const tredsVol = (receivables * Math.min(85, Number(tredsDiscount || 0))) / 100;
   const tredsFee = tredsVol * 0.015;
   const tredsInflow = tredsVol - tredsFee;
   const tredsCash = currentCash + tredsInflow + (receivables - tredsVol) - totalExpenses;
 
-  // 10. Government Subsidy Grant (Relief)
+  // 17. Government Subsidy Grant (Relief)
   const subsidyCash = netPosition + Number(govtSubsidy || 0);
 
-  // 11. Integrated Combined Reality
+  // 18. Integrated Combined Reality
   const combAdjRev = receivables * (1 + revenueChange / 100);
   const combDefaultLoss = (combAdjRev * (customerDefault || 0)) / 100;
   const combPostDefault = Math.max(0, combAdjRev - combDefaultLoss);
@@ -143,9 +181,16 @@ function buildLocalSimulation(
     currentCash +
     combAvailRev +
     combTredsInflow +
+    recoveredCash +
+    discountSavings +
     Number(govtSubsidy || 0) -
     combExpenses -
-    Number(taxOutflow || 0);
+    Number(taxOutflow || 0) -
+    sec43bTotalHit -
+    repoQuarterlySurge -
+    Number(capexOutflow || 0) -
+    Number(itcReversal || 0) -
+    exportUpfrontCost;
 
   return {
     base,
@@ -160,6 +205,13 @@ function buildLocalSimulation(
       loan_emi_amount: loanEmi,
       treds_discount_percent: tredsDiscount,
       govt_subsidy_amount: govtSubsidy,
+      sec43b_overdue_days: sec43bOverdue,
+      repo_rate_hike_bps: repoRateHike,
+      capex_outflow_amount: capexOutflow,
+      itc_reversal_amount: itcReversal,
+      cash_recovery_percent: cashRecoveryRelief,
+      supplier_discount_percent: supplierDiscount,
+      export_surge_percent: exportSurge,
     },
     scenarios: [
       {
@@ -219,6 +271,42 @@ function buildLocalSimulation(
         explanation: `Supply chain inflation adds ₹${rawMaterialSurge.toLocaleString("en-IN")} to monthly manufacturing costs.`,
       },
       {
+        scenario: "Section 43B(h) Delay & Penal Shock",
+        parameter: `${sec43bOverdue}d Overdue (3x RBI Interest)`,
+        projected_cash: sec43bCash,
+        cash_impact: -sec43bTotalHit,
+        liquidity_gap: Math.max(0, -sec43bCash),
+        risk: classify(sec43bCash, Math.max(0, -sec43bCash)),
+        explanation: `MSE payments past 45 days incur 3x RBI bank rate (~19.5%) compound interest and statutory income tax disallowances.`,
+      },
+      {
+        scenario: "RBI Repo Rate Hike on Bank OD/CC",
+        parameter: `+${repoRateHike} bps Floating Rate Hike`,
+        projected_cash: repoRateCash,
+        cash_impact: -repoQuarterlySurge,
+        liquidity_gap: Math.max(0, -repoRateCash),
+        risk: classify(repoRateCash, Math.max(0, -repoRateCash)),
+        explanation: `Higher repo rate increases quarterly borrowing costs by ₹${repoQuarterlySurge.toLocaleString("en-IN")} on bank credit lines.`,
+      },
+      {
+        scenario: "GST ITC Reversal & Supplier Freeze",
+        parameter: `₹${Number(itcReversal || 0).toLocaleString("en-IN")} ITC Reversal`,
+        projected_cash: itcCash,
+        cash_impact: -Number(itcReversal || 0),
+        liquidity_gap: Math.max(0, -itcCash),
+        risk: classify(itcCash, Math.max(0, -itcCash)),
+        explanation: `GSTR-2B non-compliance by suppliers triggers Input Tax Credit reversal liability.`,
+      },
+      {
+        scenario: "Capex Machinery Acquisition",
+        parameter: `₹${Number(capexOutflow || 0).toLocaleString("en-IN")} Down-payment`,
+        projected_cash: capexCash,
+        cash_impact: -Number(capexOutflow || 0),
+        liquidity_gap: Math.max(0, -capexCash),
+        risk: classify(capexCash, Math.max(0, -capexCash)),
+        explanation: `Direct capital expenditure for plant automation and capacity expansion.`,
+      },
+      {
         scenario: "Team Payroll Expansion",
         parameter: `+${payrollHike}% Wage / Hiring Surge`,
         projected_cash: payrollCash,
@@ -255,6 +343,25 @@ function buildLocalSimulation(
         explanation: "General operational expenditure increase across utilities and administration.",
       },
       {
+        scenario: "Export Order Working Capital Strain",
+        parameter: `+${exportSurge}% Order Volume Stretch`,
+        projected_cash: exportNetCash,
+        cash_impact: -exportUpfrontCost,
+        liquidity_gap: Math.max(0, -exportNetCash),
+        risk: classify(exportNetCash, Math.max(0, -exportNetCash)),
+        explanation: `High-volume export order requires upfront raw material procurement 60 days before LC payment realization.`,
+      },
+      {
+        scenario: "⚡ Autonomous Cash Recovery Blitz",
+        parameter: `${cashRecoveryRelief}% Trapped Cash Recovered`,
+        projected_cash: recoveryCash,
+        cash_impact: recoveredCash,
+        liquidity_gap: Math.max(0, -recoveryCash),
+        risk: classify(recoveryCash, Math.max(0, -recoveryCash)),
+        is_relief: true,
+        explanation: `Pre-litigation MSME statutory notices recover ₹${recoveredCash.toLocaleString("en-IN")} via WhatsApp & Email dispatch.`,
+      },
+      {
         scenario: "⚡ TReDS Early Discounting",
         parameter: `${tredsDiscount}% Receivables Discounted`,
         projected_cash: tredsCash,
@@ -263,6 +370,16 @@ function buildLocalSimulation(
         risk: classify(tredsCash, Math.max(0, -tredsCash)),
         is_relief: true,
         explanation: `Unlocks ₹${tredsInflow.toLocaleString("en-IN")} in instant liquid cash within 24h at 1.5% institutional fee.`,
+      },
+      {
+        scenario: "🤝 Early Supplier Cash Discount (2/10 Net 30)",
+        parameter: `${supplierDiscount}% Prompt Payment Savings`,
+        projected_cash: discountCash,
+        cash_impact: discountSavings,
+        liquidity_gap: Math.max(0, -discountCash),
+        risk: classify(discountCash, Math.max(0, -discountCash)),
+        is_relief: true,
+        explanation: `Paying vendors within 10 days captures ₹${discountSavings.toLocaleString("en-IN")} in prompt payment discounts.`,
       },
       {
         scenario: "🇮🇳 Govt MSME Capital Grant",
@@ -295,8 +412,17 @@ export default function Simulator() {
   const [tredsDiscount, setTredsDiscount] = useState(0); // 0 to 80% (relief)
   const [govtSubsidy, setGovtSubsidy] = useState(0); // 0 to 10L (relief)
 
+  // Additional Real-World MSME Stress & Relief Levers
+  const [sec43bOverdue, setSec43bOverdue] = useState(0); // 0 to 60 days (3x RBI interest)
+  const [repoRateHike, setRepoRateHike] = useState(0); // 0 to 300 bps (+0.5% to +3.0%)
+  const [capexOutflow, setCapexOutflow] = useState(0); // 0 to 10L
+  const [itcReversal, setItcReversal] = useState(0); // 0 to 2.5L
+  const [cashRecoveryRelief, setCashRecoveryRelief] = useState(0); // 0 to 100% (Relief)
+  const [supplierDiscount, setSupplierDiscount] = useState(0); // 0 to 5% (Relief)
+  const [exportSurge, setExportSurge] = useState(0); // 0 to 60%
+
   // UI state
-  const [activeTab, setActiveTab] = useState("sales"); // "sales" | "operations" | "statutory" | "relief"
+  const [activeTab, setActiveTab] = useState("sales"); // "sales" | "operations" | "statutory" | "capex" | "relief"
   const [activeChartTab, setActiveChartTab] = useState("bar"); // "bar" | "trajectory" | "matrix"
   const [simulation, setSimulation] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -322,6 +448,13 @@ export default function Simulator() {
     loanEmi,
     tredsDiscount,
     govtSubsidy,
+    sec43bOverdue,
+    repoRateHike,
+    capexOutflow,
+    itcReversal,
+    cashRecoveryRelief,
+    supplierDiscount,
+    exportSurge,
   ]);
 
   function formatMoney(amount) {
@@ -375,6 +508,13 @@ export default function Simulator() {
             loan_emi_amount: Number(loanEmi || 0),
             treds_discount_percent: Number(tredsDiscount || 0),
             govt_subsidy_amount: Number(govtSubsidy || 0),
+            sec43b_overdue_days: Number(sec43bOverdue || 0),
+            repo_rate_hike_bps: Number(repoRateHike || 0),
+            capex_outflow_amount: Number(capexOutflow || 0),
+            itc_reversal_amount: Number(itcReversal || 0),
+            cash_recovery_percent: Number(cashRecoveryRelief || 0),
+            supplier_discount_percent: Number(supplierDiscount || 0),
+            export_surge_percent: Number(exportSurge || 0),
           }),
         });
 
@@ -401,7 +541,14 @@ export default function Simulator() {
         taxOutflow,
         loanEmi,
         tredsDiscount,
-        govtSubsidy
+        govtSubsidy,
+        sec43bOverdue,
+        repoRateHike,
+        capexOutflow,
+        itcReversal,
+        cashRecoveryRelief,
+        supplierDiscount,
+        exportSurge
       );
       setSimulation(localSim);
     } catch (err) {
@@ -425,8 +572,123 @@ export default function Simulator() {
       setPayrollHike(10);
       setTaxOutflow(200000);
       setLoanEmi(35000);
+      setSec43bOverdue(45);
+      setRepoRateHike(200);
+      setCapexOutflow(0);
+      setItcReversal(120000);
+      setCashRecoveryRelief(0);
+      setSupplierDiscount(0);
+      setExportSurge(0);
       setTredsDiscount(0);
       setGovtSubsidy(0);
+    } else if (presetName === "sec43b_squeeze") {
+      setRevenueChange(-10);
+      setExpenseChange(5);
+      setPaymentDelay(50);
+      setCustomerDefault(10);
+      setRawMaterialInflation(10);
+      setPayrollHike(0);
+      setTaxOutflow(180000);
+      setLoanEmi(20000);
+      setSec43bOverdue(55);
+      setRepoRateHike(100);
+      setCapexOutflow(0);
+      setItcReversal(80000);
+      setCashRecoveryRelief(0);
+      setSupplierDiscount(0);
+      setExportSurge(0);
+      setTredsDiscount(0);
+      setGovtSubsidy(0);
+    } else if (presetName === "repo_hike") {
+      setRevenueChange(0);
+      setExpenseChange(12);
+      setPaymentDelay(15);
+      setCustomerDefault(0);
+      setRawMaterialInflation(15);
+      setPayrollHike(5);
+      setTaxOutflow(50000);
+      setLoanEmi(65000);
+      setSec43bOverdue(10);
+      setRepoRateHike(250);
+      setCapexOutflow(0);
+      setItcReversal(0);
+      setCashRecoveryRelief(0);
+      setSupplierDiscount(0);
+      setExportSurge(0);
+      setTredsDiscount(20);
+      setGovtSubsidy(0);
+    } else if (presetName === "capex_expansion") {
+      setRevenueChange(35);
+      setExpenseChange(15);
+      setPaymentDelay(10);
+      setCustomerDefault(0);
+      setRawMaterialInflation(10);
+      setPayrollHike(25);
+      setTaxOutflow(100000);
+      setLoanEmi(50000);
+      setSec43bOverdue(0);
+      setRepoRateHike(100);
+      setCapexOutflow(500000);
+      setItcReversal(0);
+      setCashRecoveryRelief(40);
+      setSupplierDiscount(2.5);
+      setExportSurge(25);
+      setTredsDiscount(40);
+      setGovtSubsidy(250000);
+    } else if (presetName === "itc_lockup") {
+      setRevenueChange(0);
+      setExpenseChange(8);
+      setPaymentDelay(25);
+      setCustomerDefault(5);
+      setRawMaterialInflation(10);
+      setPayrollHike(0);
+      setTaxOutflow(150000);
+      setLoanEmi(15000);
+      setSec43bOverdue(20);
+      setRepoRateHike(0);
+      setCapexOutflow(0);
+      setItcReversal(180000);
+      setCashRecoveryRelief(20);
+      setSupplierDiscount(0);
+      setExportSurge(0);
+      setTredsDiscount(15);
+      setGovtSubsidy(0);
+    } else if (presetName === "cash_recovery_blitz") {
+      setRevenueChange(5);
+      setExpenseChange(0);
+      setPaymentDelay(45);
+      setCustomerDefault(0);
+      setRawMaterialInflation(5);
+      setPayrollHike(0);
+      setTaxOutflow(50000);
+      setLoanEmi(15000);
+      setSec43bOverdue(40);
+      setRepoRateHike(0);
+      setCapexOutflow(0);
+      setItcReversal(0);
+      setCashRecoveryRelief(90);
+      setSupplierDiscount(2);
+      setExportSurge(10);
+      setTredsDiscount(60);
+      setGovtSubsidy(150000);
+    } else if (presetName === "export_surge") {
+      setRevenueChange(55);
+      setExpenseChange(20);
+      setPaymentDelay(45);
+      setCustomerDefault(0);
+      setRawMaterialInflation(30);
+      setPayrollHike(20);
+      setTaxOutflow(120000);
+      setLoanEmi(30000);
+      setSec43bOverdue(0);
+      setRepoRateHike(150);
+      setCapexOutflow(200000);
+      setItcReversal(0);
+      setCashRecoveryRelief(50);
+      setSupplierDiscount(3);
+      setExportSurge(50);
+      setTredsDiscount(70);
+      setGovtSubsidy(200000);
     } else if (presetName === "treds_relief") {
       // Mitigated version of crisis
       setRevenueChange(-20);
@@ -437,6 +699,13 @@ export default function Simulator() {
       setPayrollHike(5);
       setTaxOutflow(100000);
       setLoanEmi(25000);
+      setSec43bOverdue(20);
+      setRepoRateHike(100);
+      setCapexOutflow(0);
+      setItcReversal(50000);
+      setCashRecoveryRelief(60);
+      setSupplierDiscount(2);
+      setExportSurge(0);
       setTredsDiscount(75);
       setGovtSubsidy(300000);
     } else if (presetName === "supply_chain") {
@@ -448,6 +717,13 @@ export default function Simulator() {
       setPayrollHike(0);
       setTaxOutflow(50000);
       setLoanEmi(0);
+      setSec43bOverdue(0);
+      setRepoRateHike(50);
+      setCapexOutflow(0);
+      setItcReversal(40000);
+      setCashRecoveryRelief(30);
+      setSupplierDiscount(1);
+      setExportSurge(0);
       setTredsDiscount(30);
       setGovtSubsidy(0);
     } else if (presetName === "expansion") {
@@ -459,6 +735,13 @@ export default function Simulator() {
       setPayrollHike(25);
       setTaxOutflow(150000);
       setLoanEmi(60000);
+      setSec43bOverdue(0);
+      setRepoRateHike(100);
+      setCapexOutflow(300000);
+      setItcReversal(0);
+      setCashRecoveryRelief(40);
+      setSupplierDiscount(2);
+      setExportSurge(20);
       setTredsDiscount(40);
       setGovtSubsidy(200000);
     } else {
@@ -471,6 +754,13 @@ export default function Simulator() {
       setPayrollHike(0);
       setTaxOutflow(0);
       setLoanEmi(0);
+      setSec43bOverdue(0);
+      setRepoRateHike(0);
+      setCapexOutflow(0);
+      setItcReversal(0);
+      setCashRecoveryRelief(0);
+      setSupplierDiscount(0);
+      setExportSurge(0);
       setTredsDiscount(0);
       setGovtSubsidy(0);
     }
@@ -581,11 +871,47 @@ export default function Simulator() {
 
               <button
                 className="btn btn-secondary btn-sm"
-                onClick={() => applyPreset("treds_relief")}
-                title="Apply same stress shocks + 75% TReDS Discounting & ₹3L Govt Grant"
-                style={{ background: "rgba(5,150,105,0.08)", borderColor: "rgba(5,150,105,0.25)", color: "var(--accent-emerald)", fontWeight: 700 }}
+                onClick={() => applyPreset("sec43b_squeeze")}
+                title="Simulate 55d overdue buyer delay, 3x RBI penal compound interest, and 30% tax disallowance"
+                style={{ background: "rgba(244,63,94,0.08)", borderColor: "rgba(244,63,94,0.3)", color: "var(--accent-rose)", fontWeight: 700 }}
               >
-                🛡️ TReDS & Grant Relief
+                ⚖️ Sec 43B(h) Squeeze
+              </button>
+
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => applyPreset("repo_hike")}
+                title="Simulate +250 bps RBI repo rate hike on floating bank overdraft/CC"
+                style={{ fontWeight: 600 }}
+              >
+                🏛️ Repo Rate Hike (+250 bps)
+              </button>
+
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => applyPreset("itc_lockup")}
+                title="Simulate ₹1.8L Input Tax Credit reversal due to non-compliant GSTR-2B vendors"
+                style={{ fontWeight: 600 }}
+              >
+                📋 ITC Reversal Freeze
+              </button>
+
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => applyPreset("export_surge")}
+                title="Simulate +55% export demand with high upfront raw material investment"
+                style={{ fontWeight: 600 }}
+              >
+                🚢 Export Order Stretch
+              </button>
+
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => applyPreset("capex_expansion")}
+                title="Simulate ₹5L plant machinery downpayment with growth scaling"
+                style={{ fontWeight: 600 }}
+              >
+                🏭 Capex Scaling
               </button>
 
               <button
@@ -594,6 +920,24 @@ export default function Simulator() {
                 style={{ fontWeight: 600 }}
               >
                 📦 Supply Chain Squeeze
+              </button>
+
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => applyPreset("cash_recovery_blitz")}
+                title="Simulate recovering 90% trapped receivables via WhatsApp/Email legal notices"
+                style={{ background: "rgba(5,150,105,0.08)", borderColor: "rgba(5,150,105,0.3)", color: "var(--accent-emerald)", fontWeight: 700 }}
+              >
+                ⚡ Recovery Hub Blitz
+              </button>
+
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => applyPreset("treds_relief")}
+                title="Apply 75% TReDS Discounting & ₹3L Govt Grant"
+                style={{ background: "rgba(5,150,105,0.08)", borderColor: "rgba(5,150,105,0.25)", color: "var(--accent-emerald)", fontWeight: 700 }}
+              >
+                🛡️ TReDS & Grant Relief
               </button>
 
               <button
@@ -699,7 +1043,7 @@ export default function Simulator() {
             }}
           >
             <Building size={14} />
-            <span>2. Operations & Team</span>
+            <span>2. Operations & Supply Chain</span>
           </button>
 
           <button
@@ -719,7 +1063,27 @@ export default function Simulator() {
             }}
           >
             <Landmark size={14} />
-            <span>3. Taxes & Loan Debt</span>
+            <span>3. Statutory & Banking Stress</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("capex")}
+            style={{
+              padding: "7px 14px",
+              borderRadius: "var(--radius-sm)",
+              fontSize: 12.5,
+              fontWeight: 700,
+              background: activeTab === "capex" ? "var(--accent-blue)" : "var(--bg-secondary)",
+              color: activeTab === "capex" ? "#fff" : "var(--text-secondary)",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              border: "1px solid var(--border-subtle)",
+              cursor: "pointer",
+            }}
+          >
+            <Layers size={14} />
+            <span>4. Capex & Capacity Growth</span>
           </button>
 
           <button
@@ -739,7 +1103,7 @@ export default function Simulator() {
             }}
           >
             <Zap size={14} />
-            <span>4. Liquidity Relief & Grants (Solutions)</span>
+            <span>5. Liquidity Relief & Grants (Solutions)</span>
           </button>
         </div>
 
@@ -811,6 +1175,28 @@ export default function Simulator() {
                 Simulate a major customer going bankrupt or disputing payment entirely.
               </p>
             </div>
+
+            {/* Export Order Stretch */}
+            <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>🚢 Export Bulk Order Strain</strong>
+                <span style={{ fontSize: 13, fontWeight: 700, color: exportSurge > 0 ? "var(--accent-blue)" : "var(--text-muted)" }}>
+                  +{exportSurge}% Order Volume
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="60"
+                step="5"
+                value={exportSurge}
+                onChange={(e) => setExportSurge(Number(e.target.value))}
+                style={{ width: "100%", accentColor: "var(--accent-blue)" }}
+              />
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+                High-volume order requires heavy upfront inventory before 60-day Letter of Credit matures.
+              </p>
+            </div>
           </div>
         )}
 
@@ -835,7 +1221,7 @@ export default function Simulator() {
                 style={{ width: "100%", accentColor: "var(--accent-rose)" }}
               />
               <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
-                Increase in utility bills, office rent, and miscellaneous operating expenses.
+                Increase in utility bills, factory power charges, office rent, and administrative costs.
               </p>
             </div>
 
@@ -879,7 +1265,29 @@ export default function Simulator() {
                 style={{ width: "100%", accentColor: "var(--accent-blue)" }}
               />
               <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
-                Models annual appraisals, Diwali/festive bonuses, or hiring 2-5 new team members.
+                Models annual appraisals, Diwali/festive bonuses, or hiring 2-5 technical specialists.
+              </p>
+            </div>
+
+            {/* Early Supplier Cash Discount */}
+            <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "rgba(5,150,105,0.06)", border: "1px solid rgba(5,150,105,0.25)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                <strong style={{ fontSize: 13, color: "var(--accent-emerald)" }}>🤝 Supplier Early Payment Discount (2/10 Net 30)</strong>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent-emerald)" }}>
+                  {supplierDiscount}% Procurement Discount
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="5"
+                step="0.5"
+                value={supplierDiscount}
+                onChange={(e) => setSupplierDiscount(Number(e.target.value))}
+                style={{ width: "100%", accentColor: "var(--accent-emerald)" }}
+              />
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
+                Negotiate 1%–3% cash discounts on raw material purchase invoices by settling within 10 days.
               </p>
             </div>
           </div>
@@ -888,10 +1296,76 @@ export default function Simulator() {
         {/* Tab 3: Taxes & Debt */}
         {activeTab === "statutory" && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+            {/* Section 43B(h) Penal Interest */}
+            <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>⚖️ Section 43B(h) Delay (3x RBI Interest)</strong>
+                <span style={{ fontSize: 13, fontWeight: 700, color: sec43bOverdue > 0 ? "var(--accent-rose)" : "var(--text-muted)" }}>
+                  {sec43bOverdue} Days Past 45d
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="60"
+                step="5"
+                value={sec43bOverdue}
+                onChange={(e) => setSec43bOverdue(Number(e.target.value))}
+                style={{ width: "100%", accentColor: "var(--accent-rose)" }}
+              />
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+                Delays past 45 days incur 3x RBI bank rate (~19.5% p.a.) compound interest + 30% tax disallowance.
+              </p>
+            </div>
+
+            {/* RBI Repo Rate Hike */}
+            <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>🏛️ RBI Repo Rate Hike on Bank OD/CC</strong>
+                <span style={{ fontSize: 13, fontWeight: 700, color: repoRateHike > 0 ? "var(--accent-amber)" : "var(--text-muted)" }}>
+                  +{repoRateHike} bps (+{(repoRateHike / 100).toFixed(2)}%)
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="300"
+                step="25"
+                value={repoRateHike}
+                onChange={(e) => setRepoRateHike(Number(e.target.value))}
+                style={{ width: "100%", accentColor: "var(--accent-amber)" }}
+              />
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+                Simulate floating rate benchmark hikes across working capital cash credit & overdraft facilities.
+              </p>
+            </div>
+
+            {/* GST ITC Reversal */}
+            <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>📋 GST ITC Reversal (GSTR-2B Mismatch)</strong>
+                <span style={{ fontSize: 13, fontWeight: 700, color: itcReversal > 0 ? "var(--accent-rose)" : "var(--text-muted)" }}>
+                  {formatMoney(itcReversal)}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="250000"
+                step="25000"
+                value={itcReversal}
+                onChange={(e) => setItcReversal(Number(e.target.value))}
+                style={{ width: "100%", accentColor: "var(--accent-rose)" }}
+              />
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+                Non-filing by suppliers forces temporary cash blockage and statutory tax clawback.
+              </p>
+            </div>
+
             {/* GST Outflow */}
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>Quarterly GST & Tax Settlement</strong>
+                <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>Quarterly GST & Advance Tax Due</strong>
                 <span style={{ fontSize: 13, fontWeight: 700, color: taxOutflow > 0 ? "var(--accent-rose)" : "var(--text-muted)" }}>
                   {formatMoney(taxOutflow)}
                 </span>
@@ -905,35 +1379,15 @@ export default function Simulator() {
                 onChange={(e) => setTaxOutflow(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-rose)" }}
               />
-              <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-                {[0, 50000, 100000, 250000, 500000].map((amt) => (
-                  <button
-                    key={amt}
-                    type="button"
-                    onClick={() => setTaxOutflow(amt)}
-                    style={{
-                      fontSize: 10.5,
-                      padding: "2px 6px",
-                      borderRadius: 4,
-                      background: taxOutflow === amt ? "var(--accent-rose)" : "var(--bg-card)",
-                      color: taxOutflow === amt ? "#fff" : "var(--text-secondary)",
-                      border: "1px solid var(--border-subtle)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {amt === 0 ? "₹0" : formatMoney(amt)}
-                  </button>
-                ))}
-              </div>
               <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
-                Lump-sum tax liability settlement, delayed Input Tax Credit (ITC) reconciliation.
+                Lump-sum statutory tax liability settlement and advance tax installments.
               </p>
             </div>
 
             {/* Bank Loan EMI */}
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>Bank Loan Monthly EMI / Debt Servicing</strong>
+                <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>Monthly Bank Loan EMI Burden</strong>
                 <span style={{ fontSize: 13, fontWeight: 700, color: loanEmi > 0 ? "var(--accent-amber)" : "var(--text-muted)" }}>
                   {formatMoney(loanEmi)} / mo
                 </span>
@@ -947,36 +1401,85 @@ export default function Simulator() {
                 onChange={(e) => setLoanEmi(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-amber)" }}
               />
-              <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-                {[0, 25000, 50000, 100000, 150000].map((amt) => (
-                  <button
-                    key={amt}
-                    type="button"
-                    onClick={() => setLoanEmi(amt)}
-                    style={{
-                      fontSize: 10.5,
-                      padding: "2px 6px",
-                      borderRadius: 4,
-                      background: loanEmi === amt ? "var(--accent-amber)" : "var(--bg-card)",
-                      color: loanEmi === amt ? "#fff" : "var(--text-secondary)",
-                      border: "1px solid var(--border-subtle)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {amt === 0 ? "₹0" : `${formatMoney(amt)}/mo`}
-                  </button>
-                ))}
-              </div>
               <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
-                Principal & interest outflow on term loans, machinery debt, or credit facility.
+                Principal & interest outflow on business term loans, CGTMSE facilities, or equipment debt.
               </p>
             </div>
           </div>
         )}
 
-        {/* Tab 4: Liquidity Relief & Grants */}
+        {/* Tab 4: Capex & Growth Investment */}
+        {activeTab === "capex" && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+            {/* Capex Outflow */}
+            <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>🏭 Plant Machinery & Tooling Downpayment</strong>
+                <span style={{ fontSize: 13, fontWeight: 700, color: capexOutflow > 0 ? "var(--accent-blue)" : "var(--text-muted)" }}>
+                  {formatMoney(capexOutflow)}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="1000000"
+                step="50000"
+                value={capexOutflow}
+                onChange={(e) => setCapexOutflow(Number(e.target.value))}
+                style={{ width: "100%", accentColor: "var(--accent-blue)" }}
+              />
+              <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                {[0, 200000, 500000, 800000].map((amt) => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => setCapexOutflow(amt)}
+                    style={{
+                      fontSize: 10.5,
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                      background: capexOutflow === amt ? "var(--accent-blue)" : "var(--bg-card)",
+                      color: capexOutflow === amt ? "#fff" : "var(--text-secondary)",
+                      border: "1px solid var(--border-subtle)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {amt === 0 ? "₹0" : formatMoney(amt)}
+                  </button>
+                ))}
+              </div>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+                Models CNC lathe purchases, warehouse automation, or tooling upgrades before revenue begins.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 5: Liquidity Relief & Grants */}
         {activeTab === "relief" && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+            {/* Autonomous WhatsApp & Email Cash Recovery */}
+            <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.3)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                <strong style={{ fontSize: 13, color: "var(--accent-emerald)" }}>⚡ Autonomous WhatsApp & Email Cash Recovery Blitz</strong>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent-emerald)" }}>
+                  {cashRecoveryRelief}% Trapped Cash Cleared
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="10"
+                value={cashRecoveryRelief}
+                onChange={(e) => setCashRecoveryRelief(Number(e.target.value))}
+                style={{ width: "100%", accentColor: "var(--accent-emerald)" }}
+              />
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
+                Dispatches formal MSME Samadhaan pre-litigation WhatsApp notices and account payable emails to unlock 50%–90% of overdue debt without taking loans!
+              </p>
+            </div>
+
             {/* TReDS Discounting */}
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "rgba(5,150,105,0.06)", border: "1px solid rgba(5,150,105,0.25)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
@@ -995,7 +1498,7 @@ export default function Simulator() {
                 style={{ width: "100%", accentColor: "var(--accent-emerald)" }}
               />
               <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
-                Converts up to 80% of verified invoices into instant liquid cash within 24 hours at a 1.5% institutional discount fee.
+                Converts up to 80% of verified corporate invoices into instant liquid cash within 24 hours at a 1.5% institutional discount fee.
               </p>
             </div>
 
@@ -1037,7 +1540,7 @@ export default function Simulator() {
                 ))}
               </div>
               <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
-                Direct capital subsidy grant credited to your bank account without debt obligations.
+                Non-repayable government capital credit directly into current account under MSME priority schemes.
               </p>
             </div>
           </div>
