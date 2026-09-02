@@ -11,6 +11,9 @@ import {
   ArrowRight,
   FileText,
   Sparkles,
+  Zap,
+  Phone,
+  Send,
 } from "lucide-react";
 import {
   PieChart,
@@ -32,6 +35,8 @@ import {
 } from "../data/financialStore";
 import { INDUSTRY_SECTORS } from "../data/sampleData";
 import { calculateReceivables } from "../engines/digitalTwin";
+import { calculateInvoiceRiskAnalysis } from "../utils/riskRecoveryEngine";
+import CashRecoveryModal from "../components/CashRecoveryModal";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
 
@@ -39,6 +44,7 @@ export default function Customers() {
   const [customers, setCustomers] = useState(getCustomers());
   const [invoices, setInvoices] = useState(getInvoices());
   const [showAddModal, setShowAddModal] = useState(false);
+  const [recoveryData, setRecoveryData] = useState(null);
 
   // Form State
   const [name, setName] = useState("");
@@ -276,65 +282,119 @@ export default function Customers() {
                 <th>Outstanding Balance</th>
                 <th>Payment Terms</th>
                 <th>Historical Avg Delay</th>
-                <th>Credit Health Rating</th>
+                <th>Risk Analysis Attributes</th>
+                <th style={{ textAlign: "right" }}>Cash Recovery & Action</th>
               </tr>
             </thead>
             <tbody>
-              {customerMetrics.map((cust) => (
-                <tr key={cust.id}>
-                  <td>
-                    <div style={{ fontWeight: 600, color: "#fff" }}>{cust.name}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                      {cust.contactEmail || "billing@client.com"}
-                    </div>
-                  </td>
-                  <td>{cust.industry}</td>
-                  <td style={{ fontWeight: 700, color: "#60a5fa" }}>
-                    {formatLakhs(cust.outstanding)}
-                  </td>
-                  <td>Net {cust.paymentTermsDays || 30} Days</td>
-                  <td>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color:
-                          cust.avgDelayDays > 12
-                            ? "#fb7185"
-                            : cust.avgDelayDays > 5
-                            ? "#fbbf24"
-                            : "#34d399",
-                      }}
-                    >
-                      +{cust.avgDelayDays || 2} Days
-                    </span>
-                  </td>
-                  <td>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        padding: "3px 9px",
-                        borderRadius: "var(--radius-full)",
-                        background:
-                          cust.creditScore === "High Risk"
-                            ? "rgba(244,63,94,0.15)"
-                            : cust.creditScore === "Low Risk"
-                            ? "rgba(16,185,129,0.15)"
-                            : "rgba(245,158,11,0.15)",
-                        color:
-                          cust.creditScore === "High Risk"
-                            ? "#fb7185"
-                            : cust.creditScore === "Low Risk"
-                            ? "#34d399"
-                            : "#fbbf24",
-                      }}
-                    >
-                      {cust.creditScore || "Medium Risk"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {customerMetrics.map((cust) => {
+                const custInvoices = invoices.filter(
+                  (i) => (i.customer === cust.name || i.customerId === cust.id) && i.status !== "Paid"
+                );
+                const sampleInv = custInvoices[0] || {
+                  id: `REC-${cust.id}`,
+                  customer: cust.name,
+                  amount: cust.outstanding,
+                  dueDate: new Date().toISOString().slice(0, 10),
+                  status: cust.outstanding > 0 ? "Overdue" : "Paid",
+                  predictedDelayDays: cust.avgDelayDays || 8,
+                  riskScore: cust.creditScore === "High Risk" ? "High" : "Medium",
+                };
+                const risk = calculateInvoiceRiskAnalysis(sampleInv, cust);
+
+                return (
+                  <tr key={cust.id}>
+                    <td>
+                      <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{cust.name}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+                        <span>{cust.contactEmail || "billing@client.com"}</span>
+                        {cust.phone && <span style={{ color: "#22c55e" }}>• 📱 {cust.phone}</span>}
+                      </div>
+                    </td>
+                    <td>{cust.industry}</td>
+                    <td>
+                      <div style={{ fontWeight: 700, color: "#60a5fa", fontSize: 13.5 }}>
+                        {formatLakhs(cust.outstanding)}
+                      </div>
+                      {cust.outstanding > 0 && risk.accruedPenalInterest > 0 && (
+                        <div style={{ fontSize: 10.5, color: "var(--accent-purple)", fontWeight: 600 }}>
+                          +₹{risk.accruedPenalInterest.toLocaleString("en-IN")} 3x RBI penal int.
+                        </div>
+                      )}
+                    </td>
+                    <td>Net {cust.paymentTermsDays || 30} Days</td>
+                    <td>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color:
+                            cust.avgDelayDays > 12
+                              ? "#fb7185"
+                              : cust.avgDelayDays > 5
+                              ? "#fbbf24"
+                              : "#34d399",
+                        }}
+                      >
+                        +{cust.avgDelayDays || 2} Days
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 800,
+                              padding: "2px 8px",
+                              borderRadius: "var(--radius-full)",
+                              background: risk.riskBg,
+                              color: risk.riskBadgeColor,
+                              border: `1px solid ${risk.riskBadgeColor}33`,
+                            }}
+                          >
+                            {risk.riskTier}
+                          </span>
+                          <span style={{ fontSize: 11.5, fontWeight: 900, color: risk.riskBadgeColor }}>
+                            {risk.riskScoreIndex}/100
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 10.5, color: "var(--text-secondary)" }}>
+                          Default Probability: <strong>{risk.defaultProbability}%</strong>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      {cust.outstanding > 0 ? (
+                        <button
+                          className="btn btn-sm"
+                          style={{
+                            background: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(59, 130, 246, 0.15))",
+                            border: "1px solid rgba(34, 197, 94, 0.4)",
+                            color: "#22c55e",
+                            padding: "4px 10px",
+                            fontWeight: 700,
+                            fontSize: 11.5,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                            borderRadius: 6,
+                          }}
+                          onClick={() => setRecoveryData({ invoice: sampleInv, customer: cust })}
+                          title="Send WhatsApp / Email Cash Recovery Notice"
+                        >
+                          <Zap size={12} style={{ color: "#22c55e" }} />
+                          <span>⚡ Cash Recovery</span>
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: 11.5, color: "var(--accent-emerald)", fontWeight: 600 }}>
+                          ✓ Account Settled
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -425,6 +485,15 @@ export default function Customers() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Cash Recovery Modal */}
+      {recoveryData && (
+        <CashRecoveryModal
+          invoice={recoveryData.invoice}
+          customer={recoveryData.customer}
+          onClose={() => setRecoveryData(null)}
+        />
       )}
     </div>
   );

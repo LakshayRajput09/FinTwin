@@ -299,18 +299,20 @@ export default function Expenses() {
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                       <XAxis
                         type="number"
-                        stroke="#94a3b8"
+                        stroke="var(--text-muted)"
                         fontSize={11}
                         tickLine={false}
                         tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
                       />
-                      <YAxis dataKey="name" type="category" stroke="#cbd5e1" fontSize={11} tickLine={false} width={90} />
+                      <YAxis dataKey="name" type="category" stroke="var(--text-secondary)" fontSize={11} tickLine={false} width={90} />
                       <Tooltip
                         contentStyle={{
-                          background: "rgba(15, 23, 42, 0.95)",
-                          border: "1px solid rgba(255,255,255,0.15)",
+                          background: "var(--bg-card)",
+                          border: "1px solid var(--border-medium)",
                           borderRadius: 8,
                           fontSize: 12,
+                          boxShadow: "var(--shadow-md)",
+                          color: "var(--text-primary)",
                         }}
                         formatter={(val) => [formatMoney(val), "Amount"]}
                       />
@@ -348,10 +350,10 @@ export default function Expenses() {
                           flexShrink: 0,
                         }}
                       />
-                      <span style={{ color: "#cbd5e1", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                      <span style={{ color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                         {entry.name}
                       </span>
-                      <strong style={{ color: "#fff", marginLeft: "auto" }}>
+                      <strong style={{ color: "var(--text-primary)", marginLeft: "auto" }}>
                         {pct}%
                       </strong>
                     </div>
@@ -369,7 +371,7 @@ export default function Expenses() {
                 justifyContent: "center",
                 padding: "36px 20px",
                 textAlign: "center",
-                background: "rgba(255,255,255,0.02)",
+                background: "var(--bg-secondary)",
                 borderRadius: "var(--radius-md)",
                 margin: "10px 0",
               }}
@@ -390,7 +392,7 @@ export default function Expenses() {
               >
                 <PieIcon size={24} />
               </div>
-              <strong style={{ fontSize: 14, color: "#fff" }}>No Itemized Expenses Logged Yet</strong>
+              <strong style={{ fontSize: 14, color: "var(--text-primary)" }}>No Itemized Expenses Logged Yet</strong>
               <p style={{ color: "var(--text-muted)", fontSize: 12, maxWidth: 300, margin: "6px 0 16px" }}>
                 Log your recurring liabilities (payroll, rent, SaaS) to visualize your cost centers.
               </p>
@@ -515,7 +517,7 @@ export default function Expenses() {
               {(activeTab === "all" || activeTab === "recurring") &&
                 data.recurringExpenses.map((rec) => (
                   <tr key={rec.id}>
-                    <td style={{ fontWeight: 600, color: "#fff" }}>{rec.category}</td>
+                    <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>{rec.category}</td>
                     <td>{rec.description}</td>
                     <td style={{ fontWeight: 700, color: "#fbbf24" }}>
                       {formatLakhs(rec.amount)}
@@ -542,7 +544,7 @@ export default function Expenses() {
               {(activeTab === "all" || activeTab === "variable") &&
                 data.expenses.map((exp) => (
                   <tr key={exp.id}>
-                    <td style={{ fontWeight: 600, color: "#fff" }}>{exp.category}</td>
+                    <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>{exp.category}</td>
                     <td>{exp.description}</td>
                     <td style={{ fontWeight: 700, color: "#60a5fa" }}>
                       {formatLakhs(exp.amount)}

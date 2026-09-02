@@ -235,7 +235,7 @@ export default function Reports() {
                 </thead>
                 <tbody>
                   <tr>
-                    <td style={{ fontWeight: 700, color: "#fff" }}>Gross Invoiced Revenue</td>
+                    <td style={{ fontWeight: 700, color: "var(--text-primary)" }}>Gross Invoiced Revenue</td>
                     <td>Operating Inflow</td>
                     <td style={{ textAlign: "right", fontWeight: 800, color: "#34d399", fontSize: 15 }}>
                       {formatLakhs(revenue)}
@@ -270,7 +270,7 @@ export default function Reports() {
                   </tr>
 
                   <tr style={{ borderTop: "2px solid var(--border-medium)" }}>
-                    <td style={{ fontWeight: 800, color: "#fff", fontSize: 15 }}>
+                    <td style={{ fontWeight: 800, color: "var(--text-primary)", fontSize: 15 }}>
                       Net Operating Cash Margin (EBITDA approx.)
                     </td>
                     <td>Net Retained Buffer</td>
@@ -365,7 +365,7 @@ export default function Reports() {
                 </thead>
                 <tbody>
                   <tr>
-                    <td style={{ fontWeight: 700, color: "#fff" }}>Opening Liquid Cash</td>
+                    <td style={{ fontWeight: 700, color: "var(--text-primary)" }}>Opening Liquid Cash</td>
                     <td>Bank Current Account & Cash Equivalent</td>
                     <td style={{ textAlign: "right", fontWeight: 700, color: "#60a5fa" }}>
                       {formatLakhs(summary.currentCash)}
@@ -386,7 +386,7 @@ export default function Reports() {
                     </td>
                   </tr>
                   <tr style={{ borderTop: "2px solid var(--border-medium)" }}>
-                    <td style={{ fontWeight: 800, color: "#fff" }}>Projected Closing Cash Balance</td>
+                    <td style={{ fontWeight: 800, color: "var(--text-primary)" }}>Projected Closing Cash Balance</td>
                     <td>Net Month-End Position</td>
                     <td
                       style={{
@@ -428,20 +428,21 @@ export default function Reports() {
             <div style={{ height: 260, width: "100%", marginTop: 10 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={agingChartData} margin={{ top: 15, right: 25, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11.5} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                  <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11.5} tickLine={false} />
                   <YAxis
-                    stroke="#94a3b8"
+                    stroke="var(--text-muted)"
                     fontSize={11}
                     tickLine={false}
                     tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
                   />
                   <Tooltip
                     contentStyle={{
-                      background: "rgba(15, 23, 42, 0.95)",
-                      border: "1px solid rgba(255,255,255,0.15)",
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border-medium)",
                       borderRadius: 8,
                       fontSize: 12,
+                      color: "var(--text-primary)",
                     }}
                     formatter={(val) => [`₹${Number(val).toLocaleString("en-IN")}`, "Outstanding Amount"]}
                   />
@@ -475,7 +476,7 @@ export default function Reports() {
                 </thead>
                 <tbody>
                   <tr>
-                    <td style={{ fontWeight: 600, color: "#fff" }}>Current (0 - 30 Days)</td>
+                    <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>Current (0 - 30 Days)</td>
                     <td style={{ fontWeight: 700, color: "#60a5fa" }}>{formatLakhs(aging["0-30 Days"])}</td>
                     <td>{aging.total > 0 ? `${((aging["0-30 Days"] / aging.total) * 100).toFixed(1)}%` : "0%"}</td>
                     <td>
@@ -483,7 +484,7 @@ export default function Reports() {
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ fontWeight: 600, color: "#fff" }}>31 - 60 Days</td>
+                    <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>31 - 60 Days</td>
                     <td style={{ fontWeight: 700, color: "#fbbf24" }}>{formatLakhs(aging["31-60 Days"])}</td>
                     <td>{aging.total > 0 ? `${((aging["31-60 Days"] / aging.total) * 100).toFixed(1)}%` : "0%"}</td>
                     <td>
@@ -491,7 +492,7 @@ export default function Reports() {
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ fontWeight: 600, color: "#fff" }}>61 - 90 Days</td>
+                    <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>61 - 90 Days</td>
                     <td style={{ fontWeight: 700, color: "#fb7185" }}>{formatLakhs(aging["61-90 Days"])}</td>
                     <td>{aging.total > 0 ? `${((aging["61-90 Days"] / aging.total) * 100).toFixed(1)}%` : "0%"}</td>
                     <td>
@@ -499,7 +500,7 @@ export default function Reports() {
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ fontWeight: 600, color: "#fff" }}>90+ Days (Severe Overdue)</td>
+                    <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>90+ Days (Severe Overdue)</td>
                     <td style={{ fontWeight: 700, color: "#f43f5e" }}>{formatLakhs(aging["90+ Days"])}</td>
                     <td>{aging.total > 0 ? `${((aging["90+ Days"] / aging.total) * 100).toFixed(1)}%` : "0%"}</td>
                     <td>

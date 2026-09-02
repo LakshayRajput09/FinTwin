@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -17,11 +17,19 @@ import {
   UserCheck,
   ChevronDown,
   Menu,
+  Palette,
+  Play,
+  Pause,
+  Activity,
+  Check,
+  Globe,
+  Zap,
 } from "lucide-react";
 
-import { getInvoices } from "../data/financialStore";
+import { getInvoices, subscribeFinancialData } from "../data/financialStore";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { useTheme, THEMES } from "../context/ThemeContext";
 
 const titles = {
   "/dashboard": { title: "Executive Dashboard", sub: "Real-time liquidity, receivables & cash runway telemetry" },
@@ -31,7 +39,7 @@ const titles = {
   "/customers": { title: "Customer Intelligence & Risk", sub: "Credit risk scoring, payment delay tracking & concentration" },
   "/forecast": { title: "AI 90-Day Cash Forecast", sub: "Probabilistic runway simulation with confidence intervals" },
   "/simulator": { title: "What-If Shock Simulator", sub: "Interactive scenario stress-testing for MSME liquidity" },
-  "/financing": { title: "MSME Financing Marketplace", sub: "Working capital gap solutions & invoice discounting options" },
+  "/financing": { title: "MSME Financing Marketplace", sub: "Working capital gap solutions, bank loans & government schemes" },
   "/gst": { title: "GST Intelligence & Tax Calculator", sub: "Overall GST reconciliation (GSTR-1/2B/3B), transaction calculator & GSTIN lookup" },
   "/payroll": { title: "Workers & Salary Payroll Hub", sub: "Employee directory, 1-click salary disbursements, and payroll burn ledger" },
   "/reports": { title: "Financial Reports & P&L", sub: "Exportable statements, monthly burn & liquidity reconciliation" },
@@ -43,11 +51,32 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
-  const { t } = useLanguage();
+  const { t, currentLang, changeLanguage, supportedLanguages, activeLanguageMeta } = useLanguage();
+  const { theme, setTheme, currentTheme, allThemes } = useTheme();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showThemeDropdown, setShowThemeDropdown] = useState(false);
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
+  const [isLiveTicking, setIsLiveTicking] = useState(true);
+  const [secondsTick, setSecondsTick] = useState(15);
   const [invoices, setInvoices] = useState(getInvoices());
+
+  useEffect(() => {
+    const unsub = subscribeFinancialData(() => {
+      setInvoices(getInvoices());
+    });
+    return unsub;
+  }, []);
+
+  // Live simulation ticker countdown
+  useEffect(() => {
+    if (!isLiveTicking) return;
+    const interval = setInterval(() => {
+      setSecondsTick((prev) => (prev <= 1 ? 15 : prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isLiveTicking]);
 
   const currentInfo = titles[location.pathname] || {
     title: "NexFin MSME Platform",
@@ -77,11 +106,274 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
 
       {/* Right Controls */}
       <div className="topbar-right">
+        {/* Live Simulation Ticker Pill */}
+        <button
+          onClick={() => setIsLiveTicking(!isLiveTicking)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "5px 10px",
+            borderRadius: 20,
+            background: isLiveTicking ? "rgba(16,185,129,0.12)" : "var(--bg-secondary)",
+            border: isLiveTicking ? "1px solid rgba(16,185,129,0.3)" : "1px solid var(--border-subtle)",
+            fontSize: 11,
+            fontWeight: 700,
+            color: isLiveTicking ? "var(--accent-emerald)" : "var(--text-muted)",
+            cursor: "pointer",
+          }}
+          title={isLiveTicking ? "Telemetry Live (Updating every 15s) - Click to pause" : "Telemetry Paused - Click to resume"}
+        >
+          {isLiveTicking ? (
+            <>
+              <span className="twin-radar-pulse" style={{ width: 6, height: 6 }} />
+              <span>Live: {secondsTick}s</span>
+            </>
+          ) : (
+            <>
+              <Pause size={11} />
+              <span>Paused</span>
+            </>
+          )}
+        </button>
+
+        {/* Quick Cash Recovery Button on Topbar */}
+        <button
+          onClick={() => navigate("/invoices")}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "5px 12px",
+            borderRadius: 20,
+            background: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(59, 130, 246, 0.15))",
+            border: "1px solid rgba(34, 197, 94, 0.4)",
+            fontSize: 12,
+            fontWeight: 800,
+            color: "#22c55e",
+            cursor: "pointer",
+          }}
+          title="Open MSME Cash Recovery Hub (1-Click WhatsApp & Email Notices)"
+        >
+          <Zap size={13} style={{ color: "#22c55e" }} />
+          <span>⚡ Cash Recovery</span>
+          {overdueCount > 0 && (
+            <span
+              style={{
+                fontSize: 10,
+                padding: "1px 6px",
+                borderRadius: 10,
+                background: "var(--accent-rose)",
+                color: "#fff",
+                fontWeight: 900,
+              }}
+            >
+              {overdueCount}
+            </span>
+          )}
+        </button>
+
+        {/* Dynamic Theme Switcher Dropdown */}
+        <div style={{ position: "relative" }}>
+          <button
+            className="topbar-btn"
+            onClick={() => setShowThemeDropdown(!showThemeDropdown)}
+            title="Switch Dynamic Website Theme (Shortcut: Alt + T)"
+            style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 12px", borderRadius: "var(--radius-full)", background: "var(--bg-secondary)", border: "1px solid var(--border-medium)" }}
+          >
+            <span>{currentTheme.emoji}</span>
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: currentTheme.primaryAccent,
+                boxShadow: `0 0 6px ${currentTheme.primaryAccent}`,
+              }}
+            />
+            <span className="desktop-only" style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)" }}>
+              {currentTheme.name.split(" ")[0]}
+            </span>
+            <ChevronDown size={12} style={{ opacity: 0.6 }} />
+          </button>
+
+          {showThemeDropdown && (
+            <div
+              style={{
+                position: "absolute",
+                top: "100%",
+                right: 0,
+                marginTop: 8,
+                width: 230,
+                background: "var(--bg-card)",
+                border: "1px solid var(--border-medium)",
+                borderRadius: "var(--radius-md)",
+                boxShadow: "var(--shadow-lg)",
+                zIndex: 250,
+                padding: "8px",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px 8px" }}>
+                <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--text-muted)" }}>
+                  Select Dynamic Theme
+                </span>
+                <span style={{ fontSize: 9.5, padding: "1px 5px", borderRadius: 4, background: "var(--bg-secondary)", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                  Alt+T
+                </span>
+              </div>
+              {Object.values(allThemes).map((tItem) => (
+                <div
+                  key={tItem.id}
+                  onClick={() => {
+                    setTheme(tItem.id);
+                    setShowThemeDropdown(false);
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "8px 10px",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                    background: theme === tItem.id ? "var(--bg-secondary)" : "transparent",
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    marginBottom: 2,
+                    border: theme === tItem.id ? `1px solid ${tItem.primaryAccent}40` : "1px solid transparent",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span>{tItem.emoji}</span>
+                    <div>
+                      <div style={{ color: "var(--text-primary)", fontWeight: 700 }}>{tItem.name}</div>
+                      <div style={{ fontSize: 10.5, color: "var(--text-muted)", fontWeight: 400 }}>{tItem.description}</div>
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: tItem.primaryAccent,
+                      flexShrink: 0,
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Regional Language Switcher Dropdown */}
+        <div style={{ position: "relative" }}>
+          <button
+            className="topbar-btn"
+            onClick={() => {
+              setShowLangDropdown(!showLangDropdown);
+              setShowThemeDropdown(false);
+            }}
+            title="Switch Regional Language / भाषा बदलें"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 11px",
+              borderRadius: "var(--radius-full)",
+              background: "var(--bg-secondary)",
+              border: "1px solid var(--border-medium)",
+              cursor: "pointer",
+            }}
+          >
+            <Globe size={13} style={{ color: "var(--accent-purple)" }} />
+            <span style={{ fontSize: 13 }}>{activeLanguageMeta.flag}</span>
+            <span className="desktop-only" style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)" }}>
+              {activeLanguageMeta.name}
+            </span>
+            <ChevronDown size={11} style={{ opacity: 0.6 }} />
+          </button>
+
+          {showLangDropdown && (
+            <div
+              style={{
+                position: "absolute",
+                top: "100%",
+                right: 0,
+                marginTop: 8,
+                width: 250,
+                maxHeight: 360,
+                overflowY: "auto",
+                background: "var(--bg-card)",
+                border: "1px solid var(--border-medium)",
+                borderRadius: "var(--radius-md)",
+                boxShadow: "var(--shadow-lg)",
+                zIndex: 250,
+                padding: "8px",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px 8px" }}>
+                <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--text-muted)" }}>
+                  Select Language / भाषा
+                </span>
+                <span style={{ fontSize: 9.5, padding: "1px 5px", borderRadius: 4, background: "var(--bg-secondary)", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                  {supportedLanguages.length}
+                </span>
+              </div>
+              {supportedLanguages.map((l) => {
+                const isSelected = currentLang === l.id;
+                return (
+                  <div
+                    key={l.id}
+                    onClick={() => {
+                      changeLanguage(l.id);
+                      setShowLangDropdown(false);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "8px 10px",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      background: isSelected ? "var(--bg-secondary)" : "transparent",
+                      border: isSelected ? "1px solid rgba(139, 92, 246, 0.4)" : "1px solid transparent",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      marginBottom: 2,
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 16 }}>{l.flag}</span>
+                      <div>
+                        <div style={{ color: "var(--text-primary)", fontWeight: 700 }}>
+                          {l.name} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)" }}>({l.englishName})</span>
+                        </div>
+                        <div style={{ fontSize: 10, color: "var(--text-muted)" }}>{l.region}</div>
+                      </div>
+                    </div>
+                    {isSelected && <Check size={14} style={{ color: "var(--accent-purple)" }} />}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         {/* Search button */}
         <button className="topbar-search-btn" onClick={onOpenSearch}>
           <Search size={15} />
           <span>{t("quickSearch", "Quick search...")}</span>
           <kbd className="search-kbd">⌘K</kbd>
+        </button>
+
+        {/* Ask AI Copilot button */}
+        <button
+          className="topbar-ai-btn"
+          onClick={onOpenAiCopilot}
+          title="Ask NexFin AI Financial Copilot (⌘J)"
+        >
+          <Sparkles size={14} style={{ color: "var(--accent-purple)" }} />
+          <span>Ask AI</span>
+          <kbd className="ai-kbd">⌘J</kbd>
         </button>
 
         {/* Quick Add Button */}
@@ -132,7 +424,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                   borderBottom: "1px solid var(--border-subtle)",
                 }}
               >
-                <span style={{ fontWeight: 700, fontSize: 13, color: "#fff" }}>
+                <span style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
                   Alerts & Notifications
                 </span>
                 <button
@@ -211,9 +503,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
               </div>
             </div>
           )}
-        </div>
-
-        {/* User Authentication Profile Button */}
+        </div>          {/* User Authentication Profile Button */}
         <div style={{ position: "relative" }}>
           {isAuthenticated ? (
             <button
@@ -222,9 +512,9 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                padding: "5px 8px",
+                padding: "5px 10px",
                 borderRadius: "var(--radius-full)",
-                background: "rgba(255, 255, 255, 0.05)",
+                background: "var(--bg-secondary)",
                 border: "1px solid var(--border-medium)",
                 cursor: "pointer",
               }}
@@ -234,7 +524,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                   width: 28,
                   height: 28,
                   borderRadius: "50%",
-                  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+                  background: "linear-gradient(135deg, var(--accent-blue), #6366f1)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -243,14 +533,14 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                   color: "#fff",
                 }}
               >
-                {user?.avatar || "FT"}
+                {user?.avatar || "NF"}
               </div>
               <div className="topbar-user-text" style={{ textAlign: "left", display: "flex", flexDirection: "column" }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#fff", lineHeight: 1.2 }}>
-                  {user?.name || "Executive"}
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.2 }}>
+                  {user?.name || "Partner"}
                 </span>
                 <span style={{ fontSize: 9.5, color: "var(--accent-emerald)", fontWeight: 600 }}>
-                  {user?.role?.split(" ")[0] || "Admin"}
+                  {user?.role?.split(" ")[0] || "Owner"}
                 </span>
               </div>
             </button>
@@ -280,16 +570,16 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                 right: 0,
                 marginTop: 10,
                 width: "min(260px, calc(100vw - 32px))",
-                background: "var(--bg-card-solid)",
+                background: "var(--bg-card)",
                 border: "1px solid var(--border-medium)",
                 borderRadius: "var(--radius-md)",
                 boxShadow: "var(--shadow-lg)",
                 zIndex: 200,
-                padding: "8px",
+                padding: "12px",
               }}
             >
               <div style={{ paddingBottom: 10, borderBottom: "1px solid var(--border-subtle)", marginBottom: 8 }}>
-                <div style={{ fontWeight: 700, fontSize: 13.5, color: "#fff" }}>{user?.name}</div>
+                <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--text-primary)" }}>{user?.name}</div>
                 <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{user?.email}</div>
                 <div
                   style={{
@@ -297,8 +587,8 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                     fontWeight: 700,
                     padding: "2px 8px",
                     borderRadius: "var(--radius-full)",
-                    background: "rgba(59,130,246,0.15)",
-                    color: "#60a5fa",
+                    background: "rgba(79,70,229,0.1)",
+                    color: "var(--accent-blue)",
                     display: "inline-block",
                     marginTop: 6,
                   }}
@@ -307,7 +597,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                 </div>
               </div>
 
-              <div style={{ padding: "6px 8px", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", gap: 6, color: "var(--text-primary)" }} onClick={() => { setShowUserDropdown(false); navigate("/settings"); }}>
+              <div style={{ padding: "8px 10px", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: 12.5, display: "flex", alignItems: "center", gap: 8, color: "var(--text-primary)" }} onClick={() => { setShowUserDropdown(false); navigate("/settings"); }}>
                 <span>🏢 Company Settings & Targets</span>
               </div>
 
@@ -315,14 +605,15 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
 
               <div
                 style={{
-                  padding: "6px 8px",
+                  padding: "8px 10px",
                   borderRadius: "var(--radius-sm)",
                   cursor: "pointer",
-                  fontSize: 12,
-                  color: "#fb7185",
+                  fontSize: 12.5,
+                  color: "var(--accent-rose)",
                   display: "flex",
                   alignItems: "center",
-                  gap: 6,
+                  gap: 8,
+                  fontWeight: 600,
                 }}
                 onClick={() => {
                   logout();

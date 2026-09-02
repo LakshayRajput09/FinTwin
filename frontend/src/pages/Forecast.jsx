@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Clock,
+  Filter,
 } from "lucide-react";
 import {
   AreaChart,
@@ -19,6 +20,8 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
+  CartesianGrid,
+  Legend,
 } from "recharts";
 
 import {
@@ -29,11 +32,17 @@ import {
   generateLocalForecast,
   getCashFlowSummary,
 } from "../engines/digitalTwin";
+import { useTheme } from "../context/ThemeContext";
 
 export default function Forecast() {
+  const { currentTheme } = useTheme();
   const [horizonDays, setHorizonDays] = useState(90);
-  const [forecast, setForecast] = useState(generateLocalForecast(90));
+  const [forecast, setForecast] = useState(() => generateLocalForecast(90));
   const [summary, setSummary] = useState(getCashFlowSummary());
+  const [chartView, setChartView] = useState("area"); // 'area' | 'line'
+  const [showBest, setShowBest] = useState(true);
+  const [showExpected, setShowExpected] = useState(true);
+  const [showWorst, setShowWorst] = useState(true);
 
   useEffect(() => {
     const unsub = subscribeFinancialData(() => {
@@ -54,10 +63,10 @@ export default function Forecast() {
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       {/* Top Metric Row */}
       <div className="grid-4">
-        <div className="kpi-card">
+        <div className="kpi-card graphical-card-interactive">
           <div className="kpi-top">
             <span className="kpi-label">Forecast Horizon</span>
-            <div className="card-icon-wrap">
+            <div className="card-icon-wrap blue">
               <Calendar size={18} />
             </div>
           </div>
@@ -71,7 +80,7 @@ export default function Forecast() {
           </div>
         </div>
 
-        <div className="kpi-card">
+        <div className="kpi-card graphical-card-interactive">
           <div className="kpi-top">
             <span className="kpi-label">Breach Risk Horizon</span>
             <div className="card-icon-wrap amber">
@@ -88,7 +97,7 @@ export default function Forecast() {
           </div>
         </div>
 
-        <div className="kpi-card">
+        <div className="kpi-card graphical-card-interactive">
           <div className="kpi-top">
             <span className="kpi-label">Lowest Projected Buffer</span>
             <div className="card-icon-wrap rose">
@@ -105,7 +114,7 @@ export default function Forecast() {
           </div>
         </div>
 
-        <div className="kpi-card">
+        <div className="kpi-card graphical-card-interactive">
           <div className="kpi-top">
             <span className="kpi-label">Twin AI Confidence Score</span>
             <div className="card-icon-wrap emerald">
@@ -123,129 +132,216 @@ export default function Forecast() {
         </div>
       </div>
 
-      {/* Main Forecast Chart with Horizon Controls */}
+      {/* Main Forecast Chart with Dynamic Controls */}
       <div className="glass-card">
-        <div className="card-header">
+        <div className="card-header" style={{ flexWrap: "wrap", gap: 14 }}>
           <div className="card-title-group">
             <div className="card-icon-wrap purple">
               <TrendingUp size={18} />
             </div>
             <div>
-              <div className="card-title">Probabilistic Cash Runway Simulation</div>
+              <div className="card-title">{horizonDays}-Day Dynamic Cash Runway Simulation</div>
               <div className="card-subtitle">
                 Confidence envelopes: P10 Worst-Case (Delayed Collections), P50 Expected, P90 Accelerated
               </div>
             </div>
           </div>
 
-          <div className="tabs-container">
-            <button
-              className={`tab-btn ${horizonDays === 30 ? "active" : ""}`}
-              onClick={() => handleHorizonChange(30)}
-            >
-              30 Days
-            </button>
-            <button
-              className={`tab-btn ${horizonDays === 60 ? "active" : ""}`}
-              onClick={() => handleHorizonChange(60)}
-            >
-              60 Days
-            </button>
-            <button
-              className={`tab-btn ${horizonDays === 90 ? "active" : ""}`}
-              onClick={() => handleHorizonChange(90)}
-            >
-              90 Days
-            </button>
-          </div>
-        </div>
-
-        <div style={{ height: 320, width: "100%", marginTop: 10 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={forecast.timeline} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <defs>
-                <linearGradient id="colorBest" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
-                </linearGradient>
-                <linearGradient id="colorExpected" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
-                </linearGradient>
-                <linearGradient id="colorWorst" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="day" stroke="#64748b" fontSize={11} tickLine={false} />
-              <YAxis
-                stroke="#64748b"
-                fontSize={11}
-                tickLine={false}
-                tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "rgba(13, 18, 31, 0.95)",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  borderRadius: 8,
-                  fontSize: 12,
-                }}
-                formatter={(val) => [`₹${(Number(val) / 100000).toFixed(2)}L`, ""]}
-              />
-              <Area
-                type="monotone"
-                dataKey="bestCase"
-                stroke="#10b981"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#colorBest)"
-                name="P90 (Best-Case)"
-              />
-              <Area
-                type="monotone"
-                dataKey="expected"
-                stroke="#3b82f6"
-                strokeWidth={2.5}
-                fillOpacity={1}
-                fill="url(#colorExpected)"
-                name="P50 (Expected)"
-              />
-              <Area
-                type="monotone"
-                dataKey="worstCase"
-                stroke="#f43f5e"
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-                fillOpacity={1}
-                fill="url(#colorWorst)"
-                name="P10 (Stress Deficit)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* AI Recommendations Banner */}
-      <div
-        className="glass-card"
-        style={{
-          background: "linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(59,130,246,0.08) 100%)",
-          border: "1px solid rgba(139,92,246,0.35)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-          <div className="card-icon-wrap purple" style={{ width: 42, height: 42, flexShrink: 0 }}>
-            <Sparkles size={20} />
-          </div>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>
-              Digital Twin AI Runway Advisory
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            {/* Horizon Selector */}
+            <div style={{ display: "flex", background: "rgba(255,255,255,0.05)", borderRadius: 8, padding: 2 }}>
+              {[15, 30, 60, 90, 120].map((days) => (
+                <button
+                  key={days}
+                  onClick={() => handleHorizonChange(days)}
+                  style={{
+                    padding: "4px 9px",
+                    borderRadius: 6,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    background: horizonDays === days ? currentTheme.primaryAccent : "transparent",
+                    color: horizonDays === days ? "#000" : "var(--text-secondary)",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {days}D
+                </button>
+              ))}
             </div>
-            <p style={{ color: "var(--text-secondary)", fontSize: 13.5, marginTop: 6, lineHeight: 1.6 }}>
-              {forecast.recommendation}
-            </p>
+
+            {/* View Mode */}
+            <div style={{ display: "flex", background: "rgba(255,255,255,0.05)", borderRadius: 8, padding: 2 }}>
+              <button
+                onClick={() => setChartView("area")}
+                style={{
+                  padding: "4px 8px",
+                  borderRadius: 6,
+                  fontSize: 11,
+                  background: chartView === "area" ? "rgba(255,255,255,0.15)" : "transparent",
+                  color: chartView === "area" ? "#fff" : "var(--text-muted)",
+                }}
+              >
+                Area
+              </button>
+              <button
+                onClick={() => setChartView("line")}
+                style={{
+                  padding: "4px 8px",
+                  borderRadius: 6,
+                  fontSize: 11,
+                  background: chartView === "line" ? "rgba(255,255,255,0.15)" : "transparent",
+                  color: chartView === "line" ? "#fff" : "var(--text-muted)",
+                }}
+              >
+                Line
+              </button>
+            </div>
           </div>
+        </div>
+
+        {/* Dynamic Series Toggle Filters */}
+        <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 16px", background: "rgba(0,0,0,0.2)", borderRadius: 6, margin: "0 16px 8px", flexWrap: "wrap" }}>
+          <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 4 }}>Filter Series:</span>
+          <button
+            onClick={() => setShowExpected(!showExpected)}
+            style={{
+              fontSize: 11,
+              padding: "2px 8px",
+              borderRadius: 12,
+              background: showExpected ? "rgba(56,189,248,0.2)" : "rgba(255,255,255,0.05)",
+              color: showExpected ? "#38bdf8" : "var(--text-muted)",
+              border: "1px solid rgba(56,189,248,0.3)",
+            }}
+          >
+            P50 Expected
+          </button>
+          <button
+            onClick={() => setShowBest(!showBest)}
+            style={{
+              fontSize: 11,
+              padding: "2px 8px",
+              borderRadius: 12,
+              background: showBest ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.05)",
+              color: showBest ? "#34d399" : "var(--text-muted)",
+              border: "1px solid rgba(16,185,129,0.3)",
+            }}
+          >
+            P90 Best Case
+          </button>
+          <button
+            onClick={() => setShowWorst(!showWorst)}
+            style={{
+              fontSize: 11,
+              padding: "2px 8px",
+              borderRadius: 12,
+              background: showWorst ? "rgba(244,63,94,0.2)" : "rgba(255,255,255,0.05)",
+              color: showWorst ? "#fb7185" : "var(--text-muted)",
+              border: "1px solid rgba(244,63,94,0.3)",
+            }}
+          >
+            P10 Worst Case
+          </button>
+        </div>
+
+        <div style={{ height: 340, width: "100%", padding: "0 10px 10px" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            {chartView === "area" ? (
+              <AreaChart data={forecast.timeline} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="colorBest" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                  </linearGradient>
+                  <linearGradient id="colorExpected" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={currentTheme.primaryAccent} stopOpacity={0.35} />
+                    <stop offset="95%" stopColor={currentTheme.primaryAccent} stopOpacity={0.0} />
+                  </linearGradient>
+                  <linearGradient id="colorWorst" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="day" stroke="#64748b" fontSize={11} tickLine={false} />
+                <YAxis
+                  stroke="#64748b"
+                  fontSize={11}
+                  tickLine={false}
+                  tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "rgba(13, 18, 31, 0.95)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                  formatter={(val) => [`₹${(Number(val) / 100000).toFixed(2)}L`, ""]}
+                />
+                {showBest && (
+                  <Area
+                    type="monotone"
+                    dataKey="bestCase"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    strokeDasharray="4 4"
+                    fill="url(#colorBest)"
+                    animationDuration={500}
+                  />
+                )}
+                {showExpected && (
+                  <Area
+                    type="monotone"
+                    dataKey="expectedCash"
+                    stroke={currentTheme.primaryAccent}
+                    strokeWidth={2.5}
+                    fill="url(#colorExpected)"
+                    animationDuration={500}
+                  />
+                )}
+                {showWorst && (
+                  <Area
+                    type="monotone"
+                    dataKey="worstCase"
+                    stroke="#ef4444"
+                    strokeWidth={2}
+                    strokeDasharray="4 4"
+                    fill="url(#colorWorst)"
+                    animationDuration={500}
+                  />
+                )}
+              </AreaChart>
+            ) : (
+              <LineChart data={forecast.timeline} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="day" stroke="#64748b" fontSize={11} tickLine={false} />
+                <YAxis
+                  stroke="#64748b"
+                  fontSize={11}
+                  tickLine={false}
+                  tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "rgba(13, 18, 31, 0.95)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                  formatter={(val) => [`₹${(Number(val) / 100000).toFixed(2)}L`, ""]}
+                />
+                {showBest && (
+                  <Line type="monotone" dataKey="bestCase" stroke="#10b981" strokeWidth={2} dot={false} animationDuration={500} />
+                )}
+                {showExpected && (
+                  <Line type="monotone" dataKey="expectedCash" stroke={currentTheme.primaryAccent} strokeWidth={3} dot={false} animationDuration={500} />
+                )}
+                {showWorst && (
+                  <Line type="monotone" dataKey="worstCase" stroke="#ef4444" strokeWidth={2} strokeDasharray="4 4" dot={false} animationDuration={500} />
+                )}
+              </LineChart>
+            )}
+          </ResponsiveContainer>
         </div>
       </div>
     </div>

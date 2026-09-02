@@ -17,6 +17,11 @@ import {
   FileCode,
   File,
   Cpu,
+  Zap,
+  Mail,
+  Phone,
+  ShieldAlert,
+  ExternalLink,
 } from "lucide-react";
 
 import {
@@ -29,6 +34,9 @@ import {
   subscribeFinancialData,
 } from "../data/financialStore";
 import { parseInvoiceFile } from "../utils/invoiceParser";
+import { calculateInvoiceRiskAnalysis } from "../utils/riskRecoveryEngine";
+import CashRecoveryModal from "../components/CashRecoveryModal";
+import DeepDiveRiskModal from "../components/DeepDiveRiskModal";
 import {
   BarChart,
   Bar,
@@ -47,6 +55,8 @@ export default function Invoices() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [recoveryInvoice, setRecoveryInvoice] = useState(null);
+  const [selectedDeepDiveInvoice, setSelectedDeepDiveInvoice] = useState(null);
   const [notification, setNotification] = useState("");
 
   // Multi-Format Upload State
@@ -75,12 +85,18 @@ export default function Invoices() {
     if (activeTab === "pending" && inv.status !== "Pending") return false;
     if (activeTab === "overdue" && inv.status !== "Overdue") return false;
     if (activeTab === "paid" && inv.status !== "Paid") return false;
+    if (activeTab === "at_risk") {
+      if (inv.status === "Paid") return false;
+      const risk = calculateInvoiceRiskAnalysis(inv);
+      if (risk.riskScoreIndex < 40 && inv.status !== "Overdue") return false;
+    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
         inv.id.toLowerCase().includes(q) ||
         inv.customer.toLowerCase().includes(q) ||
-        inv.status.toLowerCase().includes(q)
+        inv.status.toLowerCase().includes(q) ||
+        (inv.recoveryStatus && inv.recoveryStatus.toLowerCase().includes(q))
       );
     }
     return true;
@@ -90,6 +106,20 @@ export default function Invoices() {
   const totalPending = invoices.filter((i) => i.status === "Pending").reduce((s, i) => s + Number(i.amount || 0), 0);
   const totalOverdue = invoices.filter((i) => i.status === "Overdue").reduce((s, i) => s + Number(i.amount || 0), 0);
   const totalPaid = invoices.filter((i) => i.status === "Paid").reduce((s, i) => s + Number(i.amount || 0), 0);
+
+  // Risk Analysis Totals
+  const totalPenalInterestAccrued = invoices
+    .filter((i) => i.status !== "Paid")
+    .reduce((sum, inv) => {
+      const r = calculateInvoiceRiskAnalysis(inv);
+      return sum + r.accruedPenalInterest;
+    }, 0);
+
+  const totalAtRiskCount = invoices.filter((i) => {
+    if (i.status === "Paid") return false;
+    const r = calculateInvoiceRiskAnalysis(i);
+    return r.riskScoreIndex >= 40 || i.status === "Overdue";
+  }).length;
 
   const handleCreateInvoice = (e) => {
     e.preventDefault();
@@ -225,6 +255,109 @@ export default function Invoices() {
         </div>
       </div>
 
+      {/* Risk Analysis & Cash Recovery Action Hub */}
+      <div
+        style={{
+          padding: "16px 22px",
+          borderRadius: 14,
+          background: "linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(59, 130, 246, 0.08))",
+          border: "1px solid rgba(34, 197, 94, 0.25)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 16,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 12,
+              background: "linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(59, 130, 246, 0.2))",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#22c55e",
+              flexShrink: 0,
+            }}
+          >
+            <Zap size={22} />
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 14.5, fontWeight: 800, color: "var(--text-primary)" }}>
+                Autonomous Cash Recovery & Section 43B(h) Dispatch
+              </span>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                  borderRadius: 10,
+                  background: "rgba(244, 63, 94, 0.15)",
+                  color: "#fb7185",
+                  border: "1px solid rgba(244, 63, 94, 0.3)",
+                }}
+              >
+                {totalAtRiskCount} Invoices at Default Risk
+              </span>
+            </div>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 3 }}>
+              Trapped Overdue: <strong style={{ color: "#fb7185" }}>{formatLakhs(totalOverdue)}</strong> • Accrued 3x RBI Penal Interest (19.5% p.a.):{" "}
+              <strong style={{ color: "var(--accent-purple)" }}>₹{totalPenalInterestAccrued.toLocaleString("en-IN")}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <button
+            className="btn btn-secondary btn-sm"
+            style={{
+              height: 36,
+              padding: "0 14px",
+              fontWeight: 700,
+              fontSize: 12,
+              gap: 6,
+              display: "flex",
+              alignItems: "center",
+              borderColor: "rgba(244, 63, 94, 0.4)",
+              color: "var(--accent-rose)",
+            }}
+            onClick={() => {
+              const firstDue = invoices.find((i) => i.status === "Overdue") || invoices[0];
+              setSelectedDeepDiveInvoice(firstDue);
+            }}
+          >
+            <ShieldAlert size={14} />
+            <span>Deep-Dive Risk Analysis</span>
+          </button>
+
+          <button
+            className="btn btn-sm"
+            style={{
+              background: "linear-gradient(135deg, #22c55e, #16a34a)",
+              color: "#fff",
+              border: "none",
+              height: 36,
+              padding: "0 16px",
+              fontWeight: 700,
+              fontSize: 12,
+              gap: 6,
+              boxShadow: "0 4px 12px rgba(34, 197, 94, 0.25)",
+            }}
+            onClick={() => {
+              const firstDue = invoices.find((i) => i.status === "Overdue") || invoices.find((i) => i.status !== "Paid");
+              if (firstDue) setRecoveryInvoice(firstDue);
+            }}
+          >
+            <Send size={13} />
+            <span>1-Click WhatsApp / Email Recovery</span>
+          </button>
+        </div>
+      </div>
+
       {/* Visual Invoices Status Chart */}
       {invoices.length > 0 && (
         <div className="glass-card" style={{ padding: "20px 24px" }}>
@@ -256,18 +389,20 @@ export default function Invoices() {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                 <XAxis
                   type="number"
-                  stroke="#94a3b8"
+                  stroke="var(--text-muted)"
                   fontSize={11}
                   tickLine={false}
                   tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
                 />
-                <YAxis dataKey="name" type="category" stroke="#cbd5e1" fontSize={12} tickLine={false} width={80} />
+                <YAxis dataKey="name" type="category" stroke="var(--text-secondary)" fontSize={12} tickLine={false} width={80} />
                 <Tooltip
                   contentStyle={{
-                    background: "rgba(15, 23, 42, 0.95)",
-                    border: "1px solid rgba(255,255,255,0.15)",
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border-medium)",
                     borderRadius: 8,
                     fontSize: 12,
+                    boxShadow: "var(--shadow-md)",
+                    color: "var(--text-primary)",
                   }}
                   formatter={(val, name, props) => [
                     `₹${Number(val).toLocaleString("en-IN")} (${props.payload.count} invoices)`,
@@ -311,6 +446,14 @@ export default function Invoices() {
               onClick={() => setActiveTab("overdue")}
             >
               Overdue ({invoices.filter((i) => i.status === "Overdue").length})
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "at_risk" ? "active" : ""}`}
+              onClick={() => setActiveTab("at_risk")}
+              style={{ display: "flex", alignItems: "center", gap: 5 }}
+            >
+              <Zap size={12} style={{ color: "var(--accent-rose)" }} />
+              <span>At-Risk / Recovery ({totalAtRiskCount})</span>
             </button>
             <button
               className={`tab-btn ${activeTab === "paid" ? "active" : ""}`}
@@ -372,116 +515,232 @@ export default function Invoices() {
               <tr>
                 <th>Invoice ID</th>
                 <th>Customer / Client</th>
-                <th>Amount</th>
+                <th>Principal & Penal Int.</th>
                 <th>Due Date</th>
-                <th>AI Delay Prediction</th>
-                <th>Risk Profile</th>
-                <th>Status</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
+                <th>AI Delay & 43B(h) Audit</th>
+                <th>Risk Analysis Attributes</th>
+                <th>Recovery Status</th>
+                <th style={{ textAlign: "right" }}>Cash Recovery & Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredInvoices.map((inv) => (
-                <tr key={inv.id}>
-                  <td style={{ fontWeight: 700, color: "#fff", fontFamily: "var(--font-mono)" }}>
-                    {inv.id}
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 600, color: "#f8fafc" }}>{inv.customer}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                      Issued: {inv.invoiceDate || "2026-08-01"}
-                    </div>
-                  </td>
-                  <td style={{ fontWeight: 700, color: "#60a5fa", fontSize: 14 }}>
-                    {formatLakhs(inv.amount)}
-                  </td>
-                  <td>{inv.dueDate}</td>
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <Sparkles size={13} style={{ color: "#a78bfa" }} />
-                      <span
+              {filteredInvoices.map((inv) => {
+                const cust = customers.find((c) => c.name === inv.customer || c.id === inv.customerId);
+                const risk = calculateInvoiceRiskAnalysis(inv, cust);
+
+                return (
+                  <tr key={inv.id}>
+                    <td style={{ fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-mono)" }}>
+                      {inv.id}
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{inv.customer}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+                        <span>Issued: {inv.invoiceDate || "2026-08-01"}</span>
+                        {(inv.phone || cust?.phone) && (
+                          <span style={{ color: "#22c55e", fontWeight: 600 }}>• 📱 {inv.phone || cust?.phone}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: 800, color: "#60a5fa", fontSize: 14 }}>
+                        {formatLakhs(inv.amount)}
+                      </div>
+                      {inv.status !== "Paid" && risk.accruedPenalInterest > 0 && (
+                        <div
+                          style={{ fontSize: 10.5, color: "var(--accent-purple)", fontWeight: 700 }}
+                          title="Accrued compound interest at 3x RBI Bank Rate (~19.5% p.a.) under Section 16 MSMED Act"
+                        >
+                          +₹{risk.accruedPenalInterest.toLocaleString("en-IN")} penal int.
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: 600 }}>{inv.dueDate}</div>
+                      {risk.daysOverdue > 0 && (
+                        <div style={{ fontSize: 10.5, color: "var(--accent-rose)", fontWeight: 700 }}>
+                          +{risk.daysOverdue}d overdue
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                          <Sparkles size={12} style={{ color: "#a78bfa" }} />
+                          <span
+                            style={{
+                              fontSize: 11.5,
+                              fontWeight: 600,
+                              color:
+                                inv.predictedDelayDays > 15
+                                  ? "var(--accent-rose)"
+                                  : inv.predictedDelayDays > 5
+                                  ? "var(--accent-amber)"
+                                  : "var(--accent-emerald)",
+                            }}
+                          >
+                            +{inv.predictedDelayDays || 4}d predicted delay
+                          </span>
+                        </div>
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: "1px 6px",
+                            borderRadius: 4,
+                            width: "fit-content",
+                            background:
+                              risk.section43bSeverity === "critical"
+                                ? "rgba(244,63,94,0.15)"
+                                : risk.section43bSeverity === "warning"
+                                ? "rgba(245,158,11,0.15)"
+                                : "rgba(16,185,129,0.12)",
+                            color:
+                              risk.section43bSeverity === "critical"
+                                ? "var(--accent-rose)"
+                                : risk.section43bSeverity === "warning"
+                                ? "var(--accent-amber)"
+                                : "var(--accent-emerald)",
+                          }}
+                          title={risk.section43bMessage}
+                        >
+                          Sec 43B(h): {risk.section43bStatus}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <div
+                        onClick={() => setSelectedDeepDiveInvoice(inv)}
                         style={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          color:
-                            inv.predictedDelayDays > 15
-                              ? "#fb7185"
-                              : inv.predictedDelayDays > 5
-                              ? "#fbbf24"
-                              : "#34d399",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 4,
+                          cursor: "pointer",
+                          padding: "4px 8px",
+                          borderRadius: 6,
+                          background: "var(--bg-secondary)",
+                          border: "1px dashed var(--border-medium)",
+                          transition: "all 0.15s ease",
                         }}
+                        title="Click for Deep-Dive Risk Analysis on this invoice"
                       >
-                        +{inv.predictedDelayDays || 4} Days Delay
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        padding: "2px 8px",
-                        borderRadius: "var(--radius-full)",
-                        background:
-                          inv.riskScore === "High"
-                            ? "rgba(244,63,94,0.15)"
-                            : inv.riskScore === "Low"
-                            ? "rgba(16,185,129,0.15)"
-                            : "rgba(245,158,11,0.15)",
-                        color:
-                          inv.riskScore === "High"
-                            ? "#fb7185"
-                            : inv.riskScore === "Low"
-                            ? "#34d399"
-                            : "#fbbf24",
-                      }}
-                    >
-                      {inv.riskScore || "Medium"} Risk
-                    </span>
-                  </td>
-                  <td>
-                    <span
-                      className={`status-badge ${
-                        inv.status === "Paid"
-                          ? "paid"
-                          : inv.status === "Overdue"
-                          ? "overdue"
-                          : "pending"
-                      }`}
-                    >
-                      {inv.status}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: "right" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
-                      {inv.status !== "Paid" && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span
+                            style={{
+                              fontSize: 10.5,
+                              fontWeight: 800,
+                              padding: "2px 7px",
+                              borderRadius: "var(--radius-full)",
+                              background: risk.riskBg,
+                              color: risk.riskBadgeColor,
+                              border: `1px solid ${risk.riskBadgeColor}33`,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 3,
+                            }}
+                          >
+                            <ShieldAlert size={10} />
+                            {risk.riskTier}
+                          </span>
+                          <span style={{ fontSize: 11, fontWeight: 900, color: risk.riskBadgeColor }}>
+                            {risk.riskScoreIndex}/100
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 10.5, color: "var(--text-secondary)", display: "flex", justifyContent: "space-between" }}>
+                          <span>
+                            Risk:{" "}
+                            <strong style={{ color: risk.defaultProbability > 50 ? "var(--accent-rose)" : "var(--text-primary)" }}>
+                              {risk.defaultProbability}%
+                            </strong>
+                          </span>
+                          <span style={{ color: "var(--accent-blue)", fontWeight: 700 }}>🔍 Deep Dive</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                        <span
+                          className={`status-badge ${
+                            inv.status === "Paid"
+                              ? "paid"
+                              : inv.status === "Overdue"
+                              ? "overdue"
+                              : "pending"
+                          }`}
+                        >
+                          {inv.status}
+                        </span>
+                        {inv.recoveryStatus && (
+                          <span
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 600,
+                              color: inv.lastChannel === "whatsapp" ? "#22c55e" : "#38bdf8",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 3,
+                            }}
+                          >
+                            {inv.lastChannel === "whatsapp" ? "🟢" : "🔵"} {inv.recoveryStatus}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+                        {inv.status !== "Paid" && (
+                          <button
+                            className="btn btn-sm"
+                            style={{
+                              background: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(59, 130, 246, 0.15))",
+                              border: "1px solid rgba(34, 197, 94, 0.4)",
+                              color: "#22c55e",
+                              padding: "4px 10px",
+                              fontWeight: 700,
+                              fontSize: 11.5,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 5,
+                              borderRadius: 6,
+                            }}
+                            onClick={() => setRecoveryInvoice(inv)}
+                            title="Open MSME Cash Recovery Hub (WhatsApp & Email Dispatch)"
+                          >
+                            <Zap size={13} style={{ color: "#22c55e" }} />
+                            <span>Cash Recovery</span>
+                          </button>
+                        )}
+
+                        {inv.status !== "Paid" && (
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            style={{ padding: "4px 8px" }}
+                            onClick={() => {
+                              updateInvoiceStatus(inv.id, "Paid");
+                              showNotice(`Invoice ${inv.id} marked as Paid!`);
+                            }}
+                            title="Mark as Paid"
+                          >
+                            <Check size={13} style={{ color: "#34d399" }} />
+                          </button>
+                        )}
+
                         <button
                           className="btn btn-secondary btn-sm"
                           style={{ padding: "4px 8px" }}
                           onClick={() => {
-                            updateInvoiceStatus(inv.id, "Paid");
-                            showNotice(`Invoice ${inv.id} marked as Paid!`);
+                            deleteInvoice(inv.id);
+                            showNotice(`Invoice ${inv.id} deleted.`);
                           }}
-                          title="Mark as Paid"
+                          title="Delete Invoice"
                         >
-                          <Check size={13} style={{ color: "#34d399" }} />
+                          <Trash2 size={13} style={{ color: "#fb7185" }} />
                         </button>
-                      )}
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        style={{ padding: "4px 8px" }}
-                        onClick={() => {
-                          deleteInvoice(inv.id);
-                          showNotice(`Invoice ${inv.id} deleted.`);
-                        }}
-                        title="Delete Invoice"
-                      >
-                        <Trash2 size={13} style={{ color: "#fb7185" }} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -609,8 +868,8 @@ export default function Invoices() {
               >
                 {isProcessingFile ? (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-                    <Cpu size={36} className="spin-animation" style={{ color: "#a78bfa" }} />
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>
+                    <Cpu size={36} className="spin-animation" style={{ color: "var(--accent-purple)" }} />
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
                       AI OCR Engine Scanning Document...
                     </div>
                     <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
@@ -620,7 +879,7 @@ export default function Invoices() {
                 ) : (
                   <>
                     <Upload size={38} style={{ color: "var(--accent-blue)", margin: "0 auto 12px" }} />
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>
                       Drag & Drop Invoice File Here
                     </div>
                     <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 6 }}>
@@ -658,8 +917,8 @@ export default function Invoices() {
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <CheckCircle2 size={16} style={{ color: "#34d399" }} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>
+                    <CheckCircle2 size={16} style={{ color: "var(--accent-emerald)" }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
                       Detected {parsedPreview.invoices.length} invoice(s) from <strong>{parsedPreview.fileName}</strong> ({parsedPreview.format})
                     </span>
                   </div>
@@ -685,7 +944,7 @@ export default function Invoices() {
                     <tbody>
                       {parsedPreview.invoices.map((inv, idx) => (
                         <tr key={idx}>
-                          <td style={{ fontWeight: 600, color: "#fff", fontFamily: "var(--font-mono)" }}>
+                          <td style={{ fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-mono)" }}>
                             {inv.id}
                           </td>
                           <td>{inv.customer}</td>
@@ -726,6 +985,33 @@ export default function Invoices() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Cash Recovery & WhatsApp/Email Dispatch Modal */}
+      {recoveryInvoice && (
+        <CashRecoveryModal
+          invoice={recoveryInvoice}
+          customer={customers.find(
+            (c) => c.name === recoveryInvoice.customer || c.id === recoveryInvoice.customerId
+          )}
+          onClose={() => setRecoveryInvoice(null)}
+          onActionComplete={(status) => {
+            showNotice(`Cash Recovery Update: ${status} for ${recoveryInvoice.id}`);
+          }}
+        />
+      )}
+
+      {/* Deep-Dive Institutional Risk Underwriting Modal */}
+      {selectedDeepDiveInvoice && (
+        <DeepDiveRiskModal
+          invoice={selectedDeepDiveInvoice === true ? filteredInvoices[0] : selectedDeepDiveInvoice}
+          onClose={() => setSelectedDeepDiveInvoice(null)}
+          onOpenRecovery={() => {
+            const inv = selectedDeepDiveInvoice === true ? filteredInvoices[0] : selectedDeepDiveInvoice;
+            setRecoveryInvoice(inv);
+            setSelectedDeepDiveInvoice(null);
+          }}
+        />
       )}
     </div>
   );

@@ -10,6 +10,7 @@ import {
   Languages,
   Check,
   Sparkles,
+  ChevronDown,
 } from "lucide-react";
 
 import {
@@ -27,6 +28,7 @@ export default function Settings() {
   const { currentLang, changeLanguage, t, supportedLanguages, activeLanguageMeta } =
     useLanguage();
 
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [business, setBusiness] = useState(getBusiness());
   const [name, setName] = useState(business.name || user?.company || "My Enterprise");
   const [industry, setIndustry] = useState(business.industry || "Manufacturing & Trade");
@@ -152,90 +154,198 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* 10 Regional Language Grid Cards */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: 12,
-            marginTop: 18,
-          }}
-        >
-          {supportedLanguages.map((lang) => {
-            const isSelected = currentLang === lang.id;
-            return (
+        {/* Regional Language Dropdown Selector */}
+        <div style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+            {/* Custom Interactive Dropdown Menu */}
+            <div style={{ position: "relative" }}>
+              <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-primary)", display: "block", marginBottom: 6 }}>
+                {t("selectLanguage", "Choose Regional Language (Interactive Dropdown)")}:
+              </label>
               <button
-                key={lang.id}
                 type="button"
-                onClick={() => handleLanguageSelect(lang.id, lang.name)}
+                onClick={() => setShowLangDropdown(!showLangDropdown)}
                 style={{
+                  width: "100%",
                   display: "flex",
-                  alignItems: "flex-start",
+                  alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "12px 14px",
+                  padding: "10px 14px",
                   borderRadius: "var(--radius-md)",
-                  background: isSelected
-                    ? "linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(59, 130, 246, 0.2))"
-                    : "rgba(255, 255, 255, 0.03)",
-                  border: isSelected
-                    ? "1px solid #8b5cf6"
-                    : "1px solid var(--border-subtle)",
+                  background: "var(--bg-card)",
+                  border: showLangDropdown ? "1px solid var(--accent-purple)" : "1px solid var(--border-medium)",
+                  color: "var(--text-primary)",
                   cursor: "pointer",
-                  textAlign: "left",
-                  transition: "all var(--transition-fast)",
-                  position: "relative",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.07)";
-                    e.currentTarget.style.borderColor = "var(--border-medium)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
-                    e.currentTarget.style.borderColor = "var(--border-subtle)";
-                  }
+                  fontSize: 14,
+                  fontWeight: 600,
+                  boxShadow: "var(--shadow-sm)",
+                  transition: "all 0.15s ease",
                 }}
               >
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 18 }}>{lang.flag}</span>
-                    <span style={{ fontSize: 15, fontWeight: 800, color: isSelected ? "#fff" : "var(--text-primary)" }}>
-                      {lang.name}
-                    </span>
-                    <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 500 }}>
-                      ({lang.englishName})
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 11, color: isSelected ? "#c4b5fd" : "var(--text-secondary)", fontWeight: 500 }}>
-                    {lang.region}
-                  </div>
-                  <div style={{ fontSize: 10, color: "var(--text-dim)", marginTop: 2 }}>
-                    {lang.sub}
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 22 }}>{activeLanguageMeta.flag}</span>
+                  <div style={{ textAlign: "left" }}>
+                    <div style={{ fontWeight: 800, color: "var(--text-primary)", fontSize: 14 }}>
+                      {activeLanguageMeta.name} <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>({activeLanguageMeta.englishName})</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--accent-purple)", fontWeight: 600 }}>
+                      {activeLanguageMeta.region}
+                    </div>
                   </div>
                 </div>
-
-                {isSelected && (
-                  <div
-                    style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: "50%",
-                      background: "#8b5cf6",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#fff",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Check size={12} strokeWidth={3} />
-                  </div>
-                )}
+                <ChevronDown
+                  size={16}
+                  style={{
+                    color: "var(--text-muted)",
+                    transform: showLangDropdown ? "rotate(180deg)" : "none",
+                    transition: "transform 0.2s",
+                  }}
+                />
               </button>
-            );
-          })}
+
+              {/* Dropdown Options Menu */}
+              {showLangDropdown && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    right: 0,
+                    marginTop: 6,
+                    maxHeight: 340,
+                    overflowY: "auto",
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border-medium)",
+                    borderRadius: "var(--radius-md)",
+                    boxShadow: "var(--shadow-lg)",
+                    zIndex: 200,
+                    padding: 6,
+                  }}
+                >
+                  <div style={{ padding: "4px 8px 8px", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    Available Indian Regional Languages ({supportedLanguages.length})
+                  </div>
+                  {supportedLanguages.map((lang) => {
+                    const isSelected = currentLang === lang.id;
+                    return (
+                      <div
+                        key={lang.id}
+                        onClick={() => {
+                          handleLanguageSelect(lang.id, lang.name);
+                          setShowLangDropdown(false);
+                        }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "10px 12px",
+                          borderRadius: 6,
+                          cursor: "pointer",
+                          background: isSelected ? "var(--bg-secondary)" : "transparent",
+                          border: isSelected ? "1px solid var(--accent-purple)" : "1px solid transparent",
+                          marginBottom: 4,
+                          transition: "all 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) e.currentTarget.style.background = "var(--bg-secondary)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) e.currentTarget.style.background = "transparent";
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <span style={{ fontSize: 20 }}>{lang.flag}</span>
+                          <div>
+                            <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--text-primary)" }}>
+                              {lang.name} <span style={{ fontSize: 11.5, fontWeight: 500, color: "var(--text-muted)" }}>({lang.englishName})</span>
+                            </div>
+                            <div style={{ fontSize: 10.5, color: "var(--text-secondary)" }}>
+                              {lang.region} • {lang.sub}
+                            </div>
+                          </div>
+                        </div>
+
+                        {isSelected && (
+                          <div style={{ color: "var(--accent-purple)", display: "flex", alignItems: "center" }}>
+                            <Check size={16} />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Quick Native Select (for standard form inputs & fast accessibility) */}
+            <div>
+              <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-primary)", display: "block", marginBottom: 6 }}>
+                {t("quickSelectLanguage", "Quick Native Select Dropdown")}:
+              </label>
+              <select
+                value={currentLang}
+                onChange={(e) => {
+                  const selectedObj = supportedLanguages.find((l) => l.id === e.target.value);
+                  handleLanguageSelect(e.target.value, selectedObj?.name || e.target.value);
+                }}
+                className="form-select"
+                style={{
+                  width: "100%",
+                  padding: "11px 14px",
+                  fontSize: 13.5,
+                  fontWeight: 600,
+                  borderRadius: "var(--radius-md)",
+                  background: "var(--bg-card)",
+                  color: "var(--text-primary)",
+                  border: "1px solid var(--border-medium)",
+                  cursor: "pointer",
+                }}
+              >
+                {supportedLanguages.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.flag} {l.name} ({l.englishName}) — {l.region}
+                  </option>
+                ))}
+              </select>
+              <span style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4, display: "block" }}>
+                Select instantly from standard system dropdown list.
+              </span>
+            </div>
+          </div>
+
+          {/* Active Language Telemetry Details Card */}
+          <div
+            style={{
+              padding: "14px 18px",
+              borderRadius: "var(--radius-md)",
+              background: "var(--bg-secondary)",
+              border: "1px solid var(--border-subtle)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 28 }}>{activeLanguageMeta.flag}</span>
+              <div>
+                <strong style={{ fontSize: 14, color: "var(--text-primary)", display: "block" }}>
+                  Active Language: {activeLanguageMeta.name} ({activeLanguageMeta.englishName})
+                </strong>
+                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                  Regional Jurisdiction: {activeLanguageMeta.region} — {activeLanguageMeta.sub}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--accent-emerald)", display: "flex", alignItems: "center", gap: 5 }}>
+                <CheckCircle2 size={14} />
+                <span>Live Translation Sync Active</span>
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -376,8 +486,8 @@ export default function Settings() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ padding: 14, borderRadius: "var(--radius-md)", background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
-              <div style={{ fontWeight: 600, fontSize: 13, color: "#fff", marginBottom: 4 }}>
+            <div style={{ padding: 14, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
+              <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text-primary)", marginBottom: 4 }}>
                 Purge Account Data
               </div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, lineHeight: 1.5 }}>

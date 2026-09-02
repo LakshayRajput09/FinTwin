@@ -96,7 +96,7 @@ export default function CommandSearchModal({ isOpen, onClose }) {
               background: "transparent",
               border: "none",
               outline: "none",
-              color: "#fff",
+              color: "var(--text-primary)",
               fontSize: 15,
             }}
           />
@@ -124,17 +124,17 @@ export default function CommandSearchModal({ isOpen, onClose }) {
                     cursor: "pointer",
                     transition: "background 0.15s ease",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-secondary)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <FileText size={15} style={{ color: "#60a5fa" }} />
+                    <FileText size={15} style={{ color: "var(--accent-blue)" }} />
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>{inv.id} — {inv.customer}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{inv.id} — {inv.customer}</div>
                       <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>₹{(inv.amount / 100000).toFixed(2)}L • {inv.status}</div>
                     </div>
                   </div>
-                  <ArrowRight size={14} style={{ color: "var(--text-dim)" }} />
+                  <ArrowRight size={14} style={{ color: "var(--text-muted)" }} />
                 </div>
               ))}
             </div>
@@ -142,7 +142,7 @@ export default function CommandSearchModal({ isOpen, onClose }) {
 
           {matchedCustomers.length > 0 && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--text-dim)", marginBottom: 6 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 6 }}>
                 Customers
               </div>
               {matchedCustomers.map((cust) => (
@@ -157,24 +157,24 @@ export default function CommandSearchModal({ isOpen, onClose }) {
                     borderRadius: "var(--radius-md)",
                     cursor: "pointer",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-secondary)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <Users size={15} style={{ color: "#34d399" }} />
+                    <Users size={15} style={{ color: "var(--accent-emerald)" }} />
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>{cust.name}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{cust.name}</div>
                       <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{cust.industry} • {cust.creditScore}</div>
                     </div>
                   </div>
-                  <ArrowRight size={14} style={{ color: "var(--text-dim)" }} />
+                  <ArrowRight size={14} style={{ color: "var(--text-muted)" }} />
                 </div>
               ))}
             </div>
           )}
 
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--text-dim)", marginBottom: 6 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 6 }}>
               Navigation & Modules
             </div>
             {quickPages.map((page) => {
@@ -191,12 +191,12 @@ export default function CommandSearchModal({ isOpen, onClose }) {
                     borderRadius: "var(--radius-md)",
                     cursor: "pointer",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-secondary)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <Icon size={15} style={{ color: "#a78bfa" }} />
-                    <div style={{ fontSize: 13, fontWeight: 500 }}>{page.title}</div>
+                    <Icon size={15} style={{ color: "var(--accent-purple)" }} />
+                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{page.title}</div>
                   </div>
                   <ArrowRight size={14} style={{ color: "var(--text-dim)" }} />
                 </div>

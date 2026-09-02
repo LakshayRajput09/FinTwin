@@ -3,20 +3,35 @@ import { initUserSession, clearActiveSession } from "../data/financialStore";
 
 const AuthContext = createContext();
 
+export const DEFAULT_DEMO_USER = {
+  id: "usr_ceo",
+  name: "Lakshay Rajput",
+  email: "ceo@bharatprecision.in",
+  phone: "+91 98201 44521",
+  role: "CEO",
+  company: "Precision Auto Gears Ltd",
+  businessId: "biz_usr_ceo",
+  avatar: "LR",
+};
+
 export function AuthProvider({ children }) {
-  // Start as null unless previously signed in
+  // Initialize with active user session (saved or default demo enterprise)
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem("fintwin_auth_user");
-      return saved ? JSON.parse(saved) : null;
+      if (saved) return JSON.parse(saved);
+      const isLoggedOut = localStorage.getItem("fintwin_logged_out");
+      if (isLoggedOut === "true") return null;
+      return DEFAULT_DEMO_USER;
     } catch (e) {
-      return null;
+      return DEFAULT_DEMO_USER;
     }
   });
 
   useEffect(() => {
     if (user) {
       localStorage.setItem("fintwin_auth_user", JSON.stringify(user));
+      localStorage.removeItem("fintwin_logged_out");
       initUserSession(user);
     } else {
       localStorage.removeItem("fintwin_auth_user");
@@ -97,6 +112,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     try {
       localStorage.removeItem("fintwin_auth_user");
+      localStorage.setItem("fintwin_logged_out", "true");
     } catch (e) {
       console.warn("Error removing auth token:", e);
     }

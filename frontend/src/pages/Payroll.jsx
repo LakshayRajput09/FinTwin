@@ -238,7 +238,7 @@ export default function Payroll() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
         <div style={{ flex: "1 1 320px", minWidth: 260 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#fff", lineHeight: 1.2 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--text-primary)", lineHeight: 1.2 }}>
               Workers & Salary Payroll Hub
             </h2>
             <span
@@ -416,7 +416,7 @@ export default function Payroll() {
         {filteredWorkers.length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px 20px" }}>
             <Users size={36} style={{ color: "var(--text-muted)", marginBottom: 12, opacity: 0.6 }} />
-            <div style={{ fontWeight: 700, fontSize: 16, color: "#fff" }}>No workers found</div>
+            <div style={{ fontWeight: 700, fontSize: 16, color: "var(--text-primary)" }}>No workers found</div>
             <p style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 4, maxWidth: 460, margin: "4px auto 18px" }}>
               Add your factory workers, staff specialists, and contractors to track salary liabilities and process 1-click payouts.
             </p>
@@ -461,7 +461,7 @@ export default function Payroll() {
                           {w.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div style={{ fontWeight: 600, color: "#fff" }}>{w.name}</div>
+                          <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{w.name}</div>
                           <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{w.designation}</div>
                         </div>
                       </div>
@@ -581,7 +581,7 @@ export default function Payroll() {
                       </span>
                     </td>
                     <td>
-                      <div style={{ fontWeight: 600, color: "#fff" }}>{p.workerName}</div>
+                      <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{p.workerName}</div>
                       <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{p.designation}</div>
                     </td>
                     <td>
@@ -789,10 +789,10 @@ export default function Payroll() {
             </div>
 
             <form onSubmit={handleDisburseSingleSalary}>
-              <div style={{ padding: "14px", borderRadius: "var(--radius-md)", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", marginBottom: 16 }}>
+              <div style={{ padding: "14px", borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)", marginBottom: 16 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                   <span style={{ color: "var(--text-secondary)", fontSize: 13 }}>Worker:</span>
-                  <span style={{ fontWeight: 700, color: "#fff" }}>
+                  <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>
                     {selectedWorkerForPay.name} ({selectedWorkerForPay.designation})
                   </span>
                 </div>

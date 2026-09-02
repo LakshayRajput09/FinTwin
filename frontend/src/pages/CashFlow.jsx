@@ -236,7 +236,7 @@ export default function CashFlow() {
                   .filter((i) => i.status !== "Paid")
                   .map((inv) => (
                     <tr key={inv.id}>
-                      <td style={{ fontWeight: 600, color: "#fff" }}>{inv.customer}</td>
+                      <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>{inv.customer}</td>
                       <td style={{ fontWeight: 700, color: "#34d399" }}>
                         {formatLakhs(inv.amount)}
                       </td>
@@ -280,7 +280,7 @@ export default function CashFlow() {
               <tbody>
                 {data.recurringExpenses.map((rec) => (
                   <tr key={rec.id}>
-                    <td style={{ fontWeight: 600, color: "#fff" }}>{rec.category}</td>
+                    <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>{rec.category}</td>
                     <td>{rec.description}</td>
                     <td style={{ fontWeight: 700, color: "#fb7185" }}>
                       {formatLakhs(rec.amount)}

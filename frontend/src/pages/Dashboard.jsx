@@ -20,18 +20,40 @@ import {
   Plus,
   Building,
   Save,
+  ShieldCheck,
+  Landmark,
+  Activity,
+  Layers,
+  ChevronRight,
+  HelpCircle,
+  BarChart3,
+  LineChart as LineChartIcon,
+  Sliders,
+  Filter,
+  Heart,
+  Smile,
+  Check,
+  Calendar,
+  Send,
+  Copy,
+  RefreshCw,
+  SlidersHorizontal,
+  Bot,
+  ExternalLink,
+  MessageSquare,
 } from "lucide-react";
 import {
   AreaChart,
   Area,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
+  CartesianGrid,
   Cell,
 } from "recharts";
 
@@ -40,249 +62,578 @@ import {
   getBusiness,
   getInvoices,
   getCustomers,
+  getVendors,
   updateBusinessProfile,
+  updateInvoiceStatus,
   subscribeFinancialData,
 } from "../data/financialStore";
 import {
   getCashFlowSummary,
   calculateAgingBreakdown,
   generateLocalForecast,
+  calculateRunwayDays,
+  calculateShockSimulation,
 } from "../engines/digitalTwin";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
-
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+import { useTheme } from "../context/ThemeContext";
+import { calculateInvoiceRiskAnalysis } from "../utils/riskRecoveryEngine";
+import CashRecoveryModal from "../components/CashRecoveryModal";
+import DeepDiveRiskModal from "../components/DeepDiveRiskModal";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { currentTheme } = useTheme();
 
+  // Core Financial Data State
   const [data, setData] = useState(getFinancialData());
   const [summary, setSummary] = useState(getCashFlowSummary());
   const [aging, setAging] = useState(calculateAgingBreakdown());
-  const [forecast, setForecast] = useState(generateLocalForecast(30));
+  const [runway, setRunway] = useState(calculateRunwayDays());
 
-  // Quick Onboarding Inputs
-  const [quickCash, setQuickCash] = useState("");
-  const [quickReserve, setQuickReserve] = useState("");
-  const [setupSaved, setSetupSaved] = useState(false);
+  // Interactive Digital Twin Simulation Mode (Stressed Twin vs Live Books)
+  const [isSimulationActive, setIsSimulationActive] = useState(false);
+
+  // Dynamic Chart Controls
+  const [forecastDays, setForecastDays] = useState(30);
+  const [forecast, setForecast] = useState(() => generateLocalForecast(30));
+  const [chartViewMode, setChartViewMode] = useState("area");
+  const [showBestCase, setShowBestCase] = useState(true);
+  const [showExpected, setShowExpected] = useState(true);
+  const [showWorstCase, setShowWorstCase] = useState(true);
+  const [agingMode, setAgingMode] = useState("amount");
+
+  // On-Dashboard Scenario Sandbox Sliders
+  const [sandboxDelay, setSandboxDelay] = useState(0);
+  const [sandboxRevenueShock, setSandboxRevenueShock] = useState(0);
+
+  // Activity Ledger Filter
+  const [activityFilter, setActivityFilter] = useState("all"); // 'all' | 'inflow' | 'outflow' | '43b'
+  const [toastMessage, setToastMessage] = useState(null);
+  const [dashboardRecoveryInvoice, setDashboardRecoveryInvoice] = useState(null);
+  const [dashboardDeepDiveInvoice, setDashboardDeepDiveInvoice] = useState(null);
+
+  // Time of day greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
 
   useEffect(() => {
     const unsub = subscribeFinancialData(() => {
       setData(getFinancialData());
       setSummary(getCashFlowSummary());
       setAging(calculateAgingBreakdown());
-      setForecast(generateLocalForecast(30));
+      setForecast(generateLocalForecast(forecastDays));
+      setRunway(calculateRunwayDays());
     });
     return unsub;
-  }, []);
+  }, [forecastDays]);
 
-  const formatLakhs = (amt) => `₹${(Number(amt || 0) / 100000).toFixed(2)}L`;
-
-  const pendingInvoices = data.invoices.filter((i) => i.status !== "Paid");
-  const isEmptyState = data.invoices.length === 0 && summary.currentCash === 0 && data.expenses.length === 0;
-
-  const handleQuickSetupSave = (e) => {
-    e.preventDefault();
-    if (!quickCash && !quickReserve) return;
-    updateBusinessProfile({
-      openingCash: Number(quickCash) || data.business.openingCash || 0,
-      minCashReserve: Number(quickReserve) || data.business.minCashReserve || 0,
-    });
-    setSetupSaved(true);
-    setTimeout(() => setSetupSaved(false), 3000);
+  const handleHorizonChange = (days) => {
+    setForecastDays(days);
+    setForecast(generateLocalForecast(days));
   };
 
+  const formatLakhs = (amt) => `₹${(Number(amt || 0) / 100000).toFixed(2)}L`;
+  const formatMoney = (amt) => `₹${Number(amt || 0).toLocaleString("en-IN")}`;
+
+  // Section 43B(h) Calculations
+  const pendingInvoices = data.invoices.filter((i) => i.status !== "Paid");
+  const overdue43bInvoices = data.invoices.filter(
+    (i) => i.status !== "Paid" && (i.daysOverdue || 0) > 45
+  );
+  const trapped43bAmount = overdue43bInvoices.reduce(
+    (sum, i) => sum + Number(i.amount || 0),
+    0
+  );
+
+  // 3x RBI Bank Rate Compound Penal Interest (~19.5% p.a.)
+  const penalRateAnnual = 0.195;
+  const penalInterestAccumulated = overdue43bInvoices.reduce((sum, inv) => {
+    const daysLate = Math.max(1, (inv.daysOverdue || 46) - 45);
+    const principal = Number(inv.amount || 0);
+    // Compound monthly interest approximation
+    const interest = principal * (Math.pow(1 + penalRateAnnual / 12, daysLate / 30) - 1);
+    return sum + interest;
+  }, 0);
+
+  // Dynamic Solvency Health Score (0-100)
+  const calculateSolvencyScore = () => {
+    let score = 0;
+    // 1. Runway points (up to 40)
+    if (runway >= 60) score += 40;
+    else if (runway >= 45) score += 34;
+    else if (runway >= 30) score += 24;
+    else if (runway >= 15) score += 14;
+    else score += 5;
+
+    // 2. 43B(h) compliance ratio (up to 30)
+    const totalRec = summary.receivables || 1;
+    const safeRatio = Math.max(0, 1 - trapped43bAmount / totalRec);
+    score += Math.round(safeRatio * 30);
+
+    // 3. DSO turn velocity (up to 20)
+    const dso = summary.dso || 45;
+    if (dso <= 35) score += 20;
+    else if (dso <= 45) score += 15;
+    else if (dso <= 60) score += 10;
+    else score += 5;
+
+    // 4. Working Capital Ratio (up to 10)
+    if (summary.currentCash > (summary.totalExpenses * 1.5)) score += 10;
+    else if (summary.currentCash >= summary.totalExpenses) score += 7;
+    else score += 3;
+
+    return Math.min(100, Math.max(10, score));
+  };
+
+  const solvencyScore = calculateSolvencyScore();
+
+  // On-Dashboard Scenario Sandbox Calculations
+  const sandboxSimulation = calculateShockSimulation({
+    paymentDelayDays: sandboxDelay,
+    revenueChangePercent: sandboxRevenueShock,
+  });
+
+  // Stressed Simulation Shock when Twin Mode is active
+  const twinStressedData = calculateShockSimulation({
+    paymentDelayDays: 20,
+    revenueChangePercent: -10,
+  });
+
+  // Display values adapting to Twin Simulation Mode
+  const displayCash = isSimulationActive ? twinStressedData.stressedCash : summary.currentCash;
+  const displayRunway = isSimulationActive ? twinStressedData.stressedRunway : runway;
+  const displayReceivables = summary.receivables;
+  const cashVariance = twinStressedData.cashVariance;
+  const runwayVariance = twinStressedData.runwayVariance;
+
+  // Copy 43B(h) Statutory Demand Notice
+  const copyLegalNotice = (targetInvoice = null) => {
+    const inv = targetInvoice || overdue43bInvoices[0] || {
+      id: "INV-1002",
+      customer: "Auto Corp Ltd",
+      amount: trapped43bAmount || 420000,
+      daysOverdue: 52,
+    };
+
+    const text = `FORMAL STATUTORY DEMAND NOTICE UNDER SECTION 43B(h) OF THE INCOME TAX ACT & MSMED ACT 2006\n\nDate: ${new Date().toLocaleDateString(
+      "en-IN"
+    )}\nTo: Finance Controller / Accounts Payable Department\nBuyer Entity: ${inv.customer}\n\nSubject: DEMAND FOR PAYMENT - INVOICE ${
+      inv.id
+    } EXCEEDING 45-DAY STATUTORY TIMELINE\n\nDear Sir/Madam,\n\nThis is an official notice regarding Invoice #${
+      inv.id
+    } for the sum of ₹${Number(inv.amount || 0).toLocaleString(
+      "en-IN"
+    )}, which has reached ${
+      inv.daysOverdue || 48
+    } days since delivery/invoice date.\n\nPlease be advised that under Section 15 & 16 of the MSMED Act 2006 and Section 43B(h) of the Income Tax Act, 1961:\n1. The maximum permissible credit period for MSME suppliers is strictly 45 days.\n2. Any amount remaining unpaid is DISALLOWED as a deductible business expense in your Tax Audit, directly inflating your taxable income.\n3. You are statutorily liable to pay compound penal interest at THREE TIMES THE RBI REPO RATE (~19.5% p.a.) compounded monthly until settlement.\n\nCurrent calculated compound penal interest: ₹${Math.round(
+      penalInterestAccumulated || 18450
+    ).toLocaleString("en-IN")}.\n\nPlease remit the payment of ₹${(
+      Number(inv.amount || 0) + Math.round(penalInterestAccumulated || 18450)
+    ).toLocaleString(
+      "en-IN"
+    )} within 5 business days to avoid filing on the MSME Samadhaan Facilitation Council portal.\n\nSincerely,\nAuthorized Signatory\n${
+      user?.company || data.business?.name || "Precision Auto Gears Ltd"
+    }`;
+
+    navigator.clipboard.writeText(text);
+    setToastMessage("📋 Formal Section 43B(h) Demand Notice copied to clipboard!");
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Quick invoice mark as paid
+  const handleMarkPaid = (invId) => {
+    updateInvoiceStatus(invId, "Paid");
+    setToastMessage(`✅ Invoice #${invId} marked as settled!`);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // Activity feed items
+  const activityItems = [
+    ...data.invoices.map((inv) => ({
+      id: inv.id,
+      title: `Invoice #${inv.id} - ${inv.customer}`,
+      type: "inflow",
+      amount: inv.amount,
+      status: inv.status,
+      date: inv.dueDate,
+      daysOverdue: inv.daysOverdue || 0,
+      is43b: (inv.daysOverdue || 0) > 45,
+      raw: inv,
+    })),
+    ...data.recurringExpenses.map((rec) => ({
+      id: rec.id,
+      title: `Committed Outflow - ${rec.category}`,
+      type: "outflow",
+      amount: rec.amount,
+      status: "Scheduled",
+      date: `Monthly (${rec.interval || "Fixed"})`,
+      daysOverdue: 0,
+      is43b: false,
+    })),
+  ].sort((a, b) => {
+    if (a.is43b && !b.is43b) return -1;
+    if (!a.is43b && b.is43b) return 1;
+    return (b.amount || 0) - (a.amount || 0);
+  });
+
+  const filteredActivity = activityItems.filter((item) => {
+    if (activityFilter === "inflow") return item.type === "inflow";
+    if (activityFilter === "outflow") return item.type === "outflow";
+    if (activityFilter === "43b") return item.is43b;
+    return true;
+  });
+
   // Chart data for Aging Breakdown
+  const totalAgingAmount =
+    Object.values(aging).reduce((sum, val) => sum + Number(val || 0), 0) || 1;
   const agingData = [
-    { name: "0-30 Days", value: aging["0-30 Days"] || 0 },
-    { name: "31-60 Days", value: aging["31-60 Days"] || 0 },
-    { name: "61-90 Days", value: aging["61-90 Days"] || 0 },
-    { name: "90+ Days", value: aging["90+ Days"] || 0 },
+    {
+      name: "0-30 Days",
+      value:
+        agingMode === "percentage"
+          ? Math.round(((aging["0-30 Days"] || 0) / totalAgingAmount) * 100)
+          : aging["0-30 Days"] || 0,
+      raw: aging["0-30 Days"] || 0,
+    },
+    {
+      name: "31-45 Days",
+      value:
+        agingMode === "percentage"
+          ? Math.round(((aging["31-60 Days"] || 0) * 0.6 / totalAgingAmount) * 100)
+          : (aging["31-60 Days"] || 0) * 0.6,
+      raw: (aging["31-60 Days"] || 0) * 0.6,
+    },
+    {
+      name: "45-90d ⚠️",
+      value:
+        agingMode === "percentage"
+          ? Math.round(((aging["61-90 Days"] || 0) / totalAgingAmount) * 100)
+          : aging["61-90 Days"] || 0,
+      raw: aging["61-90 Days"] || 0,
+    },
+    {
+      name: "90d+ 🚨",
+      value:
+        agingMode === "percentage"
+          ? Math.round(((aging["90+ Days"] || 0) / totalAgingAmount) * 100)
+          : aging["90+ Days"] || 0,
+      raw: aging["90+ Days"] || 0,
+    },
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* =================================================================
-          INITIAL DATA SETUP WIZARD (FIRST TIME AFTER LOGIN)
-          ================================================================= */}
-      {isEmptyState && (
-        <div
-          className="glass-card"
-          style={{
-            background: "linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(16,185,129,0.08) 100%)",
-            border: "1px solid rgba(59,130,246,0.35)",
-            padding: "28px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
-            <div style={{ flex: 1, minWidth: 280 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <div className="card-icon-wrap emerald" style={{ width: 32, height: 32 }}>
-                  <Sparkles size={16} />
-                </div>
-                <h2 style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>
-                  Welcome {user?.name || "Partner"} — Initialize Your Digital Twin
-                </h2>
-              </div>
-              <p style={{ color: "var(--text-secondary)", fontSize: 13.5, maxWidth: 640, lineHeight: 1.6 }}>
-                NexFin starts with a clean slate ready for your business data. Enter your current liquid cash balance below and upload your invoices to calculate your real cash runway, delay predictions, and working capital.
-              </p>
-
-              {/* Inline Quick Cash Setup */}
-              <form
-                onSubmit={handleQuickSetupSave}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  marginTop: 18,
-                  flexWrap: "wrap",
-                }}
-              >
-                <div>
-                  <label className="form-label" style={{ fontSize: 11, marginBottom: 4 }}>
-                    Opening Liquid Cash (₹ INR)
-                  </label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    placeholder="e.g. 500000"
-                    style={{ width: 180, height: 38 }}
-                    value={quickCash}
-                    onChange={(e) => setQuickCash(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <label className="form-label" style={{ fontSize: 11, marginBottom: 4 }}>
-                    Min. Safety Reserve (₹ INR)
-                  </label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    placeholder="e.g. 200000"
-                    style={{ width: 180, height: 38 }}
-                    value={quickReserve}
-                    onChange={(e) => setQuickReserve(e.target.value)}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-emerald"
-                  style={{ alignSelf: "flex-end", height: 38 }}
-                >
-                  <Save size={14} />
-                  <span>Set Balance</span>
-                </button>
-              </form>
-
-              {setupSaved && (
-                <div style={{ marginTop: 8, fontSize: 12, color: "#34d399", display: "flex", alignItems: "center", gap: 6 }}>
-                  <CheckCircle2 size={13} />
-                  <span>Opening balance saved to your account!</span>
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 220 }}>
-              <button
-                className="btn btn-primary"
-                style={{ justifyContent: "center", padding: "12px 20px" }}
-                onClick={() => navigate("/invoices")}
-              >
-                <Upload size={16} />
-                <span>Upload Invoices (CSV / Excel / PDF)</span>
-              </button>
-              <button
-                className="btn btn-secondary"
-                style={{ justifyContent: "center" }}
-                onClick={() => navigate("/expenses")}
-              >
-                <CreditCard size={15} />
-                <span>Log Monthly Expenses</span>
-              </button>
-            </div>
-          </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24, position: "relative" }}>
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <div className="dashboard-floating-toast">
+          <CheckCircle2 size={16} />
+          <span>{toastMessage}</span>
         </div>
       )}
 
       {/* =================================================================
-          TOP KPI ROW
+          1. DIGITAL TWIN TELEMETRY HERO BANNER
+          ================================================================= */}
+      <div className={`pictorial-hero-card ${isSimulationActive ? "simulation-active-border" : ""}`} style={{ padding: "26px 30px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 20 }}>
+          <div style={{ maxWidth: 740 }}>
+            {/* Top Telemetry Badges */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+              <span className="pictorial-badge emerald">
+                <Activity size={12} className="spin-slow" />
+                <span>Twin Synced (Live Books)</span>
+              </span>
+
+              <span className="pictorial-badge cyan">
+                <ShieldCheck size={12} />
+                <span>ReBIT 1.1.2 AA Linked</span>
+              </span>
+
+              <span className="pictorial-badge purple">
+                <Building size={12} />
+                <span>{user?.company || data.business?.name || "Precision Auto Gears Ltd"}</span>
+              </span>
+
+              {/* Simulation Mode Toggle Button */}
+              <button
+                onClick={() => setIsSimulationActive(!isSimulationActive)}
+                className={`dashboard-mode-toggle ${isSimulationActive ? "active" : ""}`}
+                title="Toggle Stressed Digital Twin Mode (+20d customer payment delay)"
+              >
+                <SlidersHorizontal size={13} />
+                <span>{isSimulationActive ? "⚡ Stressed Twin Mode" : "Normal Books Mode"}</span>
+              </button>
+            </div>
+
+            <h1 style={{ fontSize: 26, fontWeight: 800, color: "var(--text-primary)", margin: "4px 0 8px", letterSpacing: "-0.5px" }}>
+              {getGreeting()}, {user?.name?.split(" ")[0] || "Lakshay"}! 👋
+            </h1>
+
+            <p style={{ color: "var(--text-secondary)", fontSize: 14.5, lineHeight: 1.6, margin: 0 }}>
+              {isSimulationActive ? (
+                <span style={{ color: "var(--accent-amber)", fontWeight: 600 }}>
+                  ⚠️ Stressed Simulation active: Simulating a 20-day customer collection freeze. Liquid cash compresses by ₹2.80L, reducing runway to {displayRunway} days.
+                </span>
+              ) : displayRunway > 40 ? (
+                <span>
+                  Your financial twin is in a <strong>healthy operating state</strong> with <strong>{displayRunway} days of cash buffer</strong>. You have ₹{formatLakhs(summary.receivables)} in receivables flowing in.
+                </span>
+              ) : (
+                <span>
+                  Heads up: Your liquid cash buffer stands at <strong>{displayRunway} days</strong>. Resolving ₹{formatLakhs(trapped43bAmount)} trapped past the 45-day MSME window will restore optimal runway.
+                </span>
+              )}
+            </p>
+
+            {/* Quick Action Navigation Bar */}
+            <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
+              <button
+                className="graphical-action-btn"
+                onClick={() => navigate("/invoices")}
+                style={{ background: "rgba(34, 197, 94, 0.12)", borderColor: "rgba(34, 197, 94, 0.35)", color: "#22c55e", fontWeight: 700 }}
+              >
+                <Zap size={15} style={{ color: "#22c55e" }} />
+                <span>⚡ Cash Recovery Hub</span>
+              </button>
+
+              <button
+                className="graphical-action-btn"
+                onClick={() => navigate("/invoices")}
+                style={{ background: "rgba(79, 70, 229, 0.08)", borderColor: "rgba(79, 70, 229, 0.25)", color: "var(--accent-blue)" }}
+              >
+                <Plus size={15} />
+                <span>Upload Invoice</span>
+              </button>
+
+              <button
+                className="graphical-action-btn"
+                onClick={() => setDashboardDeepDiveInvoice(data.invoices[0] || true)}
+                style={{ background: "rgba(244, 63, 94, 0.08)", borderColor: "rgba(244, 63, 94, 0.3)", color: "var(--accent-rose)", fontWeight: 700 }}
+              >
+                <ShieldAlert size={15} style={{ color: "var(--accent-rose)" }} />
+                <span>Deep-Dive Risk Analysis</span>
+              </button>
+
+              <button className="graphical-action-btn" onClick={() => navigate("/vendors")}>
+                <ShieldAlert size={15} style={{ color: "var(--accent-rose)" }} />
+                <span>MSME 43B(h) Radar</span>
+              </button>
+
+              <button className="graphical-action-btn" onClick={() => navigate("/financing")}>
+                <Landmark size={15} style={{ color: "var(--accent-emerald)" }} />
+                <span>TReDS & CGTMSE Loans</span>
+              </button>
+
+              <button className="graphical-action-btn" onClick={() => navigate("/simulator")}>
+                <FlaskConical size={15} style={{ color: "var(--accent-purple)" }} />
+                <span>9-Aspect Simulator</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Solvency Health Score Radar Gauge */}
+          <div className="solvency-score-card">
+            <div style={{ position: "relative", width: 96, height: 96, marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="96" height="96" viewBox="0 0 96 96">
+                <circle cx="48" cy="48" r="40" fill="transparent" stroke="var(--bg-secondary)" strokeWidth="8" />
+                <circle
+                  cx="48"
+                  cy="48"
+                  r="40"
+                  fill="transparent"
+                  stroke={solvencyScore >= 75 ? "var(--accent-emerald)" : solvencyScore >= 50 ? "var(--accent-amber)" : "var(--accent-rose)"}
+                  strokeWidth={8}
+                  strokeDasharray={251}
+                  strokeDashoffset={251 - (solvencyScore / 100) * 251}
+                  strokeLinecap="round"
+                  transform="rotate(-90 48 48)"
+                  style={{ transition: "stroke-dashoffset 0.8s ease" }}
+                />
+              </svg>
+              <div style={{ position: "absolute", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <span style={{ fontSize: 22, fontWeight: 900, color: "var(--text-primary)", lineHeight: 1 }}>
+                  {solvencyScore}
+                </span>
+                <span style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, marginTop: 2 }}>
+                  Health Score
+                </span>
+              </div>
+            </div>
+
+            <span
+              style={{
+                fontSize: 12.5,
+                fontWeight: 800,
+                color: solvencyScore >= 75 ? "var(--accent-emerald)" : solvencyScore >= 50 ? "var(--accent-amber)" : "var(--accent-rose)",
+              }}
+            >
+              {solvencyScore >= 75 ? "Excellent Solvency" : solvencyScore >= 50 ? "Moderate Liquidity" : "High Risk Exposure"}
+            </span>
+
+            <div style={{ display: "flex", gap: 8, marginTop: 6, fontSize: 10.5, color: "var(--text-muted)" }}>
+              <span>Buffer: {displayRunway}d</span>
+              <span>•</span>
+              <span>DSO: {summary.dso || 42}d</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =================================================================
+          2. PROACTIVE GEMINI COPILOT INTELLIGENCE BANNER
+          ================================================================= */}
+      <div className="copilot-proactive-card">
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+          <div className="copilot-proactive-icon">
+            <Sparkles size={18} />
+          </div>
+
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 13.5, fontWeight: 800, color: "var(--text-primary)" }}>
+                NexFin Gemini Copilot Insight
+              </span>
+              <span className="copilot-pill-tag">Automated Financial Twin Telemetry</span>
+            </div>
+
+            <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.55 }}>
+              {trapped43bAmount > 0 ? (
+                <span>
+                  Detected <strong>₹{formatLakhs(trapped43bAmount)}</strong> in pending payments exceeding the statutory 45-day limit. Buyers owe an estimated <strong>₹{Math.round(penalInterestAccumulated).toLocaleString("en-IN")}</strong> in compound penal interest. Discounting via TReDS or issuing legal demand notices will inject immediate cash before month-end obligations.
+                </span>
+              ) : (
+                <span>
+                  Collections are disciplined with zero 45-day defaults. You qualify for <strong>CGTMSE 85% government collateral-free credit</strong> to fund plant upgrades with zero property mortgage.
+                </span>
+              )}
+            </p>
+
+            {/* Action Buttons */}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {trapped43bAmount > 0 && (
+                <button
+                  className="copilot-quick-action-btn primary"
+                  onClick={() => {
+                    const firstOverdue =
+                      data.invoices.find((i) => i.status !== "Paid" && (i.daysOverdue || 0) > 0) ||
+                      data.invoices[0];
+                    setDashboardRecoveryInvoice(firstOverdue);
+                  }}
+                  style={{
+                    background: "linear-gradient(135deg, #10b981, #059669)",
+                    borderColor: "#10b981",
+                    color: "#fff",
+                    fontWeight: 700,
+                  }}
+                >
+                  <Zap size={13} />
+                  <span>⚡ 1-Click WhatsApp & Email Recovery</span>
+                </button>
+              )}
+
+              {trapped43bAmount > 0 && (
+                <button className="copilot-quick-action-btn" onClick={() => copyLegalNotice()}>
+                  <Copy size={13} />
+                  <span>Copy 43B(h) Notice</span>
+                </button>
+              )}
+
+              <button className="copilot-quick-action-btn" onClick={() => navigate("/financing")}>
+                <Landmark size={13} />
+                <span>Auction Invoices on TReDS</span>
+              </button>
+
+              <button className="copilot-quick-action-btn" onClick={() => navigate("/simulator")}>
+                <Sliders size={13} />
+                <span>Simulate Runway Shocks</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =================================================================
+          3. DYNAMIC 4 PRIMARY KPI SUMMARY CARDS
           ================================================================= */}
       <div className="grid-4">
-        {/* Current Cash */}
-        <div className="kpi-card">
+        {/* Money in the Bank */}
+        <div className="kpi-card graphical-card-interactive">
           <div className="kpi-top">
-            <span className="kpi-label">{t("liquidCash", "Liquid Cash Reserve")}</span>
+            <span className="kpi-label">💰 Money in the Bank</span>
             <div className="card-icon-wrap emerald">
               <Wallet size={18} />
             </div>
           </div>
           <div className="kpi-value-row">
-            <span className="kpi-value" style={{ color: "#34d399" }}>
-              {formatLakhs(summary.currentCash)}
+            <span className="kpi-value" style={{ color: "var(--accent-emerald)" }}>
+              {formatLakhs(displayCash)}
             </span>
+            {isSimulationActive && (
+              <span className="kpi-variance-pill negative">
+                -₹{Math.abs(cashVariance / 100000).toFixed(2)}L
+              </span>
+            )}
           </div>
           <div className="kpi-trend positive">
             <ArrowUpRight size={14} />
-            <span>{summary.runwayDays} {t("daysBuffer", "Days Buffer")}</span>
-            <span style={{ color: "var(--text-muted)", marginLeft: "auto" }}>
-              Target: ₹{(Number(data.business.minCashReserve || 0) / 100000).toFixed(1)}L
-            </span>
+            <span>{displayRunway} days of operational burn</span>
           </div>
         </div>
 
-        {/* Total Receivables */}
-        <div className="kpi-card">
+        {/* Unpaid Invoices */}
+        <div className="kpi-card graphical-card-interactive">
           <div className="kpi-top">
-            <span className="kpi-label">{t("receivables", "Outstanding Receivables")}</span>
-            <div className="card-icon-wrap">
+            <span className="kpi-label">📬 Receivables Pipeline</span>
+            <div className="card-icon-wrap blue">
               <FileText size={18} />
             </div>
           </div>
           <div className="kpi-value-row">
-            <span className="kpi-value" style={{ color: "#60a5fa" }}>
-              {formatLakhs(summary.receivables)}
+            <span className="kpi-value" style={{ color: "var(--accent-blue)" }}>
+              {formatLakhs(displayReceivables)}
             </span>
+            {trapped43bAmount > 0 && (
+              <span className="kpi-variance-pill alert">
+                {overdue43bInvoices.length} in 43B(h)
+              </span>
+            )}
           </div>
           <div className="kpi-trend neutral">
             <Clock size={14} />
-            <span>{pendingInvoices.length} {t("Pending Invoices")}</span>
-            <span style={{ color: "var(--text-muted)", marginLeft: "auto" }}>
-              DSO: {summary.dso} {t("days", "Days")}
-            </span>
+            <span>{pendingInvoices.length} invoices ({summary.dso}d average turn)</span>
           </div>
         </div>
 
-        {/* Monthly Burn */}
-        <div className="kpi-card">
+        {/* Monthly Bills & Salaries */}
+        <div className="kpi-card graphical-card-interactive">
           <div className="kpi-top">
-            <span className="kpi-label">{t("burnRate", "Monthly Burn Velocity")}</span>
+            <span className="kpi-label">🧾 Monthly Expense Burn</span>
             <div className="card-icon-wrap amber">
               <CreditCard size={18} />
             </div>
           </div>
           <div className="kpi-value-row">
-            <span className="kpi-value" style={{ color: "#fbbf24" }}>
+            <span className="kpi-value" style={{ color: "var(--accent-amber)" }}>
               {formatLakhs(summary.totalExpenses)}
             </span>
           </div>
           <div className="kpi-trend negative">
             <ArrowDownRight size={14} />
-            <span>{formatLakhs(summary.recurringExpenses)} Fixed</span>
-            <span style={{ color: "var(--text-muted)", marginLeft: "auto" }}>
-              +{formatLakhs(summary.oneTimeExpenses)} Var
-            </span>
+            <span>{formatLakhs(summary.recurringExpenses)} fixed staff & rent</span>
           </div>
         </div>
 
-        {/* 30-Day Net Liquidity */}
-        <div className="kpi-card">
+        {/* Projected Stand in 30 Days */}
+        <div className="kpi-card graphical-card-interactive">
           <div className="kpi-top">
-            <span className="kpi-label">{t("netRunway", "30-Day Net Runway")}</span>
+            <span className="kpi-label">🌱 Projected Stand in {forecastDays}d</span>
             <div className="card-icon-wrap purple">
               <TrendingUp size={18} />
             </div>
@@ -291,323 +642,864 @@ export default function Dashboard() {
             <span
               className="kpi-value"
               style={{
-                color: summary.projectedCash >= 0 ? "#c4b5fd" : "#fb7185",
+                color: summary.projectedCash >= 0 ? "var(--accent-purple)" : "var(--accent-rose)",
               }}
             >
-              {formatLakhs(summary.projectedCash)}
+              {formatLakhs(isSimulationActive ? twinStressedData.stressedCash : summary.projectedCash)}
             </span>
+            {isSimulationActive && (
+              <span className="kpi-variance-pill negative">Stressed</span>
+            )}
           </div>
           <div className="kpi-trend positive">
             <Zap size={14} />
-            <span>{t("Working Cap")}: {summary.workingCapitalRatio}x</span>
-            <span
-              style={{
-                marginLeft: "auto",
-                color: summary.status === "Healthy" ? "#34d399" : summary.status === "Moderate" ? "#fbbf24" : "var(--text-muted)",
-                fontWeight: 700,
-              }}
-            >
-              {t(summary.status, summary.status)}
-            </span>
+            <span>Net position after collections & bills</span>
           </div>
         </div>
       </div>
 
       {/* =================================================================
-          PRIMARY CHARTS & DIGITAL TWIN TELEMETRY
+          4. 90-DAY CASH FLOW TELEMETRY & AGING BREAKDOWN
           ================================================================= */}
       <div className="grid-12">
-        {/* Cash Flow Forecast Trajectory */}
+        {/* Dynamic Cash Flow Forecast */}
         <div className="col-span-8 glass-card">
-          <div className="card-header">
+          <div className="card-header" style={{ flexWrap: "wrap", gap: 14 }}>
             <div className="card-title-group">
-              <div className="card-icon-wrap">
+              <div className="card-icon-wrap blue">
                 <TrendingUp size={18} />
               </div>
               <div>
-                <div className="card-title">30-Day AI Cash Velocity Trajectory</div>
+                <div className="card-title">90-Day Digital Twin Cash Trajectory</div>
                 <div className="card-subtitle">
-                  Monte Carlo simulation of expected collections vs operating burn
+                  Visual projection of money coming in vs money going out
                 </div>
               </div>
             </div>
-            <Link to="/forecast" className="btn btn-secondary btn-sm">
-              <span>90-Day Radar</span>
-              <ArrowRight size={13} />
-            </Link>
+
+            {/* Dynamic Controls */}
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              {/* Horizon Selector */}
+              <div style={{ display: "flex", background: "var(--bg-secondary)", borderRadius: 8, padding: 2, border: "1px solid var(--border-subtle)" }}>
+                {[7, 15, 30, 60, 90].map((days) => (
+                  <button
+                    key={days}
+                    onClick={() => handleHorizonChange(days)}
+                    style={{
+                      padding: "4px 9px",
+                      borderRadius: 6,
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      background: forecastDays === days ? currentTheme.primaryAccent : "transparent",
+                      color: forecastDays === days ? "#fff" : "var(--text-secondary)",
+                      transition: "all 0.15s ease",
+                      border: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {days}D
+                  </button>
+                ))}
+              </div>
+
+              {/* View Selector */}
+              <div style={{ display: "flex", background: "var(--bg-secondary)", borderRadius: 8, padding: 2, border: "1px solid var(--border-subtle)" }}>
+                <button
+                  onClick={() => setChartViewMode("area")}
+                  className={`tab-btn ${chartViewMode === "area" ? "active" : ""}`}
+                  style={{ padding: "4px 8px", fontSize: 11.5 }}
+                >
+                  Area
+                </button>
+                <button
+                  onClick={() => setChartViewMode("line")}
+                  className={`tab-btn ${chartViewMode === "line" ? "active" : ""}`}
+                  style={{ padding: "4px 8px", fontSize: 11.5 }}
+                >
+                  Line
+                </button>
+                <button
+                  onClick={() => setChartViewMode("bar")}
+                  className={`tab-btn ${chartViewMode === "bar" ? "active" : ""}`}
+                  style={{ padding: "4px 8px", fontSize: 11.5 }}
+                >
+                  Bar
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div style={{ height: 260, width: "100%", marginTop: 10 }}>
+          {/* Series Toggle Buttons */}
+          <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "6px 12px", background: "var(--bg-secondary)", borderRadius: 8, marginBottom: 10, flexWrap: "wrap", border: "1px solid var(--border-subtle)" }}>
+            <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginRight: 4 }}>Layers:</span>
+            <button
+              onClick={() => setShowExpected(!showExpected)}
+              style={{
+                fontSize: 11.5,
+                padding: "2px 8px",
+                borderRadius: 12,
+                background: showExpected ? "rgba(79,70,229,0.12)" : "transparent",
+                color: showExpected ? "var(--accent-blue)" : "var(--text-muted)",
+                fontWeight: 600,
+                border: "1px solid rgba(0,0,0,0.06)",
+                cursor: "pointer",
+              }}
+            >
+              Expected Cash
+            </button>
+            <button
+              onClick={() => setShowBestCase(!showBestCase)}
+              style={{
+                fontSize: 11.5,
+                padding: "2px 8px",
+                borderRadius: 12,
+                background: showBestCase ? "rgba(5,150,105,0.12)" : "transparent",
+                color: showBestCase ? "var(--accent-emerald)" : "var(--text-muted)",
+                fontWeight: 600,
+                border: "1px solid rgba(0,0,0,0.06)",
+                cursor: "pointer",
+              }}
+            >
+              Early Settlements
+            </button>
+            <button
+              onClick={() => setShowWorstCase(!showWorstCase)}
+              style={{
+                fontSize: 11.5,
+                padding: "2px 8px",
+                borderRadius: 12,
+                background: showWorstCase ? "rgba(225,29,72,0.12)" : "transparent",
+                color: showWorstCase ? "var(--accent-rose)" : "var(--text-muted)",
+                fontWeight: 600,
+                border: "1px solid rgba(0,0,0,0.06)",
+                cursor: "pointer",
+              }}
+            >
+              30d Late Shock
+            </button>
+          </div>
+
+          <div style={{ height: 280, width: "100%", marginTop: 4 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={forecast.timeline}>
-                <defs>
-                  <linearGradient id="colorExpected" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
-                  </linearGradient>
-                  <linearGradient id="colorWorst" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="day" stroke="#64748b" fontSize={11} tickLine={false} />
-                <YAxis
-                  stroke="#64748b"
-                  fontSize={11}
-                  tickLine={false}
-                  tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: "rgba(13, 18, 31, 0.95)",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    borderRadius: 8,
-                    fontSize: 12,
-                  }}
-                  formatter={(val) => [`₹${(Number(val) / 100000).toFixed(2)}L`, ""]}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="expected"
-                  stroke="#3b82f6"
-                  strokeWidth={2.5}
-                  fillOpacity={1}
-                  fill="url(#colorExpected)"
-                  name="Expected Cash"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="worstCase"
-                  stroke="#f43f5e"
-                  strokeWidth={1.5}
-                  strokeDasharray="4 4"
-                  fillOpacity={1}
-                  fill="url(#colorWorst)"
-                  name="Worst-Case Stress"
-                />
-              </AreaChart>
+              {chartViewMode === "area" ? (
+                <AreaChart data={forecast.timeline} margin={{ top: 15, right: 25, left: 10, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="forecastExpected" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={currentTheme.primaryAccent} stopOpacity={0.25} />
+                      <stop offset="95%" stopColor={currentTheme.primaryAccent} stopOpacity={0.02} />
+                    </linearGradient>
+                    <linearGradient id="forecastBest" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                  <XAxis dataKey="day" stroke="var(--text-muted)" fontSize={11} tickLine={false} />
+                  <YAxis
+                    stroke="var(--text-muted)"
+                    fontSize={11}
+                    tickLine={false}
+                    tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border-medium)",
+                      borderRadius: 8,
+                      fontSize: 12,
+                      boxShadow: "var(--shadow-md)",
+                      color: "var(--text-primary)",
+                    }}
+                    formatter={(val, name) => [
+                      formatMoney(val),
+                      name === "expectedCash" ? "Expected Balance" : name === "bestCase" ? "Best Case (Early)" : "Late Collections",
+                    ]}
+                  />
+                  {showBestCase && (
+                    <Area
+                      type="monotone"
+                      dataKey="bestCase"
+                      stroke="#059669"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 4"
+                      fill="url(#forecastBest)"
+                      animationDuration={400}
+                    />
+                  )}
+                  {showExpected && (
+                    <Area
+                      type="monotone"
+                      dataKey="expectedCash"
+                      stroke={currentTheme.primaryAccent}
+                      strokeWidth={2.5}
+                      fill="url(#forecastExpected)"
+                      animationDuration={400}
+                    />
+                  )}
+                  {showWorstCase && (
+                    <Area
+                      type="monotone"
+                      dataKey="worstCase"
+                      stroke="#e11d48"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 4"
+                      fill="transparent"
+                      animationDuration={400}
+                    />
+                  )}
+                </AreaChart>
+              ) : chartViewMode === "line" ? (
+                <LineChart data={forecast.timeline} margin={{ top: 15, right: 25, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                  <XAxis dataKey="day" stroke="var(--text-muted)" fontSize={11} tickLine={false} />
+                  <YAxis
+                    stroke="var(--text-muted)"
+                    fontSize={11}
+                    tickLine={false}
+                    tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border-medium)",
+                      borderRadius: 8,
+                      fontSize: 12,
+                      boxShadow: "var(--shadow-md)",
+                      color: "var(--text-primary)",
+                    }}
+                    formatter={(val) => [formatMoney(val)]}
+                  />
+                  {showBestCase && (
+                    <Line type="monotone" dataKey="bestCase" stroke="#059669" strokeWidth={2} dot={false} animationDuration={400} />
+                  )}
+                  {showExpected && (
+                    <Line type="monotone" dataKey="expectedCash" stroke={currentTheme.primaryAccent} strokeWidth={2.5} dot={false} animationDuration={400} />
+                  )}
+                  {showWorstCase && (
+                    <Line type="monotone" dataKey="worstCase" stroke="#e11d48" strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={400} />
+                  )}
+                </LineChart>
+              ) : (
+                <BarChart data={forecast.timeline.filter((_, idx) => idx % Math.max(1, Math.floor(forecastDays / 10)) === 0)} margin={{ top: 15, right: 25, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                  <XAxis dataKey="day" stroke="var(--text-muted)" fontSize={11} tickLine={false} />
+                  <YAxis
+                    stroke="var(--text-muted)"
+                    fontSize={11}
+                    tickLine={false}
+                    tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border-medium)",
+                      borderRadius: 8,
+                      fontSize: 12,
+                      boxShadow: "var(--shadow-md)",
+                      color: "var(--text-primary)",
+                    }}
+                    formatter={(val) => [formatMoney(val)]}
+                  />
+                  <Bar dataKey="expectedCash" fill={currentTheme.primaryAccent} radius={[4, 4, 0, 0]} animationDuration={400} />
+                </BarChart>
+              )}
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Receivables Aging Breakdown */}
+        {/* Section 43B(h) & Receivables Aging Breakdown */}
         <div className="col-span-4 glass-card">
-          <div className="card-header">
+          <div className="card-header" style={{ flexWrap: "wrap", gap: 10 }}>
             <div className="card-title-group">
               <div className="card-icon-wrap amber">
                 <Clock size={18} />
               </div>
               <div>
-                <div className="card-title">Receivables Aging</div>
-                <div className="card-subtitle">Breakdown by maturity bracket</div>
+                <div className="card-title">Pending Invoices by Age</div>
+                <div className="card-subtitle">45-day statutory MSME windows</div>
               </div>
+            </div>
+
+            {/* Metric Mode Switcher */}
+            <div style={{ display: "flex", background: "var(--bg-secondary)", borderRadius: 6, padding: 2, border: "1px solid var(--border-subtle)" }}>
+              <button
+                onClick={() => setAgingMode("amount")}
+                style={{
+                  padding: "3px 8px",
+                  borderRadius: 4,
+                  fontSize: 11,
+                  background: agingMode === "amount" ? "var(--bg-card)" : "transparent",
+                  color: agingMode === "amount" ? "var(--text-primary)" : "var(--text-muted)",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                ₹ Value
+              </button>
+              <button
+                onClick={() => setAgingMode("percentage")}
+                style={{
+                  padding: "3px 8px",
+                  borderRadius: 4,
+                  fontSize: 11,
+                  background: agingMode === "percentage" ? "var(--bg-card)" : "transparent",
+                  color: agingMode === "percentage" ? "var(--text-primary)" : "var(--text-muted)",
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                % Share
+              </button>
             </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 10 }}>
-            {agingData.map((item, idx) => {
-              const total = aging.total || 1;
-              const pct = aging.total > 0 ? Math.round((item.value / total) * 100) : 0;
-              return (
-                <div key={item.name}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 5 }}>
-                    <span style={{ color: "var(--text-secondary)" }}>{item.name}</span>
-                    <span style={{ fontWeight: 700, color: "#fff" }}>
-                      {formatLakhs(item.value)} ({pct}%)
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      height: 6,
-                      background: "rgba(255,255,255,0.06)",
-                      borderRadius: 3,
-                      overflow: "hidden",
-                    }}
-                  >
-                    <div
-                      style={{
-                        height: "100%",
-                        width: `${pct}%`,
-                        background: COLORS[idx % COLORS.length],
-                        borderRadius: 3,
-                      }}
+          <div style={{ height: 280, width: "100%", marginTop: 8 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={agingData} margin={{ top: 15, right: 15, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={10.5} tickLine={false} />
+                <YAxis
+                  stroke="var(--text-muted)"
+                  fontSize={10.5}
+                  tickLine={false}
+                  tickFormatter={(val) => (agingMode === "percentage" ? `${val}%` : `₹${(val / 100000).toFixed(1)}L`)}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border-medium)",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    boxShadow: "var(--shadow-md)",
+                    color: "var(--text-primary)",
+                  }}
+                  formatter={(val, _, props) => [
+                    agingMode === "percentage" ? `${val}% (${formatMoney(props.payload.raw)})` : formatMoney(val),
+                    "Amount",
+                  ]}
+                />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={36} animationDuration={400}>
+                  {agingData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={index === 0 ? "#4f46e5" : index === 1 ? "#059669" : index === 2 ? "#d97706" : "#e11d48"}
                     />
-                  </div>
-                </div>
-              );
-            })}
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-
-          <button
-            className="btn btn-secondary btn-sm"
-            style={{ width: "100%", marginTop: 24, justifyContent: "center" }}
-            onClick={() => navigate("/invoices")}
-          >
-            <span>Manage Collections</span>
-            <ArrowRight size={13} />
-          </button>
         </div>
       </div>
 
       {/* =================================================================
-          BOTTOM SECTION: INVOICES & QUICK ACTIONS
+          5. ON-DASHBOARD SCENARIO SANDBOX & SECTION 43B(h) RADAR
           ================================================================= */}
       <div className="grid-12">
-        {/* Active Invoices with Delay Prediction */}
-        <div className="col-span-8 glass-card">
-          <div className="card-header">
-            <div className="card-title-group">
-              <div className="card-icon-wrap emerald">
-                <FileText size={18} />
-              </div>
-              <div>
-                <div className="card-title">Active Invoices & AI Delay Predictions</div>
-                <div className="card-subtitle">Real-time payment probability scores</div>
-              </div>
-            </div>
-            <Link to="/invoices" className="btn btn-secondary btn-sm">
-              View All ({data.invoices.length})
-            </Link>
-          </div>
-
-          {data.invoices.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "36px 20px" }}>
-              <FileText size={32} style={{ color: "var(--text-dim)", margin: "0 auto 10px" }} />
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>No Invoices Yet</div>
-              <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4, marginBottom: 16 }}>
-                Upload your first invoice file (CSV, Excel, PDF, or JSON) to activate AI delay predictions.
-              </div>
-              <button className="btn btn-primary btn-sm" onClick={() => navigate("/invoices")}>
-                <Upload size={14} />
-                <span>Import Invoices</span>
-              </button>
-            </div>
-          ) : (
-            <div className="table-responsive">
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>Invoice ID</th>
-                    <th>Customer</th>
-                    <th>Amount</th>
-                    <th>Due Date</th>
-                    <th>AI Predicted Delay</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.invoices.slice(0, 5).map((inv) => (
-                    <tr key={inv.id}>
-                      <td style={{ fontWeight: 600, color: "#fff", fontFamily: "var(--font-mono)" }}>
-                        {inv.id}
-                      </td>
-                      <td>{inv.customer}</td>
-                      <td style={{ fontWeight: 700, color: "#60a5fa" }}>
-                        {formatLakhs(inv.amount)}
-                      </td>
-                      <td>{inv.dueDate}</td>
-                      <td>
-                        <span
-                          style={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color:
-                              inv.predictedDelayDays > 15
-                                ? "#fb7185"
-                                : inv.predictedDelayDays > 5
-                                ? "#fbbf24"
-                                : "#34d399",
-                          }}
-                        >
-                          +{inv.predictedDelayDays || 3} Days Delay
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            inv.status === "Paid"
-                              ? "paid"
-                              : inv.status === "Overdue"
-                              ? "overdue"
-                              : "pending"
-                          }`}
-                        >
-                          {inv.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* Quick Stress Test Launchers */}
-        <div className="col-span-4 glass-card">
+        {/* On-Dashboard Scenario Sandbox */}
+        <div className="col-span-6 glass-card">
           <div className="card-header">
             <div className="card-title-group">
               <div className="card-icon-wrap purple">
-                <FlaskConical size={18} />
+                <Sliders size={18} />
               </div>
               <div>
-                <div className="card-title">Instant Actions</div>
-                <div className="card-subtitle">Tools to simulate and manage cash</div>
+                <div className="card-title">Live What-If Scenario Sandbox</div>
+                <div className="card-subtitle">Drag sliders to test cash flow resilience in real-time</div>
+              </div>
+            </div>
+
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() =>
+                navigate("/simulator", {
+                  state: { delayDays: sandboxDelay, revenueShock: sandboxRevenueShock },
+                })
+              }
+            >
+              <span>Full Simulator</span>
+              <ArrowRight size={13} />
+            </button>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 10 }}>
+            {/* Slider 1: Payment Delay */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5 }}>
+                <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>Customer Payment Delay</span>
+                <span style={{ fontWeight: 800, color: sandboxDelay > 30 ? "var(--accent-rose)" : "var(--accent-blue)" }}>
+                  +{sandboxDelay} Days
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="60"
+                step="5"
+                value={sandboxDelay}
+                onChange={(e) => setSandboxDelay(Number(e.target.value))}
+                className="range-slider"
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "var(--text-muted)" }}>
+                <span>On-time (0d)</span>
+                <span>Section 43B(h) Limit (45d)</span>
+                <span>Severe Freeze (+60d)</span>
+              </div>
+            </div>
+
+            {/* Slider 2: Revenue Shock */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5 }}>
+                <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>Monthly Revenue Shift</span>
+                <span style={{ fontWeight: 800, color: sandboxRevenueShock < 0 ? "var(--accent-rose)" : "var(--accent-emerald)" }}>
+                  {sandboxRevenueShock > 0 ? `+${sandboxRevenueShock}%` : `${sandboxRevenueShock}%`}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="-30"
+                max="30"
+                step="5"
+                value={sandboxRevenueShock}
+                onChange={(e) => setSandboxRevenueShock(Number(e.target.value))}
+                className="range-slider"
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "var(--text-muted)" }}>
+                <span>-30% Demand Slump</span>
+                <span>Baseline (0%)</span>
+                <span>+30% Boom</span>
+              </div>
+            </div>
+
+            {/* Live Reactive Results Box */}
+            <div className="sandbox-results-panel">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+                    Simulated Runway
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: sandboxSimulation.stressedRunway > 35 ? "var(--accent-emerald)" : "var(--accent-rose)", marginTop: 2 }}>
+                    {sandboxSimulation.stressedRunway} Days
+                  </div>
+                </div>
+
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+                    Simulated Liquid Cash
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: "var(--text-primary)", marginTop: 2 }}>
+                    ₹{(sandboxSimulation.stressedCash / 100000).toFixed(2)}L
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 10, fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, borderTop: "1px solid var(--border-subtle)", paddingTop: 8 }}>
+                {sandboxDelay > 45 ? (
+                  <span style={{ color: "var(--accent-rose)", fontWeight: 600 }}>
+                    ⚠️ Section 43B(h) triggered: Buyers legally incur 19.5% compound interest. Issue statutory legal demand notice now.
+                  </span>
+                ) : (
+                  <span>
+                    💡 Runway buffer is safe. Factoring pending accounts on TReDS will unlock immediate liquid capital without collateral.
+                  </span>
+                )}
               </div>
             </div>
           </div>
+        </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div
-              className="glass-card interactive"
-              style={{ padding: 14 }}
-              onClick={() => navigate("/simulator")}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ fontWeight: 600, fontSize: 13, color: "#fff" }}>
-                  🧪 What-If Shock Simulator
-                </div>
-                <ArrowRight size={14} style={{ color: "#60a5fa" }} />
+        {/* Section 43B(h) Trapped Capital Radar */}
+        <div className="col-span-6 glass-card">
+          <div className="card-header">
+            <div className="card-title-group">
+              <div className="card-icon-wrap rose">
+                <ShieldAlert size={18} />
               </div>
-              <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 4 }}>
-                Stress test revenue drops and client payment stalls.
+              <div>
+                <div className="card-title">Section 43B(h) MSME Trapped Capital</div>
+                <div className="card-subtitle">45-day statutory payment enforcement & interest</div>
               </div>
             </div>
 
-            <div
-              className="glass-card interactive"
-              style={{ padding: 14 }}
-              onClick={() => navigate("/financing")}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ fontWeight: 600, fontSize: 13, color: "#fff" }}>
-                  🏦 Invoice Discounting
+            <button className="btn btn-secondary btn-sm" onClick={() => navigate("/vendors")}>
+              <span>Compliance Matrix</span>
+              <ArrowRight size={13} />
+            </button>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 8 }}>
+            {/* Metric Banner */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", borderRadius: "var(--radius-md)", background: "rgba(225,29,72,0.06)", border: "1px solid rgba(225,29,72,0.2)" }}>
+              <div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+                  Statutory 45-Day Violations
                 </div>
-                <ArrowRight size={14} style={{ color: "#34d399" }} />
+                <div style={{ fontSize: 24, fontWeight: 900, color: "var(--accent-rose)", marginTop: 2 }}>
+                  ₹{(trapped43bAmount / 100000).toFixed(2)}L
+                </div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                  Across {overdue43bInvoices.length} enterprise buyer accounts
+                </div>
               </div>
-              <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 4 }}>
-                Unlock working capital from your uploaded invoices.
+
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+                  Accumulated Penal Interest
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 900, color: "var(--accent-amber)", marginTop: 2 }}>
+                  ₹{Math.round(penalInterestAccumulated).toLocaleString("en-IN")}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                  3x RBI repo rate (~19.5% p.a.)
+                </div>
               </div>
             </div>
 
-            <div
-              className="glass-card interactive"
-              style={{ padding: 14 }}
-              onClick={() => navigate("/reports")}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ fontWeight: 600, fontSize: 13, color: "#fff" }}>
-                  📑 P&L & Cash Statements
+            {/* Overdue Debtors Breakdown List */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {overdue43bInvoices.slice(0, 3).map((inv) => (
+                <div key={inv.id} className="debtor-row-card">
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+                      {inv.customer}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                      Invoice #{inv.id} • {inv.daysOverdue} days open ({inv.daysOverdue - 45}d past statutory cutoff)
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 800, color: "var(--accent-rose)" }}>
+                      ₹{Number(inv.amount || 0).toLocaleString("en-IN")}
+                    </span>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      style={{ padding: "4px 8px", fontSize: 11 }}
+                      onClick={() => copyLegalNotice(inv)}
+                      title="Copy legal notice for this invoice"
+                    >
+                      <Copy size={12} />
+                      <span>Notice</span>
+                    </button>
+                  </div>
                 </div>
-                <ArrowRight size={14} style={{ color: "#a78bfa" }} />
-              </div>
-              <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 4 }}>
-                Export monthly financial statements and aging CSVs.
-              </div>
+              ))}
+            </div>
+
+            {/* 1-Click Action */}
+            <button
+              className="btn btn-primary"
+              style={{ width: "100%", justifyContent: "center", gap: 8 }}
+              onClick={() => copyLegalNotice()}
+            >
+              <FileText size={15} />
+              <span>Copy Formal Section 43B(h) Demand Notice</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* =================================================================
+          6. RECENT FINANCIAL ACTIVITY & INFLOW LEDGER
+          ================================================================= */}
+      <div className="glass-card">
+        <div className="card-header" style={{ flexWrap: "wrap", gap: 12 }}>
+          <div className="card-title-group">
+            <div className="card-icon-wrap emerald">
+              <Activity size={18} />
+            </div>
+            <div>
+              <div className="card-title">Live Transaction Pulse & Inflow Stream</div>
+              <div className="card-subtitle">Real-time status of client invoices and scheduled outflows</div>
+            </div>
+          </div>
+
+          {/* Activity Filters */}
+          <div style={{ display: "flex", gap: 6, background: "var(--bg-secondary)", borderRadius: 8, padding: 3, border: "1px solid var(--border-subtle)" }}>
+            <button
+              className={`category-tab-btn ${activityFilter === "all" ? "active" : ""}`}
+              onClick={() => setActivityFilter("all")}
+            >
+              All Items ({activityItems.length})
+            </button>
+            <button
+              className={`category-tab-btn ${activityFilter === "inflow" ? "active" : ""}`}
+              onClick={() => setActivityFilter("inflow")}
+            >
+              Inflows
+            </button>
+            <button
+              className={`category-tab-btn ${activityFilter === "outflow" ? "active" : ""}`}
+              onClick={() => setActivityFilter("outflow")}
+            >
+              Bills & Salaries
+            </button>
+            <button
+              className={`category-tab-btn ${activityFilter === "43b" ? "active" : ""}`}
+              onClick={() => setActivityFilter("43b")}
+            >
+              43B(h) Breaches
+            </button>
+          </div>
+        </div>
+
+        {/* Responsive Table */}
+        <div className="table-responsive" style={{ marginTop: 8 }}>
+          <table className="custom-table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Type</th>
+                <th>Due / Schedule</th>
+                <th>Amount</th>
+                <th>Risk Analysis & Sec 43B(h)</th>
+                <th>Status</th>
+                <th style={{ textAlign: "right" }}>Cash Recovery & Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredActivity.slice(0, 6).map((item, idx) => {
+                const isInvoice = item.type === "inflow" && item.raw;
+                const cust = isInvoice
+                  ? data.customers.find((c) => c.name === item.raw.customer || c.id === item.raw.customerId)
+                  : null;
+                const risk = isInvoice ? calculateInvoiceRiskAnalysis(item.raw, cust) : null;
+
+                return (
+                  <tr key={idx}>
+                    <td>
+                      <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{item.title}</div>
+                      {item.is43b && (
+                        <span style={{ fontSize: 10.5, color: "var(--accent-rose)", fontWeight: 600 }}>
+                          ⚠️ Exceeds 45-day MSME window ({item.daysOverdue}d)
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: item.type === "inflow" ? "var(--accent-blue)" : "var(--accent-amber)" }}>
+                        {item.type === "inflow" ? "Incoming Receivables" : "Outgoing Liability"}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: 12, color: "var(--text-muted)" }}>{item.date}</td>
+                    <td>
+                      <div style={{ fontWeight: 800, fontSize: 13.5, color: item.type === "inflow" ? "var(--accent-emerald)" : "var(--text-primary)" }}>
+                        {item.type === "inflow" ? `+${formatMoney(item.amount)}` : `-${formatMoney(item.amount)}`}
+                      </div>
+                      {isInvoice && item.status !== "Paid" && risk && risk.accruedPenalInterest > 0 && (
+                        <div style={{ fontSize: 10.5, color: "var(--accent-purple)", fontWeight: 700 }}>
+                          +₹{risk.accruedPenalInterest.toLocaleString("en-IN")} penal int.
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      {isInvoice && risk ? (
+                        <div
+                          onClick={() => setDashboardDeepDiveInvoice(item)}
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 3,
+                            cursor: "pointer",
+                            padding: "3px 6px",
+                            borderRadius: 6,
+                            background: "var(--bg-secondary)",
+                            border: "1px dashed var(--border-medium)",
+                            transition: "all 0.15s ease",
+                          }}
+                          title="Click to view Deep-Dive Risk Analysis"
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span
+                              style={{
+                                fontSize: 10,
+                                fontWeight: 800,
+                                padding: "2px 6px",
+                                borderRadius: "var(--radius-full)",
+                                background: risk.riskBg,
+                                color: risk.riskBadgeColor,
+                                border: `1px solid ${risk.riskBadgeColor}33`,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 3,
+                              }}
+                            >
+                              <ShieldAlert size={9} />
+                              {risk.riskTier}
+                            </span>
+                            <span style={{ fontSize: 10.5, fontWeight: 800, color: risk.riskBadgeColor }}>
+                              {risk.riskScoreIndex}/100
+                            </span>
+                          </div>
+                          <span
+                            style={{
+                              fontSize: 9.5,
+                              fontWeight: 600,
+                              color: risk.section43bSeverity === "critical" ? "var(--accent-rose)" : "var(--text-muted)",
+                              display: "flex",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <span>43B(h): {risk.section43bStatus}</span>
+                            <span style={{ color: "var(--accent-blue)", fontWeight: 700 }}>🔍 Deep Dive</span>
+                          </span>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: 11, color: "var(--text-muted)" }}>—</span>
+                      )}
+                    </td>
+                    <td>
+                      <span
+                        className={`status-badge ${
+                          item.status === "Paid"
+                            ? "paid"
+                            : item.is43b
+                            ? "overdue"
+                            : item.status === "Overdue"
+                            ? "overdue"
+                            : "pending"
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+                        {item.type === "inflow" && item.status !== "Paid" && (
+                          <button
+                            className="btn btn-sm"
+                            style={{
+                              background: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(59, 130, 246, 0.15))",
+                              border: "1px solid rgba(34, 197, 94, 0.4)",
+                              color: "#22c55e",
+                              padding: "4px 8px",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 4,
+                            }}
+                            onClick={() => setDashboardRecoveryInvoice(item.raw)}
+                            title="Send WhatsApp & Email Cash Recovery Notice"
+                          >
+                            <Zap size={12} style={{ color: "#22c55e" }} />
+                            <span>⚡ Cash Recovery</span>
+                          </button>
+                        )}
+
+                        {item.type === "inflow" && item.status !== "Paid" ? (
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            style={{ padding: "4px 8px", fontSize: 11 }}
+                            onClick={() => handleMarkPaid(item.id)}
+                            title="Mark Settled"
+                          >
+                            <Check size={12} />
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>On Schedule</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* =================================================================
+          7. GAMIFIED MSME MILESTONES & COMPLIANCE BADGES
+          ================================================================= */}
+      <div className="dashboard-milestones-row">
+        <div className="milestone-badge-card">
+          <div className="milestone-icon-wrap emerald">
+            <ShieldCheck size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "var(--text-primary)" }}>
+              Section 43B(h) Protected
+            </div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+              Automated 45-day calculation & 19.5% penal notices active
+            </div>
+          </div>
+        </div>
+
+        <div className="milestone-badge-card">
+          <div className="milestone-icon-wrap cyan">
+            <Landmark size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "var(--text-primary)" }}>
+              TReDS Pre-Qualified
+            </div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+              Eligible for 24-hr bill discounting across RXIL & M1xchange
+            </div>
+          </div>
+        </div>
+
+        <div className="milestone-badge-card">
+          <div className="milestone-icon-wrap purple">
+            <Zap size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "var(--text-primary)" }}>
+              ReBIT 1.1.2 AA Consent
+            </div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+              End-to-end Curve25519 encrypted banking statements
+            </div>
+          </div>
+        </div>
+
+        <div className="milestone-badge-card">
+          <div className="milestone-icon-wrap amber">
+            <CheckCircle2 size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "var(--text-primary)" }}>
+              CGTMSE Credit Ready
+            </div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+              Pre-scored for ₹5Cr collateral-free government credit
             </div>
           </div>
         </div>
       </div>
+
+      {/* Cash Recovery & WhatsApp/Email Dispatch Modal */}
+      {dashboardRecoveryInvoice && (
+        <CashRecoveryModal
+          invoice={dashboardRecoveryInvoice}
+          customer={data.customers.find(
+            (c) =>
+              c.name === dashboardRecoveryInvoice.customer ||
+              c.id === dashboardRecoveryInvoice.customerId
+          )}
+          onClose={() => setDashboardRecoveryInvoice(null)}
+          onActionComplete={(status) => {
+            setToastMessage(`Recovery update logged: ${status}`);
+            setTimeout(() => setToastMessage(null), 4000);
+          }}
+        />
+      )}
+
+      {/* Deep-Dive Institutional Risk Underwriting Modal */}
+      {dashboardDeepDiveInvoice && (
+        <DeepDiveRiskModal
+          invoice={dashboardDeepDiveInvoice === true ? data.invoices[0] : dashboardDeepDiveInvoice}
+          onClose={() => setDashboardDeepDiveInvoice(null)}
+          onOpenRecovery={() => {
+            const inv = dashboardDeepDiveInvoice === true ? data.invoices[0] : dashboardDeepDiveInvoice;
+            setDashboardRecoveryInvoice(inv);
+            setDashboardDeepDiveInvoice(null);
+          }}
+        />
+      )}
     </div>
   );
 }

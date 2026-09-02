@@ -8,15 +8,237 @@ import { API_URL } from "../config";
 let activeUserId = null;
 let activeBusinessId = null;
 
+export const initialVendors = [
+  {
+    id: "VEN-001",
+    name: "Tata Steel Alloys Ltd",
+    category: "Raw Materials",
+    gstin: "27AAACT2727Q1ZW",
+    isMsmeRegistered: true,
+    msmeRegNo: "UDYAM-MH-01-0023412",
+    contactPerson: "Rajesh Sharma",
+    phone: "+91 98201 44521",
+    email: "supplies@tatasteel.com",
+    paymentTermsDays: 30,
+    earlyDiscountPercent: 2,
+    earlyDiscountDays: 10,
+    reliabilityScore: 96,
+  },
+  {
+    id: "VEN-002",
+    name: "Apex Precision Tools & Dies",
+    category: "Tooling & Spares",
+    gstin: "29AABCA9876C1Z3",
+    isMsmeRegistered: true,
+    msmeRegNo: "UDYAM-KR-03-0098124",
+    contactPerson: "Kavita Rao",
+    phone: "+91 98450 11234",
+    email: "orders@apextools.in",
+    paymentTermsDays: 45,
+    earlyDiscountPercent: 1.5,
+    earlyDiscountDays: 7,
+    reliabilityScore: 92,
+  },
+  {
+    id: "VEN-003",
+    name: "National Logistics & Freight",
+    category: "Logistics & Freight",
+    gstin: "07AAACN4431D1ZO",
+    isMsmeRegistered: false,
+    msmeRegNo: "",
+    contactPerson: "Harpreet Singh",
+    phone: "+91 98110 55678",
+    email: "billing@nationallogistics.com",
+    paymentTermsDays: 15,
+    earlyDiscountPercent: 0,
+    earlyDiscountDays: 0,
+    reliabilityScore: 88,
+  },
+];
+
+export const initialPurchaseOrders = [
+  {
+    id: "PO-2026-001",
+    vendorId: "VEN-001",
+    vendorName: "Tata Steel Alloys Ltd",
+    itemDescription: "Hot Rolled Steel Coils (Grade IS 2062 - 12 Tons)",
+    orderDate: "2026-08-10",
+    deliveryDate: "2026-08-25",
+    amount: 680000,
+    status: "Delivered",
+    paymentStatus: "Pending",
+    invoiceNumber: "TSA/26/884",
+    invoiceDate: "2026-08-15",
+    dueDate: "2026-09-14",
+    isMsme43BhApplicable: true,
+    earlyDiscountEligible: true,
+  },
+  {
+    id: "PO-2026-002",
+    vendorId: "VEN-002",
+    vendorName: "Apex Precision Tools & Dies",
+    itemDescription: "Carbide End Mills & CNC Tooling Insert Sets",
+    orderDate: "2026-08-18",
+    deliveryDate: "2026-08-28",
+    amount: 145000,
+    status: "In Transit",
+    paymentStatus: "Pending",
+    invoiceNumber: "APT/802",
+    invoiceDate: "2026-08-22",
+    dueDate: "2026-10-06",
+    isMsme43BhApplicable: true,
+    earlyDiscountEligible: true,
+  },
+  {
+    id: "PO-2026-003",
+    vendorId: "VEN-003",
+    vendorName: "National Logistics & Freight",
+    itemDescription: "Interstate Freight Dispatch to Pune & Bengaluru Depots",
+    orderDate: "2026-08-20",
+    deliveryDate: "2026-08-24",
+    amount: 54000,
+    status: "Delivered",
+    paymentStatus: "Paid",
+    invoiceNumber: "NL/26/512",
+    invoiceDate: "2026-08-20",
+    dueDate: "2026-09-04",
+    isMsme43BhApplicable: false,
+    earlyDiscountEligible: false,
+  },
+];
+
+export const initialCustomers = [
+  {
+    id: "CUS-001",
+    name: "Auto Corp Ltd",
+    industry: "Automotive OEM",
+    phone: "+91 98201 55678",
+    contactEmail: "finance@autocorp.in",
+    contactPerson: "Rajeev Mehra (Finance Controller)",
+    creditScore: "High Risk",
+    paymentTermsDays: 30,
+    avgDelayDays: 22,
+  },
+  {
+    id: "CUS-002",
+    name: "Metro Retail Distribution",
+    industry: "Retail & FMCG",
+    phone: "+91 98450 22331",
+    contactEmail: "ap@metroretail.com",
+    contactPerson: "Sunita Verma (Accounts Payable)",
+    creditScore: "Medium Risk",
+    paymentTermsDays: 30,
+    avgDelayDays: 14,
+  },
+  {
+    id: "CUS-003",
+    name: "Paramount Precision Engineering",
+    industry: "Industrial Machinery",
+    phone: "+91 98110 99882",
+    contactEmail: "accounts@paramount.com",
+    contactPerson: "Kunal Ghosh (CFO)",
+    creditScore: "High Risk",
+    paymentTermsDays: 45,
+    avgDelayDays: 28,
+  },
+  {
+    id: "CUS-004",
+    name: "Apex Infrastructure & Projects",
+    industry: "Infrastructure",
+    phone: "+91 98332 11440",
+    contactEmail: "billing@apexinfra.org",
+    contactPerson: "Anil Sharma (Accounts Head)",
+    creditScore: "Low Risk",
+    paymentTermsDays: 45,
+    avgDelayDays: 4,
+  },
+];
+
+export const initialInvoices = [
+  {
+    id: "INV-1001",
+    customerId: "CUS-001",
+    customer: "Auto Corp Ltd",
+    phone: "+91 98201 55678",
+    email: "finance@autocorp.in",
+    amount: 350000,
+    invoiceDate: "2026-07-15",
+    dueDate: "2026-08-15",
+    status: "Overdue",
+    predictedDelayDays: 22,
+    riskScore: "High",
+  },
+  {
+    id: "INV-1002",
+    customerId: "CUS-002",
+    customer: "Metro Retail Distribution",
+    phone: "+91 98450 22331",
+    email: "ap@metroretail.com",
+    amount: 180000,
+    invoiceDate: "2026-07-28",
+    dueDate: "2026-08-28",
+    status: "Overdue",
+    predictedDelayDays: 14,
+    riskScore: "Medium",
+  },
+  {
+    id: "INV-1003",
+    customerId: "CUS-003",
+    customer: "Paramount Precision Engineering",
+    phone: "+91 98110 99882",
+    email: "accounts@paramount.com",
+    amount: 540000,
+    invoiceDate: "2026-07-05",
+    dueDate: "2026-08-05",
+    status: "Overdue",
+    predictedDelayDays: 28,
+    riskScore: "High",
+  },
+  {
+    id: "INV-1004",
+    customerId: "CUS-004",
+    customer: "Apex Infrastructure & Projects",
+    phone: "+91 98332 11440",
+    email: "billing@apexinfra.org",
+    amount: 420000,
+    invoiceDate: "2026-08-10",
+    dueDate: "2026-09-10",
+    status: "Pending",
+    predictedDelayDays: 4,
+    riskScore: "Low",
+  },
+  {
+    id: "INV-1005",
+    customerId: "CUS-004",
+    customer: "Apex Infrastructure & Projects",
+    phone: "+91 98332 11440",
+    email: "billing@apexinfra.org",
+    amount: 290000,
+    invoiceDate: "2026-06-20",
+    dueDate: "2026-07-20",
+    status: "Paid",
+    predictedDelayDays: 2,
+    riskScore: "Low",
+    paymentDate: "2026-07-22",
+  },
+];
+
 let financialData = {
-  business: { ...cleanBusiness },
-  customers: [],
-  invoices: [],
+  business: {
+    ...cleanBusiness,
+    openingCash: 1240000,
+    monthlyRevenue: 1450000,
+    monthlyExpenses: 620000,
+  },
+  customers: [...initialCustomers],
+  invoices: [...initialInvoices],
   payments: [],
   recurringExpenses: [],
   expenses: [],
   workers: [],
   payrollDisbursements: [],
+  vendors: [...initialVendors],
+  purchaseOrders: [...initialPurchaseOrders],
 };
 
 let databaseConnected = false;
@@ -65,34 +287,44 @@ export function initUserSession(user) {
         business: {
           ...cleanBusiness,
           id: activeBusinessId,
-          name: user.company || parsed.business?.name || "My Enterprise",
-          gstin: user.gstin || parsed.business?.gstin || "",
+          name: user.company || parsed.business?.name || "Precision Auto Gears Ltd",
+          gstin: user.gstin || parsed.business?.gstin || "07AAAAA0000A1Z5",
+          openingCash: parsed.business?.openingCash || 1240000,
+          monthlyRevenue: parsed.business?.monthlyRevenue || 1450000,
+          monthlyExpenses: parsed.business?.monthlyExpenses || 620000,
           ...parsed.business,
         },
-        customers: parsed.customers || [],
-        invoices: parsed.invoices || [],
+        customers: parsed.customers && parsed.customers.length > 0 ? parsed.customers : [...initialCustomers],
+        invoices: parsed.invoices && parsed.invoices.length > 0 ? parsed.invoices : [...initialInvoices],
         payments: parsed.payments || [],
         recurringExpenses: parsed.recurringExpenses || [],
         expenses: parsed.expenses || [],
         workers: parsed.workers || [],
         payrollDisbursements: parsed.payrollDisbursements || [],
+        vendors: parsed.vendors && parsed.vendors.length > 0 ? parsed.vendors : [...initialVendors],
+        purchaseOrders: parsed.purchaseOrders && parsed.purchaseOrders.length > 0 ? parsed.purchaseOrders : [...initialPurchaseOrders],
       };
     } else {
-      // Clean slate for newly registered user
+      // Default enterprise state with ready-to-test invoices and risk attributes
       financialData = {
         business: {
           ...cleanBusiness,
           id: activeBusinessId,
-          name: user.company || "My Enterprise",
-          gstin: user.gstin || "",
+          name: user.company || "Precision Auto Gears Ltd",
+          gstin: user.gstin || "07AAAAA0000A1Z5",
+          openingCash: 1240000,
+          monthlyRevenue: 1450000,
+          monthlyExpenses: 620000,
         },
-        customers: [],
-        invoices: [],
+        customers: [...initialCustomers],
+        invoices: [...initialInvoices],
         payments: [],
         recurringExpenses: [],
         expenses: [],
         workers: [],
         payrollDisbursements: [],
+        vendors: [...initialVendors],
+        purchaseOrders: [...initialPurchaseOrders],
       };
     }
   } catch (e) {
@@ -118,6 +350,8 @@ export function clearActiveSession() {
     expenses: [],
     workers: [],
     payrollDisbursements: [],
+    vendors: [...initialVendors],
+    purchaseOrders: [...initialPurchaseOrders],
   };
 
   notifySubscribers();
@@ -137,6 +371,8 @@ export function getFinancialData() {
     expenses: [...financialData.expenses],
     workers: [...(financialData.workers || [])],
     payrollDisbursements: [...(financialData.payrollDisbursements || [])],
+    vendors: [...(financialData.vendors || initialVendors)],
+    purchaseOrders: [...(financialData.purchaseOrders || initialPurchaseOrders)],
   };
 }
 
@@ -287,6 +523,20 @@ export function updateInvoiceStatus(invoiceId, newStatus) {
       }).catch((err) => console.warn("Backend invoice update error:", err));
 
       return updated;
+    }
+    return inv;
+  });
+  notifySubscribers();
+}
+
+export function updateInvoiceRecovery(invoiceId, recoveryData) {
+  financialData.invoices = financialData.invoices.map((inv) => {
+    if (inv.id === invoiceId) {
+      return {
+        ...inv,
+        ...recoveryData,
+        lastRecoveryActionAt: new Date().toISOString(),
+      };
     }
     return inv;
   });
@@ -581,4 +831,94 @@ export function loadFinancialData() {
   if (activeUserId) {
     syncWithBackendDatabase();
   }
+}
+
+// ==========================================
+// VENDOR & SUPPLIER MANAGEMENT
+// ==========================================
+
+export function getVendors() {
+  return [...(financialData.vendors || initialVendors)];
+}
+
+export function addVendor(vendor) {
+  const newVendor = {
+    ...vendor,
+    id: vendor.id || `VEN-${Date.now().toString().slice(-4)}`,
+    isMsmeRegistered: Boolean(vendor.isMsmeRegistered),
+    reliabilityScore: Number(vendor.reliabilityScore) || 90,
+  };
+  financialData.vendors = [newVendor, ...(financialData.vendors || [])];
+  notifySubscribers();
+  return newVendor;
+}
+
+export function updateVendor(id, updates) {
+  financialData.vendors = (financialData.vendors || []).map((v) =>
+    v.id === id ? { ...v, ...updates } : v
+  );
+  notifySubscribers();
+}
+
+export function deleteVendor(id) {
+  financialData.vendors = (financialData.vendors || []).filter((v) => v.id !== id);
+  notifySubscribers();
+}
+
+// ==========================================
+// PURCHASE ORDERS & BILLS PAYABLE
+// ==========================================
+
+export function getPurchaseOrders() {
+  return [...(financialData.purchaseOrders || initialPurchaseOrders)];
+}
+
+export function addPurchaseOrder(po) {
+  const newPo = {
+    ...po,
+    id: po.id || `PO-${new Date().getFullYear()}-${Date.now().toString().slice(-3)}`,
+    amount: Number(po.amount) || 0,
+    status: po.status || "Created",
+    paymentStatus: po.paymentStatus || "Pending",
+    orderDate: po.orderDate || new Date().toISOString().slice(0, 10),
+  };
+  financialData.purchaseOrders = [newPo, ...(financialData.purchaseOrders || [])];
+
+  // Auto record as expense if it has an invoice
+  if (newPo.invoiceNumber) {
+    addExpense({
+      category: "Cost of Goods Sold (Raw Materials)",
+      description: `Vendor Bill: ${newPo.vendorName} (${newPo.itemDescription})`,
+      amount: newPo.amount,
+      recurring: false,
+      date: newPo.invoiceDate || newPo.orderDate,
+    });
+  }
+
+  notifySubscribers();
+  return newPo;
+}
+
+export function updatePurchaseOrder(id, updates) {
+  financialData.purchaseOrders = (financialData.purchaseOrders || []).map((p) =>
+    p.id === id ? { ...p, ...updates } : p
+  );
+  notifySubscribers();
+}
+
+export function deletePurchaseOrder(id) {
+  financialData.purchaseOrders = (financialData.purchaseOrders || []).filter((p) => p.id !== id);
+  notifySubscribers();
+}
+
+export function payPurchaseOrder(id, paymentMethod = "Bank Transfer (NEFT/RTGS)") {
+  const po = (financialData.purchaseOrders || []).find((p) => p.id === id);
+  if (!po) return null;
+
+  po.paymentStatus = "Paid";
+  po.paidDate = new Date().toISOString().slice(0, 10);
+  po.paymentMethod = paymentMethod;
+
+  notifySubscribers();
+  return po;
 }
