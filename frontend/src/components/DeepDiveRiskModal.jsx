@@ -148,6 +148,9 @@ export default function DeepDiveRiskModal({ invoice, onClose, onOpenRecovery }) 
           padding: 24,
         }}
       >
+        {/* Mobile drag handle */}
+        <div className="modal-drag-handle" />
+
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>

@@ -434,7 +434,7 @@ Udyam Registration: UDYAM-MH-01-0089124`;
           ================================================================= */}
       <div className="glass-card" style={{ padding: "20px 24px", marginBottom: 24 }}>
         {/* Navigation Tabs */}
-        <div style={{ display: "flex", gap: 10, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        <div className="mobile-scroll-x" style={{ display: "flex", gap: 10, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 12, marginBottom: 20, flexWrap: "nowrap", overflowX: "auto" }}>
           <button
             onClick={() => setActiveTab("msme_43b")}
             style={{
@@ -449,6 +449,8 @@ Udyam Registration: UDYAM-MH-01-0089124`;
               gap: 6,
               border: "1px solid var(--border-subtle)",
               cursor: "pointer",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
             }}
           >
             <ShieldAlert size={15} />
@@ -469,6 +471,8 @@ Udyam Registration: UDYAM-MH-01-0089124`;
               gap: 6,
               border: "1px solid var(--border-subtle)",
               cursor: "pointer",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
             }}
           >
             <Package size={15} />
@@ -489,6 +493,8 @@ Udyam Registration: UDYAM-MH-01-0089124`;
               gap: 6,
               border: "1px solid var(--border-subtle)",
               cursor: "pointer",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
             }}
           >
             <Percent size={15} />
@@ -509,6 +515,8 @@ Udyam Registration: UDYAM-MH-01-0089124`;
               gap: 6,
               border: "1px solid var(--border-subtle)",
               cursor: "pointer",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
             }}
           >
             <Building2 size={15} />

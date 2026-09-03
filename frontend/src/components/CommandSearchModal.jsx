@@ -75,6 +75,7 @@ export default function CommandSearchModal({ isOpen, onClose }) {
         style={{ maxWidth: 580, padding: 0, overflow: "hidden" }}
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="modal-drag-handle" style={{ marginTop: 8 }} />
         <div
           style={{
             display: "flex",

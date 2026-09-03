@@ -393,11 +393,11 @@ export default function Dashboard() {
             </p>
 
             {/* Quick Action Navigation Bar */}
-            <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
+            <div className="mobile-scroll-x" style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "nowrap" }}>
               <button
                 className="graphical-action-btn"
                 onClick={() => navigate("/invoices")}
-                style={{ background: "rgba(34, 197, 94, 0.12)", borderColor: "rgba(34, 197, 94, 0.35)", color: "#22c55e", fontWeight: 700 }}
+                style={{ background: "rgba(34, 197, 94, 0.12)", borderColor: "rgba(34, 197, 94, 0.35)", color: "#22c55e", fontWeight: 700, flexShrink: 0 }}
               >
                 <Zap size={15} style={{ color: "#22c55e" }} />
                 <span>⚡ Cash Recovery Hub</span>
@@ -730,8 +730,8 @@ export default function Dashboard() {
           </div>
 
           {/* Series Toggle Buttons */}
-          <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "6px 12px", background: "var(--bg-secondary)", borderRadius: 8, marginBottom: 10, flexWrap: "wrap", border: "1px solid var(--border-subtle)" }}>
-            <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginRight: 4 }}>Layers:</span>
+          <div className="mobile-scroll-x" style={{ display: "flex", gap: 8, alignItems: "center", padding: "6px 12px", background: "var(--bg-secondary)", borderRadius: 8, marginBottom: 10, flexWrap: "nowrap", border: "1px solid var(--border-subtle)", overflowX: "auto" }}>
+            <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginRight: 4, flexShrink: 0 }}>Layers:</span>
             <button
               onClick={() => setShowExpected(!showExpected)}
               style={{

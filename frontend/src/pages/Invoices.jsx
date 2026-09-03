@@ -428,7 +428,7 @@ export default function Invoices() {
       <div className="glass-card" style={{ padding: "18px 24px" }}>
         <div className="filter-bar" style={{ margin: 0 }}>
           {/* Tabs */}
-          <div className="tabs-container">
+          <div className="tabs-container mobile-scroll-x">
             <button
               className={`tab-btn ${activeTab === "all" ? "active" : ""}`}
               onClick={() => setActiveTab("all")}
@@ -464,7 +464,7 @@ export default function Invoices() {
           </div>
 
           {/* Search Box */}
-          <div style={{ position: "relative", minWidth: 260 }}>
+          <div style={{ position: "relative", flex: "1 1 240px", minWidth: 0, width: "100%" }}>
             <Search
               size={15}
               style={{
@@ -478,14 +478,14 @@ export default function Invoices() {
               type="text"
               className="form-input"
               placeholder="Search by invoice ID or client..."
-              style={{ paddingLeft: 34, height: 38, fontSize: 13 }}
+              style={{ paddingLeft: 34, height: 38, fontSize: 13, width: "100%" }}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <button
               className="btn btn-secondary"
               onClick={() => {

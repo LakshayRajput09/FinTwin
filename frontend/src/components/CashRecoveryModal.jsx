@@ -146,6 +146,9 @@ export default function CashRecoveryModal({ invoice, customer, onClose, onAction
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile drag handle */}
+        <div className="modal-drag-handle" />
+
         {/* Header */}
         <div
           style={{
@@ -312,7 +315,7 @@ export default function CashRecoveryModal({ invoice, customer, onClose, onAction
           </div>
 
           {/* 2. Recipient Contact Details */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
             <div>
               <label style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                 <Phone size={13} style={{ color: "#22c55e" }} />

@@ -859,12 +859,12 @@ export default function Simulator() {
             </p>
 
             {/* Quick 1-Click Presets */}
-            <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
+            <div className="mobile-scroll-x" style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4 }}>
               <button
                 className="btn btn-secondary btn-sm"
                 onClick={() => applyPreset("black_swan")}
                 title="Simulate sudden sales drop, 45d delay, and raw material inflation"
-                style={{ background: "rgba(225,29,72,0.08)", borderColor: "rgba(225,29,72,0.25)", color: "var(--accent-rose)", fontWeight: 700 }}
+                style={{ background: "rgba(225,29,72,0.08)", borderColor: "rgba(225,29,72,0.25)", color: "var(--accent-rose)", fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}
               >
                 🌪️ Black Swan Crisis
               </button>
@@ -873,7 +873,7 @@ export default function Simulator() {
                 className="btn btn-secondary btn-sm"
                 onClick={() => applyPreset("sec43b_squeeze")}
                 title="Simulate 55d overdue buyer delay, 3x RBI penal compound interest, and 30% tax disallowance"
-                style={{ background: "rgba(244,63,94,0.08)", borderColor: "rgba(244,63,94,0.3)", color: "var(--accent-rose)", fontWeight: 700 }}
+                style={{ background: "rgba(244,63,94,0.08)", borderColor: "rgba(244,63,94,0.3)", color: "var(--accent-rose)", fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}
               >
                 ⚖️ Sec 43B(h) Squeeze
               </button>
@@ -882,7 +882,7 @@ export default function Simulator() {
                 className="btn btn-secondary btn-sm"
                 onClick={() => applyPreset("repo_hike")}
                 title="Simulate +250 bps RBI repo rate hike on floating bank overdraft/CC"
-                style={{ fontWeight: 600 }}
+                style={{ fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}
               >
                 🏛️ Repo Rate Hike (+250 bps)
               </button>
@@ -891,7 +891,7 @@ export default function Simulator() {
                 className="btn btn-secondary btn-sm"
                 onClick={() => applyPreset("itc_lockup")}
                 title="Simulate ₹1.8L Input Tax Credit reversal due to non-compliant GSTR-2B vendors"
-                style={{ fontWeight: 600 }}
+                style={{ fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}
               >
                 📋 ITC Reversal Freeze
               </button>
@@ -900,7 +900,7 @@ export default function Simulator() {
                 className="btn btn-secondary btn-sm"
                 onClick={() => applyPreset("export_surge")}
                 title="Simulate +55% export demand with high upfront raw material investment"
-                style={{ fontWeight: 600 }}
+                style={{ fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}
               >
                 🚢 Export Order Stretch
               </button>
@@ -909,7 +909,7 @@ export default function Simulator() {
                 className="btn btn-secondary btn-sm"
                 onClick={() => applyPreset("capex_expansion")}
                 title="Simulate ₹5L plant machinery downpayment with growth scaling"
-                style={{ fontWeight: 600 }}
+                style={{ fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}
               >
                 🏭 Capex Scaling
               </button>
@@ -917,7 +917,8 @@ export default function Simulator() {
               <button
                 className="btn btn-secondary btn-sm"
                 onClick={() => applyPreset("supply_chain")}
-                style={{ fontWeight: 600 }}
+                title="Simulate severe raw material cost inflation"
+                style={{ fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}
               >
                 📦 Supply Chain Squeeze
               </button>
@@ -926,7 +927,7 @@ export default function Simulator() {
                 className="btn btn-secondary btn-sm"
                 onClick={() => applyPreset("cash_recovery_blitz")}
                 title="Simulate recovering 90% trapped receivables via WhatsApp/Email legal notices"
-                style={{ background: "rgba(5,150,105,0.08)", borderColor: "rgba(5,150,105,0.3)", color: "var(--accent-emerald)", fontWeight: 700 }}
+                style={{ background: "rgba(5,150,105,0.08)", borderColor: "rgba(5,150,105,0.3)", color: "var(--accent-emerald)", fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}
               >
                 ⚡ Recovery Hub Blitz
               </button>
@@ -935,7 +936,7 @@ export default function Simulator() {
                 className="btn btn-secondary btn-sm"
                 onClick={() => applyPreset("treds_relief")}
                 title="Apply 75% TReDS Discounting & ₹3L Govt Grant"
-                style={{ background: "rgba(5,150,105,0.08)", borderColor: "rgba(5,150,105,0.25)", color: "var(--accent-emerald)", fontWeight: 700 }}
+                style={{ background: "rgba(5,150,105,0.08)", borderColor: "rgba(5,150,105,0.25)", color: "var(--accent-emerald)", fontWeight: 700, flexShrink: 0, whiteSpace: "nowrap" }}
               >
                 🛡️ TReDS & Grant Relief
               </button>
@@ -943,7 +944,7 @@ export default function Simulator() {
               <button
                 className="btn btn-secondary btn-sm"
                 onClick={() => applyPreset("expansion")}
-                style={{ fontWeight: 600 }}
+                style={{ fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}
               >
                 🚀 Expansion & Hiring
               </button>
@@ -951,7 +952,7 @@ export default function Simulator() {
               <button
                 className="btn btn-secondary btn-sm"
                 onClick={() => applyPreset("reset")}
-                style={{ display: "flex", alignItems: "center", gap: 4 }}
+                style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0, whiteSpace: "nowrap" }}
               >
                 <RotateCcw size={13} />
                 <span>Reset All</span>
@@ -1005,7 +1006,7 @@ export default function Simulator() {
           ================================================================= */}
       <div className="glass-card" style={{ padding: "20px 24px", marginBottom: 20 }}>
         {/* Navigation Category Tabs */}
-        <div style={{ display: "flex", gap: 8, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        <div className="mobile-scroll-x" style={{ display: "flex", gap: 8, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 12, marginBottom: 20, flexWrap: "nowrap", overflowX: "auto" }}>
           <button
             onClick={() => setActiveTab("sales")}
             style={{
@@ -1020,6 +1021,8 @@ export default function Simulator() {
               gap: 6,
               border: "1px solid var(--border-subtle)",
               cursor: "pointer",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
             }}
           >
             <TrendingUp size={14} />
@@ -1040,6 +1043,8 @@ export default function Simulator() {
               gap: 6,
               border: "1px solid var(--border-subtle)",
               cursor: "pointer",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
             }}
           >
             <Building size={14} />
@@ -1060,6 +1065,8 @@ export default function Simulator() {
               gap: 6,
               border: "1px solid var(--border-subtle)",
               cursor: "pointer",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
             }}
           >
             <Landmark size={14} />
@@ -1080,6 +1087,8 @@ export default function Simulator() {
               gap: 6,
               border: "1px solid var(--border-subtle)",
               cursor: "pointer",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
             }}
           >
             <Layers size={14} />
@@ -1100,6 +1109,8 @@ export default function Simulator() {
               gap: 6,
               border: "1px solid var(--border-subtle)",
               cursor: "pointer",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
             }}
           >
             <Zap size={14} />

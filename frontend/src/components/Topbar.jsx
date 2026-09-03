@@ -108,6 +108,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
       <div className="topbar-right">
         {/* Live Simulation Ticker Pill */}
         <button
+          className="topbar-ticker-btn desktop-only"
           onClick={() => setIsLiveTicking(!isLiveTicking)}
           style={{
             display: "inline-flex",
@@ -139,6 +140,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
 
         {/* Quick Cash Recovery Button on Topbar */}
         <button
+          className="topbar-recovery-btn desktop-only"
           onClick={() => navigate("/invoices")}
           style={{
             display: "inline-flex",
@@ -204,7 +206,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                 top: "100%",
                 right: 0,
                 marginTop: 8,
-                width: 230,
+                width: "min(230px, calc(100vw - 24px))",
                 background: "var(--bg-card)",
                 border: "1px solid var(--border-medium)",
                 borderRadius: "var(--radius-md)",
@@ -299,7 +301,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                 top: "100%",
                 right: 0,
                 marginTop: 8,
-                width: 250,
+                width: "min(250px, calc(100vw - 24px))",
                 maxHeight: 360,
                 overflowY: "auto",
                 background: "var(--bg-card)",
@@ -359,7 +361,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
         </div>
 
         {/* Search button */}
-        <button className="topbar-search-btn" onClick={onOpenSearch}>
+        <button className="topbar-search-btn desktop-only" onClick={onOpenSearch}>
           <Search size={15} />
           <span>{t("quickSearch", "Quick search...")}</span>
           <kbd className="search-kbd">⌘K</kbd>
@@ -367,7 +369,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
 
         {/* Ask AI Copilot button */}
         <button
-          className="topbar-ai-btn"
+          className="topbar-ai-btn desktop-only"
           onClick={onOpenAiCopilot}
           title="Ask NexFin AI Financial Copilot (⌘J)"
         >
@@ -378,7 +380,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
 
         {/* Quick Add Button */}
         <button
-          className="topbar-btn primary-action"
+          className="topbar-btn primary-action desktop-only"
           onClick={onOpenQuickAction}
           title="Create Invoice or Expense"
         >

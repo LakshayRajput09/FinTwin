@@ -252,6 +252,9 @@ export default function SetuVerificationModal({ onClose, onVerified }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile drag handle */}
+        <div className="modal-drag-handle" />
+
         {/* Header */}
         <div
           style={{
@@ -410,12 +413,14 @@ export default function SetuVerificationModal({ onClose, onVerified }) {
 
         {/* 6 Verification Channels Grid / Tabs */}
         <div
+          className="mobile-scroll-x"
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(6, 1fr)",
-            gap: 6,
+            display: "flex",
+            gap: 8,
             marginBottom: 20,
             overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+            paddingBottom: 4,
           }}
         >
           {[
@@ -433,7 +438,9 @@ export default function SetuVerificationModal({ onClose, onVerified }) {
                 key={tab.id}
                 onClick={() => setActiveChannel(tab.id)}
                 style={{
-                  padding: "10px 8px",
+                  flex: "1 0 auto",
+                  minWidth: 120,
+                  padding: "10px 10px",
                   borderRadius: 8,
                   border: isActive
                     ? "2px solid var(--accent-blue)"

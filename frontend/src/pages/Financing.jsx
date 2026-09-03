@@ -1017,7 +1017,7 @@ export default function Financing() {
             </div>
           </div>
 
-          <div className="tabs-container">
+          <div className="tabs-container mobile-scroll-x">
             <button
               className={`tab-btn ${activeTab === "instruments" ? "active" : ""}`}
               onClick={() => setActiveTab("instruments")}

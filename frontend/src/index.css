@@ -2305,10 +2305,62 @@ a {
   }
 }
 
+/* Universal Mobile Utility Classes */
+.mobile-scroll-x {
+  display: flex !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  flex-wrap: nowrap !important;
+  gap: 8px;
+  padding-bottom: 4px;
+  max-width: 100%;
+}
+.mobile-scroll-x::-webkit-scrollbar {
+  display: none !important;
+}
+
+.modal-drag-handle {
+  display: none;
+}
+
+/* Range input touch thumb enhancement */
+input[type="range"].range-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--bg-tertiary);
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"].range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--accent-blue);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+input[type="range"].range-slider::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+}
+
 /* 4. Mobile Devices & Small Tablets (<= 768px) */
 @media (max-width: 768px) {
   :root {
     --sidebar-width: 280px;
+  }
+
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .desktop-only {
@@ -2348,77 +2400,74 @@ a {
   }
 
   .page-container {
-    padding: 18px 14px 80px;
+    padding: 14px 12px calc(76px + env(safe-area-inset-bottom, 14px)) !important;
   }
 
   /* Topbar responsive adjustments */
   .app-topbar {
-    padding: 0 14px;
-    height: 64px;
+    height: 58px;
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .topbar-left {
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .topbar-page-title {
-    font-size: 15px;
+    font-size: 14px;
+    letter-spacing: -0.2px;
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .topbar-page-subtitle {
     display: none;
   }
 
+  .topbar-right {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .topbar-right .topbar-btn {
+    height: 34px;
+    padding: 0 8px;
+  }
+
+  .topbar-btn.icon-only {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    justify-content: center;
+  }
+
   .topbar-search-btn {
-    display: none;
+    display: none !important;
   }
 
-  .topbar-btn.ai-copilot-trigger span {
-    display: none;
+  .topbar-ai-btn {
+    display: none !important;
   }
 
-  .topbar-btn.primary-action span {
-    display: none;
+  .topbar-ticker-btn {
+    display: none !important;
+  }
+
+  .topbar-recovery-btn {
+    display: none !important;
   }
 
   .topbar-btn.primary-action {
-    padding: 7px 10px;
+    display: none !important;
   }
 
   .topbar-user-text {
     display: none !important;
-  }
-
-  .topbar-search-btn span,
-  .topbar-search-btn kbd {
-    display: none;
-  }
-
-  .topbar-search-btn {
-    padding: 8px;
-    width: 36px;
-    height: 36px;
-    justify-content: center;
-    border-radius: var(--radius-full);
-  }
-
-  .app-topbar {
-    height: 60px;
-    padding: 0 12px;
-  }
-
-  .topbar-page-title {
-    font-size: 15px;
-  }
-
-  .topbar-page-subtitle {
-    display: none;
-  }
-
-  /* Main content wrapper & page container */
-  .main-content-wrapper {
-    margin-left: 0 !important;
-    width: 100% !important;
-  }
-
-  .page-container {
-    padding: 14px 12px 100px 12px;
   }
 
   /* Show Mobile Bottom Navigation */
@@ -2429,7 +2478,7 @@ a {
     left: 0;
     right: 0;
     height: 62px;
-    background: rgba(13, 18, 31, 0.97);
+    background: rgba(13, 18, 31, 0.98);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid rgba(59, 130, 246, 0.25);
@@ -2455,6 +2504,7 @@ a {
     transition: all var(--transition-fast);
     cursor: pointer;
     flex: 1;
+    min-height: 48px;
   }
 
   .mobile-nav-item.active {
@@ -2474,8 +2524,8 @@ a {
   }
 
   .mobile-fab-circle {
-    width: 44px;
-    height: 44px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     background: linear-gradient(135deg, #2563eb, #10b981);
     color: #fff;
@@ -2491,23 +2541,13 @@ a {
   }
 
   /* Grid Stack on Mobile */
-  .grid-4 {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .grid-3 {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .grid-2 {
-    grid-template-columns: 1fr;
-    gap: 12px;
+  .grid-4, .grid-3, .grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
   }
 
   .col-span-8, .col-span-4, .col-span-6 {
-    grid-column: span 12 / span 12;
+    grid-column: span 12 / span 12 !important;
   }
 
   /* Cards & Spacing */
@@ -2534,6 +2574,28 @@ a {
     font-size: 22px;
   }
 
+  /* Pictorial Hero Card mobile stacking */
+  .pictorial-hero-card {
+    padding: 18px 16px !important;
+  }
+
+  .pictorial-hero-card > div {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+
+  .pictorial-hero-card > div > div:last-child {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Recharts responsive wrapper */
+  .recharts-responsive-container {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
   /* Tables - Smooth horizontal touch scrolling */
   .table-responsive {
     overflow-x: auto;
@@ -2551,9 +2613,15 @@ a {
   }
 
   /* Prevent iOS zoom on inputs by ensuring 16px font size */
-  .form-input, .form-select, textarea {
+  .form-input, .form-select, textarea, input[type="text"], input[type="number"], input[type="email"] {
     font-size: 16px !important;
     padding: 10px 12px;
+  }
+
+  /* Sliders - 26px finger touch thumb on mobile */
+  input[type="range"]::-webkit-slider-thumb {
+    width: 26px !important;
+    height: 26px !important;
   }
 
   /* Filter bar & Tabs */
@@ -2569,37 +2637,57 @@ a {
     width: 100%;
     justify-content: flex-start;
     padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .tabs-container::-webkit-scrollbar {
+    display: none;
   }
 
   .tab-btn {
     white-space: nowrap;
     font-size: 11.5px;
-    padding: 6px 12px;
+    padding: 7px 14px;
     flex-shrink: 0;
+    min-height: 38px;
   }
 
   /* Modals as Slide-Up Bottom Sheets on Mobile */
+  .modal-drag-handle {
+    display: block;
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-medium);
+    margin: -6px auto 14px;
+  }
+
   .modal-backdrop {
     align-items: flex-end !important;
     padding: 0 !important;
+    background: rgba(0, 0, 0, 0.82) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
   }
 
   .modal-card {
     width: 100vw !important;
     max-width: 100vw !important;
-    border-radius: 20px 20px 0 0 !important;
-    padding: 22px 16px 36px 16px !important;
+    border-radius: 22px 22px 0 0 !important;
+    padding: 18px 14px 36px 14px !important;
     max-height: 88vh !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     border-bottom: none !important;
-    animation: slideUpBottom 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    border-left: none !important;
+    border-right: none !important;
+    animation: slideUpBottom 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
   .modal-card.wide {
     width: 100vw !important;
     max-width: 100vw !important;
-    border-radius: 20px 20px 0 0 !important;
+    border-radius: 22px 22px 0 0 !important;
   }
 
   @keyframes slideUpBottom {
@@ -2652,11 +2740,11 @@ a {
 
   /* Landing Page Mobile */
   .landing-hero {
-    padding: 95px 14px 45px;
+    padding: 85px 14px 40px;
   }
 
   .landing-hero-title {
-    font-size: 30px;
+    font-size: 28px;
     letter-spacing: -0.8px;
     line-height: 1.15;
   }
@@ -2700,7 +2788,7 @@ a {
 /* 5. Extra Small Mobile Devices (< 480px) */
 @media (max-width: 480px) {
   .landing-hero-title {
-    font-size: 26px;
+    font-size: 24px;
   }
 
   .kpi-value {
@@ -2710,15 +2798,22 @@ a {
   .btn {
     font-size: 12px;
     padding: 8px 12px;
+    min-height: 40px;
   }
 
   .btn-lg {
     font-size: 13.5px;
     padding: 10px 14px;
+    min-height: 44px;
   }
 
   .brand-title {
     font-size: 16px;
+  }
+
+  .topbar-page-title {
+    max-width: 120px;
+    font-size: 13.5px;
   }
 }
 

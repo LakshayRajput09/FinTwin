@@ -164,6 +164,9 @@ export default function QuickActionModal({ isOpen, onClose }) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card wide" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 640 }}>
+        {/* Mobile drag handle */}
+        <div className="modal-drag-handle" />
+
         {/* Header */}
         <div className="modal-header">
           <div className="card-title-group">
@@ -205,7 +208,7 @@ export default function QuickActionModal({ isOpen, onClose }) {
         )}
 
         {/* Tab Selector (Touch & Scroll friendly) */}
-        <div className="tabs-container" style={{ marginBottom: 20, overflowX: "auto" }}>
+        <div className="tabs-container mobile-scroll-x" style={{ marginBottom: 20, overflowX: "auto" }}>
           <button
             className={`tab-btn ${activeTab === "cash" ? "active" : ""}`}
             onClick={() => setActiveTab("cash")}
