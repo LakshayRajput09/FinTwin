@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import Hero3DScene from "../components/Hero3DScene";
 
 // Dynamic Rotating Headline Phrases
 const ROTATING_PHRASES = [
@@ -546,8 +547,10 @@ export default function LandingPage() {
           )}
         </div>
 
+        <Hero3DScene />
+
         {/* Continuous Horizontal Sliding Marquee Ribbon */}
-        <div className="sliding-marquee-container" style={{ margin: "20px 0 10px" }}>
+        <div className="sliding-marquee-container" style={{ margin: "40px 0 10px" }}>
           <div className="sliding-marquee-track">
             {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, idx) => {
               const Icon = item.icon;
