@@ -50,6 +50,7 @@ html, body {
   --sidebar-collapsed-width: 80px;
   --topbar-height: 72px;
   /* Apple Liquid Glass Palette */
+  --bg-canvas: #F6F7F5;
   --bg-primary: #F5F5F3;
   --bg-secondary: rgba(255, 255, 255, 0.6);
   --bg-tertiary: rgba(255, 255, 255, 0.75);
@@ -100,6 +101,7 @@ html, body {
 
 /* Daylight Indigo (Default) */
 .theme-daylight {
+  --bg-canvas: #F7F7F5;
   --bg-primary: #F7F7F5;
   --bg-secondary: #F0F0EE;
   --bg-tertiary: #E5E5E2;
@@ -123,6 +125,7 @@ html, body {
 
 /* Warm Sage & Ivory */
 .theme-sage {
+  --bg-canvas: #fbfbfa;
   --bg-primary: #fbfbfa;
   --bg-secondary: #f4f5f0;
   --bg-tertiary: #e8ebe4;
