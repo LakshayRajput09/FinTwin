@@ -295,14 +295,13 @@ a {
 .app-container {
   display: flex;
   min-height: 100vh;
-  background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.04) 0%, transparent 40%),
-              radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 40%),
-              var(--bg-primary);
+  position: relative;
+  background: transparent;
 }
 
 .main-content-wrapper {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   flex: 1;
   margin-left: var(--sidebar-width);
   display: flex;
@@ -319,7 +318,7 @@ a {
 
 .page-container {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   flex: 1;
   padding: 32px 36px 60px;
   max-width: 1560px;
@@ -839,12 +838,12 @@ a {
    ========================================================================== */
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.50);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.045);
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px) saturate(145%);
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.70);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  border-radius: 18px;
   padding: 24px;
   margin-bottom: 24px;
 }
@@ -2982,10 +2981,12 @@ input[type="range"].range-slider::-webkit-slider-thumb:active {
 /* Pictorial Graphical Hero Card */
 .pictorial-hero-card {
   position: relative;
-  border-radius: var(--radius-lg);
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(28px) saturate(145%);
+  -webkit-backdrop-filter: blur(28px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.80);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   overflow: hidden;
 }
 
@@ -3996,9 +3997,11 @@ input:focus, select:focus, textarea:focus {
 
 
 .solid-card {
-  background: #FFFFFF;
-  border: 1px solid rgba(0,0,0,0.04);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.035), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   border-radius: 20px;
   padding: 24px;
   margin-bottom: 24px;

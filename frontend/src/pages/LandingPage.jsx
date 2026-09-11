@@ -33,6 +33,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import Hero3DScene from "../components/Hero3DScene";
+import AmbientBackground from "../components/AmbientBackground";
 
 // Dynamic Rotating Headline Phrases
 const ROTATING_PHRASES = [
@@ -176,7 +177,10 @@ export default function LandingPage() {
   ];
 
   return (
-    <div style={{ background: "var(--bg-canvas)", color: "var(--text-primary)", minHeight: "100vh" }}>
+    <div style={{ position: "relative", background: "transparent", color: "var(--text-primary)", minHeight: "100vh" }}>
+      {/* Ambient Apple-inspired Liquid Glass Wallpaper Background */}
+      <AmbientBackground />
+
       {/* =================================================================
           1. TOP NAVBAR (MATCHING REFERENCE EXACTLY)
           ================================================================= */}
@@ -192,6 +196,12 @@ export default function LandingPage() {
           justifyContent: "space-between",
           maxWidth: 1320,
           margin: "0 auto",
+          background: "rgba(255, 255, 255, 0.65)",
+          backdropFilter: "blur(20px) saturate(150%)",
+          WebkitBackdropFilter: "blur(20px) saturate(150%)",
+          border: "1px solid rgba(255, 255, 255, 0.8)",
+          borderRadius: "var(--radius-full)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.06)",
         }}
       >
         {/* Brand & MSME TWIN Badge */}
@@ -1769,7 +1779,7 @@ export default function LandingPage() {
       {/* =================================================================
           9. BOTTOM CALL TO ACTION
           ================================================================= */}
-      <section style={{ padding: "70px 24px 80px", textAlign: "center", background: "var(--bg-secondary)", borderTop: "1px solid var(--border-subtle)" }}>
+      <section style={{ padding: "70px 24px 80px", textAlign: "center", background: "rgba(255, 255, 255, 0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid var(--border-subtle)" }}>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
           <h2 style={{ fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 800, color: "var(--text-primary)", margin: "0 0 12px" }}>
             Ready to Protect Your Working Capital?
