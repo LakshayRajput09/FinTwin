@@ -44,7 +44,7 @@ const primaryNavItems = [
   { key: "expenses", name: "Expenses", path: "/expenses", icon: CreditCard },
   { key: "cashFlow", name: "Cash Flow", path: "/cash-flow", icon: Wallet },
   { key: "forecast", name: "Forecast", path: "/forecast", icon: TrendingUp },
-  { key: "risk", name: "Risk", path: "/financing", icon: ShieldCheck },
+  { key: "risk", name: "Risk Analysis", path: "/risk", icon: ShieldCheck },
   { key: "simulator", name: "Simulator", path: "/simulator", icon: FlaskConical },
   { key: "financing", name: "Financing", path: "/financing", icon: Landmark },
   { key: "reports", name: "Reports", path: "/reports", icon: FileSpreadsheet },

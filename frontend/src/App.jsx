@@ -30,6 +30,7 @@ const Payroll = React.lazy(() => import("./pages/Payroll"));
 const Reports = React.lazy(() => import("./pages/Reports"));
 const Integrations = React.lazy(() => import("./pages/Integrations"));
 const Settings = React.lazy(() => import("./pages/Settings"));
+const Risk = React.lazy(() => import("./pages/Risk"));
 const ProductivitySaaS = React.lazy(() => import("./pages/ProductivitySaaS"));
 
 // ==========================================
@@ -144,6 +145,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <Financing />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/risk"
+            element={
+              <ProtectedRoute>
+                <Risk />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/risk-analysis"
+            element={
+              <ProtectedRoute>
+                <Risk />
               </ProtectedRoute>
             }
           />
