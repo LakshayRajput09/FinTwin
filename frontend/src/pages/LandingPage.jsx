@@ -181,10 +181,12 @@ export default function LandingPage() {
       {/* Ambient Apple-inspired Liquid Glass Wallpaper Background */}
       <AmbientBackground />
 
-      {/* =================================================================
-          1. TOP NAVBAR (MATCHING REFERENCE EXACTLY)
-          ================================================================= */}
-      <header
+      {/* Foreground Content Layer (z-index: 2 ensures all texts sit cleanly in front of the background) */}
+      <div className="landing-content-layer" style={{ position: "relative", zIndex: 2 }}>
+        {/* =================================================================
+            1. TOP NAVBAR (MATCHING REFERENCE EXACTLY)
+            ================================================================= */}
+        <header
         className=""
         style={{
           position: "sticky",
@@ -348,6 +350,11 @@ export default function LandingPage() {
             fontSize: 12.5,
             fontWeight: 600,
             color: "var(--text-primary)",
+            background: "rgba(255, 255, 255, 0.75)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            border: "1px solid rgba(255, 255, 255, 0.9)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
           }}
         >
           <Sparkles size={14} style={{ color: "var(--accent-blue)" }} />
@@ -1829,6 +1836,7 @@ export default function LandingPage() {
           <span>ISO 27001 Certified</span>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
