@@ -60,10 +60,24 @@ export default function Forecast() {
   const formatLakhs = (amt) => `₹${(Number(amt || 0) / 100000).toFixed(2)}L`;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24, position: "relative", zIndex: 1 }}>
+      <div className="page-header" style={{ position: "relative", zIndex: 10 }}>
+        <div className="page-header-content">
+          <div className="card-title-group">
+            <div className="card-icon-wrap purple">
+              <TrendingUp size={24} />
+            </div>
+            <div>
+              <h1 className="page-title">Cash Flow Forecast</h1>
+              <p className="page-subtitle">AI-driven predictive liquidity analysis & runway simulation</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Top Metric Row */}
-      <div className="grid-4">
-        <div className="kpi-card graphical-card-interactive">
+      <div className="grid-4" style={{ position: "relative", zIndex: 10 }}>
+        <div className="kpi-card glass-card">
           <div className="kpi-top">
             <span className="kpi-label">Forecast Horizon</span>
             <div className="card-icon-wrap blue">
@@ -80,7 +94,7 @@ export default function Forecast() {
           </div>
         </div>
 
-        <div className="kpi-card graphical-card-interactive">
+        <div className="kpi-card glass-card">
           <div className="kpi-top">
             <span className="kpi-label">Breach Risk Horizon</span>
             <div className="card-icon-wrap amber">
@@ -89,7 +103,7 @@ export default function Forecast() {
           </div>
           <div className="kpi-value-row">
             <span className="kpi-value" style={{ color: "#B7791F" }}>
-              {forecast.breachDay}
+              {forecast.breachDay || "N/A"}
             </span>
           </div>
           <div className="kpi-trend neutral">
@@ -97,7 +111,7 @@ export default function Forecast() {
           </div>
         </div>
 
-        <div className="kpi-card graphical-card-interactive">
+        <div className="kpi-card glass-card">
           <div className="kpi-top">
             <span className="kpi-label">Lowest Projected Buffer</span>
             <div className="card-icon-wrap rose">
@@ -105,7 +119,7 @@ export default function Forecast() {
             </div>
           </div>
           <div className="kpi-value-row">
-            <span className="kpi-value" style={{ color: forecast.lowestProjectedCash >= 0 ? "#34d399" : "#fb7185" }}>
+            <span className="kpi-value" style={{ color: (forecast.lowestProjectedCash || 0) >= 0 ? "#34d399" : "#fb7185" }}>
               {formatLakhs(forecast.lowestProjectedCash)}
             </span>
           </div>
@@ -114,7 +128,7 @@ export default function Forecast() {
           </div>
         </div>
 
-        <div className="kpi-card graphical-card-interactive">
+        <div className="kpi-card glass-card">
           <div className="kpi-top">
             <span className="kpi-label">Twin AI Confidence Score</span>
             <div className="card-icon-wrap emerald">
@@ -149,7 +163,7 @@ export default function Forecast() {
 
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             {/* Horizon Selector */}
-            <div style={{ display: "flex", background: "rgba(255,255,255,0.05)", borderRadius: 8, padding: 2 }}>
+            <div style={{ display: "flex", background: "var(--bg-secondary)", borderRadius: 8, padding: 2, border: "1px solid var(--border-subtle)" }}>
               {[15, 30, 60, 90, 120].map((days) => (
                 <button
                   key={days}
@@ -160,7 +174,7 @@ export default function Forecast() {
                     fontSize: 11,
                     fontWeight: 700,
                     background: horizonDays === days ? currentTheme.primaryAccent : "transparent",
-                    color: horizonDays === days ? "#000" : "var(--text-secondary)",
+                    color: horizonDays === days ? "#fff" : "var(--text-secondary)",
                     transition: "all 0.15s ease",
                   }}
                 >
@@ -170,14 +184,15 @@ export default function Forecast() {
             </div>
 
             {/* View Mode */}
-            <div style={{ display: "flex", background: "rgba(255,255,255,0.05)", borderRadius: 8, padding: 2 }}>
+            <div style={{ display: "flex", background: "var(--bg-secondary)", borderRadius: 8, padding: 2, border: "1px solid var(--border-subtle)" }}>
               <button
                 onClick={() => setChartView("area")}
                 style={{
                   padding: "4px 8px",
                   borderRadius: 6,
                   fontSize: 11,
-                  background: chartView === "area" ? "rgba(255,255,255,0.15)" : "transparent",
+                  fontWeight: 600,
+                  background: chartView === "area" ? currentTheme.primaryAccent : "transparent",
                   color: chartView === "area" ? "#fff" : "var(--text-muted)",
                 }}
               >
@@ -189,7 +204,8 @@ export default function Forecast() {
                   padding: "4px 8px",
                   borderRadius: 6,
                   fontSize: 11,
-                  background: chartView === "line" ? "rgba(255,255,255,0.15)" : "transparent",
+                  fontWeight: 600,
+                  background: chartView === "line" ? currentTheme.primaryAccent : "transparent",
                   color: chartView === "line" ? "#fff" : "var(--text-muted)",
                 }}
               >
@@ -200,17 +216,17 @@ export default function Forecast() {
         </div>
 
         {/* Dynamic Series Toggle Filters */}
-        <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 16px", background: "rgba(0,0,0,0.2)", borderRadius: 6, margin: "0 16px 8px", flexWrap: "wrap" }}>
-          <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 4 }}>Filter Series:</span>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 16px", background: "var(--bg-secondary)", borderRadius: 6, margin: "0 16px 8px", flexWrap: "wrap", border: "1px solid var(--border-subtle)" }}>
+          <span style={{ fontSize: 11, color: "var(--text-secondary)", marginRight: 4, fontWeight: 600 }}>Filter Series:</span>
           <button
             onClick={() => setShowExpected(!showExpected)}
             style={{
               fontSize: 11,
               padding: "2px 8px",
               borderRadius: 12,
-              background: showExpected ? "rgba(56,189,248,0.2)" : "rgba(255,255,255,0.05)",
+              background: showExpected ? "rgba(31, 90, 74, 0.12)" : "var(--bg-tertiary)",
               color: showExpected ? "#1F5A4A" : "var(--text-muted)",
-              border: "1px solid rgba(56,189,248,0.3)",
+              border: showExpected ? "1px solid rgba(31, 90, 74, 0.3)" : "1px solid var(--border-subtle)",
             }}
           >
             P50 Expected
@@ -221,9 +237,9 @@ export default function Forecast() {
               fontSize: 11,
               padding: "2px 8px",
               borderRadius: 12,
-              background: showBest ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.05)",
-              color: showBest ? "#34d399" : "var(--text-muted)",
-              border: "1px solid rgba(16,185,129,0.3)",
+              background: showBest ? "rgba(16,185,129,0.12)" : "var(--bg-tertiary)",
+              color: showBest ? "#059669" : "var(--text-muted)",
+              border: showBest ? "1px solid rgba(16,185,129,0.3)" : "1px solid var(--border-subtle)",
             }}
           >
             P90 Best Case
@@ -234,9 +250,9 @@ export default function Forecast() {
               fontSize: 11,
               padding: "2px 8px",
               borderRadius: 12,
-              background: showWorst ? "rgba(244,63,94,0.2)" : "rgba(255,255,255,0.05)",
-              color: showWorst ? "#fb7185" : "var(--text-muted)",
-              border: "1px solid rgba(244,63,94,0.3)",
+              background: showWorst ? "rgba(244,63,94,0.12)" : "var(--bg-tertiary)",
+              color: showWorst ? "#e11d48" : "var(--text-muted)",
+              border: showWorst ? "1px solid rgba(244,63,94,0.3)" : "1px solid var(--border-subtle)",
             }}
           >
             P10 Worst Case
@@ -342,6 +358,24 @@ export default function Forecast() {
               </LineChart>
             )}
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* AI Twin Recommendation Card */}
+      <div className="glass-card" style={{ borderLeft: `4px solid ${currentTheme.primaryAccent}` }}>
+        <div className="card-header">
+          <div className="card-title-group">
+            <div className="card-icon-wrap emerald">
+              <Sparkles size={18} />
+            </div>
+            <div>
+              <div className="card-title">Twin AI Insight & Recommendation</div>
+              <div className="card-subtitle">Based on current collection cycles and burn rate</div>
+            </div>
+          </div>
+        </div>
+        <div style={{ padding: "0 16px 16px", fontSize: 14, color: "var(--text-primary)", lineHeight: 1.6 }}>
+          {forecast.recommendation || "Insufficient data to generate a recommendation. Please upload your financial records."}
         </div>
       </div>
     </div>

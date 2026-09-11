@@ -53,12 +53,26 @@ export default function CashFlow() {
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24, position: "relative", zIndex: 1 }}>
+      <div className="page-header" style={{ position: "relative", zIndex: 10 }}>
+        <div className="page-header-content">
+          <div className="card-title-group">
+            <div className="card-icon-wrap emerald">
+              <Wallet size={24} />
+            </div>
+            <div>
+              <h1 className="page-title">Cash Flow Analysis</h1>
+              <p className="page-subtitle">Real-time liquidity telemetry & waterfall reconciliation</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* =================================================================
           SUMMARY STAT CARDS
           ================================================================= */}
-      <div className="grid-4">
-        <div className="kpi-card">
+      <div className="grid-4" style={{ position: "relative", zIndex: 10 }}>
+        <div className="kpi-card glass-card">
           <div className="kpi-top">
             <span className="kpi-label">Current Cash</span>
             <div className="card-icon-wrap emerald">
@@ -76,7 +90,7 @@ export default function CashFlow() {
           </div>
         </div>
 
-        <div className="kpi-card">
+        <div className="kpi-card glass-card">
           <div className="kpi-top">
             <span className="kpi-label">Expected Inflows (Receivables)</span>
             <div className="card-icon-wrap">
@@ -90,11 +104,11 @@ export default function CashFlow() {
           </div>
           <div className="kpi-trend positive">
             <ArrowUpRight size={14} />
-            <span>{data.invoices.filter((i) => i.status !== "Paid").length} Unsettled Invoices</span>
+            <span>{(data.invoices || []).filter((i) => i.status !== "Paid").length} Unsettled Invoices</span>
           </div>
         </div>
 
-        <div className="kpi-card">
+        <div className="kpi-card glass-card">
           <div className="kpi-top">
             <span className="kpi-label">Total Outflows (Burn)</span>
             <div className="card-icon-wrap amber">
@@ -112,7 +126,7 @@ export default function CashFlow() {
           </div>
         </div>
 
-        <div className="kpi-card">
+        <div className="kpi-card glass-card">
           <div className="kpi-top">
             <span className="kpi-label">Projected Net Liquidity</span>
             <div className="card-icon-wrap purple">
@@ -123,7 +137,7 @@ export default function CashFlow() {
             <span
               className="kpi-value"
               style={{
-                color: summary.projectedCash >= 0 ? "#c4b5fd" : "#fb7185",
+                color: (summary.projectedCash || 0) >= 0 ? "#c4b5fd" : "#fb7185",
               }}
             >
               {formatLakhs(summary.projectedCash)}
@@ -132,7 +146,7 @@ export default function CashFlow() {
           <div className="kpi-trend positive">
             <span
               style={{
-                color: summary.projectedCash >= 0 ? "#34d399" : "#fb7185",
+                color: (summary.projectedCash || 0) >= 0 ? "#34d399" : "#fb7185",
                 fontWeight: 700,
               }}
             >
@@ -278,7 +292,7 @@ export default function CashFlow() {
                 </tr>
               </thead>
               <tbody>
-                {data.recurringExpenses.map((rec) => (
+                {(data.recurringExpenses || []).map((rec) => (
                   <tr key={rec.id}>
                     <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>{rec.category}</td>
                     <td>{rec.description}</td>

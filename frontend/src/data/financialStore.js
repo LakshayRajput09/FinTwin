@@ -363,41 +363,41 @@ export function isDatabaseConnected() {
 
 export function getFinancialData() {
   return {
-    business: { ...financialData.business },
-    customers: [...financialData.customers],
-    invoices: [...financialData.invoices],
-    payments: [...financialData.payments],
-    recurringExpenses: [...financialData.recurringExpenses],
-    expenses: [...financialData.expenses],
-    workers: [...(financialData.workers || [])],
-    payrollDisbursements: [...(financialData.payrollDisbursements || [])],
-    vendors: [...(financialData.vendors || initialVendors)],
-    purchaseOrders: [...(financialData.purchaseOrders || initialPurchaseOrders)],
+    business: { ...(financialData.business || {}) },
+    customers: Array.isArray(financialData.customers) ? [...financialData.customers] : [],
+    invoices: Array.isArray(financialData.invoices) ? [...financialData.invoices] : [],
+    payments: Array.isArray(financialData.payments) ? [...financialData.payments] : [],
+    recurringExpenses: Array.isArray(financialData.recurringExpenses) ? [...financialData.recurringExpenses] : [],
+    expenses: Array.isArray(financialData.expenses) ? [...financialData.expenses] : [],
+    workers: Array.isArray(financialData.workers) ? [...financialData.workers] : [],
+    payrollDisbursements: Array.isArray(financialData.payrollDisbursements) ? [...financialData.payrollDisbursements] : [],
+    vendors: Array.isArray(financialData.vendors) ? [...financialData.vendors] : [...initialVendors],
+    purchaseOrders: Array.isArray(financialData.purchaseOrders) ? [...financialData.purchaseOrders] : [...initialPurchaseOrders],
   };
 }
 
 export function getBusiness() {
-  return { ...financialData.business };
+  return { ...(financialData.business || {}) };
 }
 
 export function getCustomers() {
-  return [...financialData.customers];
+  return Array.isArray(financialData.customers) ? [...financialData.customers] : [];
 }
 
 export function getInvoices() {
-  return [...financialData.invoices];
+  return Array.isArray(financialData.invoices) ? [...financialData.invoices] : [];
 }
 
 export function getPayments() {
-  return [...financialData.payments];
+  return Array.isArray(financialData.payments) ? [...financialData.payments] : [];
 }
 
 export function getRecurringExpenses() {
-  return [...financialData.recurringExpenses];
+  return Array.isArray(financialData.recurringExpenses) ? [...financialData.recurringExpenses] : [];
 }
 
 export function getExpenses() {
-  return [...financialData.expenses];
+  return Array.isArray(financialData.expenses) ? [...financialData.expenses] : [];
 }
 
 // ==========================================
@@ -729,11 +729,11 @@ export async function syncWithBackendDatabase() {
 // ==========================================
 
 export function getWorkers() {
-  return [...(financialData.workers || [])];
+  return Array.isArray(financialData.workers) ? [...financialData.workers] : [];
 }
 
 export function getPayrollDisbursements() {
-  return [...(financialData.payrollDisbursements || [])];
+  return Array.isArray(financialData.payrollDisbursements) ? [...financialData.payrollDisbursements] : [];
 }
 
 export function addWorker(worker) {

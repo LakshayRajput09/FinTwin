@@ -225,6 +225,7 @@ export function generateLocalForecast(days = 90) {
     timeline.push({
       day: `Day ${d}`,
       dayNum: d,
+      expected: expectedVal,
       expectedCash: expectedVal,
       worstCase: worstVal,
       bestCase: bestVal,
