@@ -79,7 +79,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
   }, [isLiveTicking]);
 
   const currentInfo = titles[location.pathname] || {
-    title: "NexFin MSME Platform",
+    title: "FinTwin MSME Platform",
     sub: "AI Financial Intelligence & Digital Twin",
   };
 
@@ -89,7 +89,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
   return (
     <header className="app-topbar">
       {/* Page Title & Subtitle */}
-      <div className="topbar-left">
+      <div className="topbar-left" style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <button
           className="mobile-menu-toggle"
           onClick={onToggleMobileMenu}
@@ -98,83 +98,20 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
           <Menu size={20} />
         </button>
 
-        <div className="topbar-page-info">
-          <h1 className="topbar-page-title">{t(currentInfo.title, currentInfo.title)}</h1>
-          <span className="topbar-page-subtitle">{t(currentInfo.sub, currentInfo.sub)}</span>
-        </div>
+        {/* Apple Liquid Glass Wide Search Pill */}
+        <button className="topbar-search-pill desktop-only" onClick={onOpenSearch}>
+          <Search size={15} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+          <span style={{ color: "var(--text-muted)", fontSize: 13, flex: 1, textAlign: "left" }}>
+            Search invoices, customers, or ask anything...
+          </span>
+          <kbd className="search-kbd" style={{ background: "rgba(255, 255, 255, 0.8)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 6, padding: "2px 6px", fontSize: 11, color: "var(--text-secondary)" }}>
+            ⌘K
+          </kbd>
+        </button>
       </div>
 
       {/* Right Controls */}
       <div className="topbar-right">
-        {/* Live Simulation Ticker Pill */}
-        <button
-          className="topbar-ticker-btn desktop-only"
-          onClick={() => setIsLiveTicking(!isLiveTicking)}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "5px 10px",
-            borderRadius: 20,
-            background: isLiveTicking ? "rgba(16,185,129,0.12)" : "var(--bg-secondary)",
-            border: isLiveTicking ? "1px solid rgba(16,185,129,0.3)" : "1px solid var(--border-subtle)",
-            fontSize: 11,
-            fontWeight: 700,
-            color: isLiveTicking ? "var(--accent-emerald)" : "var(--text-muted)",
-            cursor: "pointer",
-          }}
-          title={isLiveTicking ? "Telemetry Live (Updating every 15s) - Click to pause" : "Telemetry Paused - Click to resume"}
-        >
-          {isLiveTicking ? (
-            <>
-              <span className="twin-radar-pulse" style={{ width: 6, height: 6 }} />
-              <span>Live: {secondsTick}s</span>
-            </>
-          ) : (
-            <>
-              <Pause size={11} />
-              <span>Paused</span>
-            </>
-          )}
-        </button>
-
-        {/* Quick Cash Recovery Button on Topbar */}
-        <button
-          className="topbar-recovery-btn desktop-only"
-          onClick={() => navigate("/invoices")}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "5px 12px",
-            borderRadius: 20,
-            background: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(59, 130, 246, 0.15))",
-            border: "1px solid rgba(34, 197, 94, 0.4)",
-            fontSize: 12,
-            fontWeight: 800,
-            color: "#22c55e",
-            cursor: "pointer",
-          }}
-          title="Open MSME Cash Recovery Hub (1-Click WhatsApp & Email Notices)"
-        >
-          <Zap size={13} style={{ color: "#22c55e" }} />
-          <span>⚡ Cash Recovery</span>
-          {overdueCount > 0 && (
-            <span
-              style={{
-                fontSize: 10,
-                padding: "1px 6px",
-                borderRadius: 10,
-                background: "var(--accent-rose)",
-                color: "#fff",
-                fontWeight: 900,
-              }}
-            >
-              {overdueCount}
-            </span>
-          )}
-        </button>
-
         {/* Dynamic Theme Switcher Dropdown */}
         <div style={{ position: "relative" }}>
           <button
@@ -360,32 +297,24 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
           )}
         </div>
 
-        {/* Search button */}
-        <button className="topbar-search-btn desktop-only" onClick={onOpenSearch}>
-          <Search size={15} />
-          <span>{t("quickSearch", "Quick search...")}</span>
-          <kbd className="search-kbd">⌘K</kbd>
-        </button>
-
-        {/* Ask AI Copilot button */}
+        {/* Ask AI Pill Button */}
         <button
-          className="topbar-ai-btn desktop-only"
+          className="topbar-ai-pill-btn desktop-only"
           onClick={onOpenAiCopilot}
-          title="Ask NexFin AI Financial Copilot (⌘J)"
+          title="Ask FinTwin AI (⌘J)"
         >
-          <Sparkles size={14} style={{ color: "var(--accent-purple)" }} />
+          <Sparkles size={14} style={{ color: "#1F5A4A" }} />
           <span>Ask AI</span>
-          <kbd className="ai-kbd">⌘J</kbd>
         </button>
 
-        {/* Quick Add Button */}
+        {/* Solid Green Quick Add Button */}
         <button
-          className="topbar-btn primary-action desktop-only"
+          className="topbar-add-pill-btn desktop-only"
           onClick={onOpenQuickAction}
           title="Create Invoice or Expense"
         >
           <Plus size={15} />
-          <span>{t("quickAdd", "Quick Add")}</span>
+          <span>Add</span>
         </button>
 
         {/* Notification Bell */}
@@ -453,7 +382,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                       setShowNotifications(false);
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, color: "#fb7185" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, color: "#B54747" }}>
                       <AlertTriangle size={14} /> {overdueCount} Overdue Invoices
                     </div>
                     <div style={{ color: "var(--text-secondary)", marginTop: 4, fontSize: 11.5 }}>
@@ -477,7 +406,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                       setShowNotifications(false);
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, color: "#fbbf24" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, color: "#B7791F" }}>
                       <TrendingDown size={14} /> {highRiskCount} High Risk Customer Invoices
                     </div>
                     <div style={{ color: "var(--text-secondary)", marginTop: 4, fontSize: 11.5 }}>
@@ -495,7 +424,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                     fontSize: 12.5,
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, color: "#34d399" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, color: "#2E7D5B" }}>
                     <ShieldCheck size={14} /> Digital Twin Engine Synchronized
                   </div>
                   <div style={{ color: "var(--text-secondary)", marginTop: 4, fontSize: 11.5 }}>
@@ -526,7 +455,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                   width: 28,
                   height: 28,
                   borderRadius: "50%",
-                  background: "linear-gradient(135deg, var(--accent-blue), #6366f1)",
+                  background: "var(--bg-tertiary), #1F5A4A)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",

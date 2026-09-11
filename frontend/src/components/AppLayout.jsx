@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import AmbientBackground from "./AmbientBackground";
 
 export default function AppLayout({ children }) {
   const location = useLocation();
@@ -26,7 +27,7 @@ export default function AppLayout({ children }) {
 
   const isActive = (path) => location.pathname === path;
 
-  // Global Keyboard Shortcuts (⌘J for AI Copilot, ⌘K for Search)
+  // Global Keyboard Shortcuts (⌘J for FinTwin Insight, ⌘K for Search)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
@@ -43,6 +44,8 @@ export default function AppLayout({ children }) {
 
   return (
     <div className="app-container">
+      {/* Liquid Glass Background Wallpaper for Internal App */}
+      <AmbientBackground />
       {/* Mobile Backdrop Overlay */}
       {mobileMenuOpen && (
         <div
@@ -75,15 +78,15 @@ export default function AppLayout({ children }) {
         <main className="page-container">{children}</main>
       </div>
 
-      {/* Floating AI Copilot Trigger (Desktop only - mobile uses bottom nav) */}
+      {/* Floating FinTwin Insight Trigger (Desktop only - mobile uses bottom nav) */}
       {!isAiCopilotOpen && (
         <button
           className="floating-copilot-btn desktop-only"
           onClick={() => setIsAiCopilotOpen(true)}
-          title={t("askAi", "Ask NexFin AI")}
+          title={t("askAi", "Ask FinTwin AI")}
         >
           <Sparkles size={17} />
-          <span className="copilot-btn-text">{t("askAi", "Ask NexFin AI")}</span>
+          <span className="copilot-btn-text">{t("askAi", "Ask FinTwin AI")}</span>
         </button>
       )}
 
@@ -136,14 +139,14 @@ export default function AppLayout({ children }) {
         <button
           className={`mobile-nav-item ${isAiCopilotOpen ? "active" : ""}`}
           onClick={() => setIsAiCopilotOpen(true)}
-          title="AI Copilot"
+          title="FinTwin Insight"
         >
           <Sparkles size={20} style={{ color: "#c4b5fd" }} />
           <span>{t("AI Twin", "AI Twin")}</span>
         </button>
       </nav>
 
-      {/* Floating AI Copilot Drawer */}
+      {/* Floating FinTwin Insight Drawer */}
       <AiCopilotModal
         isOpen={isAiCopilotOpen}
         onClose={() => setIsAiCopilotOpen(false)}

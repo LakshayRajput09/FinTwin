@@ -106,7 +106,7 @@ export default function AiCopilotModal({ isOpen, onClose }) {
     {
       id: "m1",
       role: "assistant",
-      text: "👋 Welcome! I am your **NexFin Copilot**, powered by live financial twin telemetry and Google Gemini.\n\nI continuously monitor your **₹12.40L cash buffer**, forecast 45-day **Section 43B(h)** customer payment limits, and detect cash deficits before they happen.\n\nWhat scenario would you like to explore today?",
+      text: "👋 Welcome! I am your **FinTwin FinTwin Insight**, powered by live financial twin telemetry and Google Gemini.\n\nI continuously monitor your **₹12.40L cash buffer**, forecast 45-day **Section 43B(h)** customer payment limits, and detect cash deficits before they happen.\n\nWhat scenario would you like to explore today?",
       actions: [
         { type: "simulate", label: "Simulate 30d Payment Delay", params: { delayDays: 30 } },
         { type: "navigate", label: "Check 43B(h) Violations", path: "/vendors" },
@@ -269,7 +269,7 @@ export default function AiCopilotModal({ isOpen, onClose }) {
       onClose();
       navigate(act.path || "/dashboard");
     } else if (act.type === "notice") {
-      const noticeText = `FORMAL STATUTORY DEMAND NOTICE UNDER SECTION 43B(h) OF THE INCOME TAX ACT & MSMED ACT 2006\n\nDate: ${new Date().toLocaleDateString("en-IN")}\nTo: Finance Controller / Accounts Payable\nCustomer Account: ${act.customer || "Enterprise Buyer"}\n\nSubject: Outstanding Invoices Delayed Beyond 45 Days - Statutory Interest & Deduction Disallowance\n\nDear Sir/Madam,\n\nWe hereby notify you that outstanding invoices totaling ₹${(overdue43b || 420000).toLocaleString("en-IN")} remain unpaid beyond the statutory 45-day limit prescribed under Section 15 of the Micro, Small and Medium Enterprises Development (MSMED) Act, 2006.\n\nIn accordance with Section 43B(h) of the Income Tax Act, 1961, failure to settle these amounts within the prescribed period will result in:\n1. Permanent disallowance of these expenses from your taxable income during tax audit.\n2. Mandatory liability to pay compound penal interest at 3x the RBI Bank Rate (~19.5% p.a.) compounded monthly.\n\nPlease remit the overdue payment immediately to avoid escalation to the MSME Samadhaan Facilitation Council.\n\nSincerely,\nAuthorized Signatory\n${biz?.name || "NexFin Enterprise Supplier"}`;
+      const noticeText = `FORMAL STATUTORY DEMAND NOTICE UNDER SECTION 43B(h) OF THE INCOME TAX ACT & MSMED ACT 2006\n\nDate: ${new Date().toLocaleDateString("en-IN")}\nTo: Finance Controller / Accounts Payable\nCustomer Account: ${act.customer || "Enterprise Buyer"}\n\nSubject: Outstanding Invoices Delayed Beyond 45 Days - Statutory Interest & Deduction Disallowance\n\nDear Sir/Madam,\n\nWe hereby notify you that outstanding invoices totaling ₹${(overdue43b || 420000).toLocaleString("en-IN")} remain unpaid beyond the statutory 45-day limit prescribed under Section 15 of the Micro, Small and Medium Enterprises Development (MSMED) Act, 2006.\n\nIn accordance with Section 43B(h) of the Income Tax Act, 1961, failure to settle these amounts within the prescribed period will result in:\n1. Permanent disallowance of these expenses from your taxable income during tax audit.\n2. Mandatory liability to pay compound penal interest at 3x the RBI Bank Rate (~19.5% p.a.) compounded monthly.\n\nPlease remit the overdue payment immediately to avoid escalation to the MSME Samadhaan Facilitation Council.\n\nSincerely,\nAuthorized Signatory\n${biz?.name || "FinTwin Enterprise Supplier"}`;
 
       navigator.clipboard.writeText(noticeText);
       setNoticeToast("📋 Statutory Section 43B(h) Notice copied to clipboard!");
@@ -317,7 +317,7 @@ export default function AiCopilotModal({ isOpen, onClose }) {
 
     let replyText = "";
     let actionsList = [];
-    let modelName = "NexFin Twin Engine";
+    let modelName = "FinTwin Twin Engine";
 
     try {
       let geminiSuccess = false;
@@ -325,7 +325,7 @@ export default function AiCopilotModal({ isOpen, onClose }) {
       // 1. DIRECT BROWSER GEMINI REST API (Unrestricted by local backend sandbox)
       if (geminiApiKey) {
         try {
-          const systemInstruction = `You are NexFin Copilot, an elite CFO and financial intelligence advisor for Indian MSMEs.
+          const systemInstruction = `You are FinTwin FinTwin Insight, an elite CFO and financial intelligence advisor for Indian MSMEs.
 Enterprise Name: ${biz?.name || "Precision Auto Gears Ltd"}
 Liquid Bank Cash: ₹${((summary?.currentCash || 1240000) / 100000).toFixed(2)} Lakhs
 Safe Runway: ${summary?.runwayDays || 38} Days
@@ -405,7 +405,7 @@ Guidelines:
             if (data.answer) {
               replyText = data.answer;
               actionsList = data.suggested_actions || [];
-              modelName = data.is_gemini ? data.model_used : "NexFin Twin Engine";
+              modelName = data.is_gemini ? data.model_used : "FinTwin Twin Engine";
             }
           }
         } catch (beErr) {
@@ -421,7 +421,7 @@ Guidelines:
           (q.includes("gemini") &&
             (q.includes("why") || q.includes("key") || q.includes("error") || q.includes("connect") || q.includes("work")))
         ) {
-          replyText = `### 🔌 How to Activate Google Gemini AI in NexFin\n\nGoogle Gemini requires a free API key from Google AI Studio to generate live responses.\n\n**To connect Gemini in 30 seconds:**\n1. Get your free key from **[Google AI Studio ↗](https://aistudio.google.com/app/apikey)**.\n2. Click **'Configure Gemini Key'** below or the key icon (🔑) in the header.\n3. Paste your key (starts with \`AIzaSy...\`) and click **Verify & Save**.\n\n*Once connected, all answers will be generated live by Google Gemini 1.5 Flash grounded in your financial twin metrics!*`;
+          replyText = `### 🔌 How to Activate Google Gemini AI in FinTwin\n\nGoogle Gemini requires a free API key from Google AI Studio to generate live responses.\n\n**To connect Gemini in 30 seconds:**\n1. Get your free key from **[Google AI Studio ↗](https://aistudio.google.com/app/apikey)**.\n2. Click **'Configure Gemini Key'** below or the key icon (🔑) in the header.\n3. Paste your key (starts with \`AIzaSy...\`) and click **Verify & Save**.\n\n*Once connected, all answers will be generated live by Google Gemini 1.5 Flash grounded in your financial twin metrics!*`;
           actionsList = [
             { type: "config_key", label: "Configure Gemini Key 🔑" },
             { type: "navigate", label: "Inspect Financial Dashboard", path: "/dashboard" },
@@ -460,10 +460,10 @@ Guidelines:
             { type: "navigate", label: "View Banking Schemes", path: "/financing" },
           ];
         }
-        modelName = "NexFin Twin Engine";
+        modelName = "FinTwin Twin Engine";
       }
     } catch (err) {
-      console.error("AI Copilot submission error:", err);
+      console.error("FinTwin Insight submission error:", err);
       replyText = "An error occurred while analyzing financial data. Please try again.";
     }
 
@@ -577,12 +577,12 @@ Guidelines:
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ fontSize: 14, fontWeight: 800, color: "var(--text-primary)", letterSpacing: -0.3 }}>
-                  NexFin AI Copilot
+                  FinTwin FinTwin Insight
                 </span>
                 <span className="copilot-engine-pill" onClick={() => setShowSettings(!showSettings)} title="Click to configure Gemini API Key">
                   {geminiApiKey ? (
                     <>
-                      <Sparkles size={11} style={{ color: "#8b5cf6" }} />
+                      <Sparkles size={11} style={{ color: "#1F5A4A" }} />
                       <span>Gemini 3.6 Flash</span>
                     </>
                   ) : (
@@ -645,7 +645,7 @@ Guidelines:
             </button>
 
             {/* Close */}
-            <button className="copilot-action-btn" onClick={onClose} title="Close AI Copilot">
+            <button className="copilot-action-btn" onClick={onClose} title="Close FinTwin Insight">
               <X size={16} />
             </button>
           </div>
@@ -718,7 +718,7 @@ Guidelines:
           <div
             style={{
               padding: "8px 14px",
-              background: "linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(59, 130, 246, 0.08))",
+              background: "var(--bg-tertiary)",
               borderBottom: "1px solid rgba(139, 92, 246, 0.25)",
               display: "flex",
               alignItems: "center",
@@ -785,7 +785,7 @@ Guidelines:
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: m.role === "assistant" ? "var(--accent-purple)" : "var(--accent-blue)" }}>
-                      {m.role === "assistant" ? (m.model ? `NexFin AI (${m.model.replace("Google ", "")})` : "NexFin AI") : "You"}
+                      {m.role === "assistant" ? (m.model ? `FinTwin AI (${m.model.replace("Google ", "")})` : "FinTwin AI") : "You"}
                     </span>
                     <span style={{ fontSize: 10, color: "var(--text-dim)" }}>{m.timestamp}</span>
                   </div>
@@ -835,7 +835,7 @@ Guidelines:
                 <div className="typing-dot" />
                 <div className="typing-dot" />
                 <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginLeft: 6 }}>
-                  {geminiApiKey ? "Gemini 1.5 Flash is analyzing your financial twin..." : "NexFin Twin Engine is computing calculations..."}
+                  {geminiApiKey ? "Gemini 1.5 Flash is analyzing your financial twin..." : "FinTwin Twin Engine is computing calculations..."}
                 </span>
               </div>
             </div>

@@ -850,7 +850,7 @@ export default function Simulator() {
               <span className="pictorial-badge cyan">9 Financial Aspects</span>
             </div>
 
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-primary)", margin: "4px 0 8px" }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "4px 0 8px" }}>
               Test Any Business Scenario With Complete Peace of Mind
             </h1>
 
@@ -973,13 +973,14 @@ export default function Simulator() {
                 boxShadow: "var(--shadow-sm)",
               }}
             >
-              <span style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+              <span style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 500 }}>
                 Projected Cash Under Stress
               </span>
               <div
                 style={{
                   fontSize: 24,
-                  fontWeight: 800,
+                  fontWeight: 750,
+                  fontVariantNumeric: "tabular-nums",
                   margin: "4px 0",
                   color: combinedScenario.projected_cash >= 0 ? "var(--accent-emerald)" : "var(--accent-rose)",
                 }}
@@ -1658,13 +1659,13 @@ export default function Simulator() {
                     `Projected Cash (${props.payload.parameter || props.payload.risk})`,
                   ]}
                 />
-                <ReferenceLine y={0} stroke="#ef4444" strokeDasharray="3 3" />
+                <ReferenceLine y={0} stroke="#B54747" strokeDasharray="3 3" />
                 <Bar dataKey="projectedCash" radius={[4, 4, 0, 0]}>
                   {comparisonChartData.map((entry, index) => {
-                    let fill = "#4f46e5";
-                    if (entry.isRelief) fill = "#059669";
-                    else if (entry.risk === "HIGH") fill = "#e11d48";
-                    else if (entry.risk === "MEDIUM") fill = "#d97706";
+                    let fill = "#1F5A4A";
+                    if (entry.isRelief) fill = "#2E7D5B";
+                    else if (entry.risk === "HIGH") fill = "#B54747";
+                    else if (entry.risk === "MEDIUM") fill = "#B7791F";
                     return <Cell key={`cell-${index}`} fill={fill} />;
                   })}
                 </Bar>
@@ -1680,16 +1681,16 @@ export default function Simulator() {
               <AreaChart data={trajectoryData} margin={{ top: 20, right: 20, left: 15, bottom: 10 }}>
                 <defs>
                   <linearGradient id="colorBaseline" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#1F5A4A" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#1F5A4A" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorStressed" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#e11d48" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#e11d48" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#B54747" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#B54747" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorRelief" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#059669" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#059669" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#2E7D5B" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#2E7D5B" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
@@ -1707,11 +1708,11 @@ export default function Simulator() {
                   formatter={(val) => [formatMoney(val)]}
                 />
                 <Legend verticalAlign="top" height={36} />
-                <ReferenceLine y={0} stroke="#ef4444" strokeDasharray="3 3" />
-                <Area type="monotone" dataKey="baseline" name="Base Operations" stroke="#4f46e5" strokeWidth={2} fill="url(#colorBaseline)" />
-                <Area type="monotone" dataKey="stressed" name="Stressed (No Relief)" stroke="#e11d48" strokeWidth={2} strokeDasharray="4 4" fill="url(#colorStressed)" />
+                <ReferenceLine y={0} stroke="#B54747" strokeDasharray="3 3" />
+                <Area type="monotone" dataKey="baseline" name="Base Operations" stroke="#1F5A4A" strokeWidth={2} fill="url(#colorBaseline)" />
+                <Area type="monotone" dataKey="stressed" name="Stressed (No Relief)" stroke="#B54747" strokeWidth={2} strokeDasharray="4 4" fill="url(#colorStressed)" />
                 {(tredsDiscount > 0 || govtSubsidy > 0) && (
-                  <Area type="monotone" dataKey="withRelief" name="With TReDS & Grant Relief" stroke="#059669" strokeWidth={2.5} fill="url(#colorRelief)" />
+                  <Area type="monotone" dataKey="withRelief" name="With TReDS & Grant Relief" stroke="#2E7D5B" strokeWidth={2.5} fill="url(#colorRelief)" />
                 )}
               </AreaChart>
             </ResponsiveContainer>

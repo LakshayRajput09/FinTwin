@@ -187,7 +187,7 @@ export default function Login() {
               style={{
                 width: 18,
                 height: 18,
-                border: "2.5px solid #38bdf8",
+                border: "2.5px solid #1F5A4A",
                 borderRadius: 4,
                 position: "relative",
                 display: "flex",
@@ -195,11 +195,11 @@ export default function Login() {
                 justifyContent: "center",
               }}
             >
-              <div style={{ width: 6, height: 6, background: "#10b981", borderRadius: "50%" }} />
+              <div style={{ width: 6, height: 6, background: "#2E7D5B", borderRadius: "50%" }} />
             </div>
           </div>
           <span style={{ fontSize: 19, fontWeight: 800, color: "var(--text-primary)", letterSpacing: -0.5 }}>
-            NexFin
+            FinTwin
           </span>
         </Link>
 
@@ -251,7 +251,7 @@ export default function Login() {
             gap: 6,
           }}
         >
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10b981" }} />
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#2E7D5B" }} />
           ReBIT 1.1.2 Curve25519 Encrypted
         </span>
         <span

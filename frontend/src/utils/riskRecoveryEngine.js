@@ -85,7 +85,7 @@ export function calculateInvoiceRiskAnalysis(invoice, customer = null, business 
     recoveryPriority = "Priority 1: Immediate Legal Demand";
   } else if (riskScoreIndex >= 45) {
     riskTier = "MODERATE STRESS";
-    riskBadgeColor = "#fbbf24";
+    riskBadgeColor = "#B7791F";
     riskBg = "rgba(245, 158, 11, 0.15)";
     recoveryPriority = "Priority 2: Prompt Cash Recovery";
   }
@@ -122,7 +122,7 @@ export function calculateInvoiceRiskAnalysis(invoice, customer = null, business 
  * Generates 3 customizable Cash Recovery templates for WhatsApp and Email.
  */
 export function generateRecoveryTemplates({ invoice, riskAnalysis, business }) {
-  const bizName = business?.name || "NexFin Enterprise Solutions Ltd";
+  const bizName = business?.name || "FinTwin Enterprise Solutions Ltd";
   const custName = invoice?.customer || "Enterprise Buyer / Counterparty";
   const invId = invoice?.id || "INV-1001";
   const amtFormatted = `₹${Number(invoice?.amount || 0).toLocaleString("en-IN")}`;
@@ -149,7 +149,7 @@ export function generateRecoveryTemplates({ invoice, riskAnalysis, business }) {
     id: "executive_urgent",
     name: "Urgent Executive Settlement & UPI",
     tag: "Fast Settlement",
-    tagColor: "#38bdf8",
+    tagColor: "#1F5A4A",
     subject: `Urgent Payment Follow-Up: Invoice ${invId} (${amtFormatted}) - ${bizName}`,
     whatsappText: `Hi *${custName}* Team, gentle reminder from *${bizName}* regarding Invoice *#${invId}* of *${amtFormatted}* which is currently overdue by *${daysOverdue} days*.\n\nWe request you to kindly process this payment today to keep our credit line active and avoid statutory 43B(h) tax disallowance.\n\n*Quick Pay Details*:\nUPI: *${upiId}*\nBank A/c: *${bankAcc}*\n\nPlease reply with the transaction UTR once processed. Thank you for your continued partnership! 🙏`,
     emailBody: `Dear Accounts Team at ${custName},\n\nHope this finds you well.\n\nThis is an urgent follow-up regarding Invoice ${invId} for ${amtFormatted}, which was due on ${dueDate} and is now overdue by ${daysOverdue} days.\n\nTo ensure uninterrupted supply schedules and maintain seamless Section 43B(h) tax compliance, we request your prompt clearance of this outstanding amount today.\n\nPayment Details:\n- Amount: ${amtFormatted}\n- UPI ID: ${upiId}\n- Bank Account: ${bankAcc}\n\nPlease share the transaction confirmation / UTR as soon as executed.\n\nBest regards,\n${bizName}`,

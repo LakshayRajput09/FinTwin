@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
+  Grid,
   Wallet,
   FileText,
   TrendingUp,
@@ -338,8 +339,15 @@ export default function Dashboard() {
         </div>
       )}
 
+
+      <div style={{ marginBottom: 12 }}>
+        <h1 style={{ fontSize: 32, fontWeight: 800, margin: "0 0 4px", letterSpacing: "-1px" }}>Dashboard</h1>
+        <p style={{ color: "var(--text-secondary)", margin: 0, fontSize: 14 }}>Liquidity, receivables & cash runway telemetry</p>
+      </div>
+
       {/* =================================================================
           1. DIGITAL TWIN TELEMETRY HERO BANNER
+
           ================================================================= */}
       <div className={`pictorial-hero-card ${isSimulationActive ? "simulation-active-border" : ""}`} style={{ padding: "26px 30px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 20 }}>
@@ -372,84 +380,84 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <h1 style={{ fontSize: 26, fontWeight: 800, color: "var(--text-primary)", margin: "4px 0 8px", letterSpacing: "-0.5px" }}>
-              {getGreeting()}, {user?.name?.split(" ")[0] || "Lakshay"}! 👋
+            <h1 style={{ fontSize: "clamp(24px, 2.5vw, 30px)", fontWeight: 700, color: "var(--text-primary)", margin: "4px 0 8px", letterSpacing: "-0.02em", lineHeight: 1.25 }}>
+              {getGreeting()}, {user?.name?.split(" ")[0] || "Ceo"}! 👋
             </h1>
 
-            <p style={{ color: "var(--text-secondary)", fontSize: 14.5, lineHeight: 1.6, margin: 0 }}>
+            <p style={{ color: "var(--text-secondary)", fontSize: 14.5, lineHeight: 1.6, margin: 0, fontWeight: 450 }}>
               {isSimulationActive ? (
                 <span style={{ color: "var(--accent-amber)", fontWeight: 600 }}>
                   ⚠️ Stressed Simulation active: Simulating a 20-day customer collection freeze. Liquid cash compresses by ₹2.80L, reducing runway to {displayRunway} days.
                 </span>
               ) : displayRunway > 40 ? (
                 <span>
-                  Your financial twin is in a <strong>healthy operating state</strong> with <strong>{displayRunway} days of cash buffer</strong>. You have ₹{formatLakhs(summary.receivables)} in receivables flowing in.
+                  Your financial twin is in a <strong>healthy operating state</strong> with <strong>{displayRunway} days of cash buffer</strong>. You have {formatLakhs(summary.receivables)} in receivables flowing in.
                 </span>
               ) : (
                 <span>
-                  Heads up: Your liquid cash buffer stands at <strong>{displayRunway} days</strong>. Resolving ₹{formatLakhs(trapped43bAmount)} trapped past the 45-day MSME window will restore optimal runway.
+                  Heads up: Your liquid cash buffer stands at <strong>{displayRunway} days</strong>. Resolving {formatLakhs(trapped43bAmount)} trapped past the 45-day MSME window will restore optimal runway.
                 </span>
               )}
             </p>
 
             {/* Quick Action Navigation Bar */}
-            <div className="mobile-scroll-x" style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "nowrap" }}>
-              <button
-                className="graphical-action-btn"
-                onClick={() => navigate("/invoices")}
-                style={{ background: "rgba(34, 197, 94, 0.12)", borderColor: "rgba(34, 197, 94, 0.35)", color: "#22c55e", fontWeight: 700, flexShrink: 0 }}
-              >
-                <Zap size={15} style={{ color: "#22c55e" }} />
-                <span>⚡ Cash Recovery Hub</span>
-              </button>
+            <div className="mobile-scroll-x" style={{ display: "flex", gap: 24, marginTop: 32, flexWrap: "nowrap" }}>
+              
+              <div className="quick-action-item" onClick={() => navigate("/invoices")}>
+                <div className="quick-action-icon" style={{ background: "#e8f5e9", color: "#2e7d5b" }}><Zap size={18} /></div>
+                <div className="quick-action-text">
+                  <span className="quick-action-title">Cash Recovery Hub</span>
+                  <span className="quick-action-sub">Identify & collect dues</span>
+                </div>
+              </div>
 
-              <button
-                className="graphical-action-btn"
-                onClick={() => navigate("/invoices")}
-                style={{ background: "rgba(79, 70, 229, 0.08)", borderColor: "rgba(79, 70, 229, 0.25)", color: "var(--accent-blue)" }}
-              >
-                <Plus size={15} />
-                <span>Upload Invoice</span>
-              </button>
+              <div className="quick-action-item" onClick={() => navigate("/invoices")}>
+                <div className="quick-action-icon" style={{ background: "#e3f2fd", color: "#1976d2" }}><Plus size={18} /></div>
+                <div className="quick-action-text">
+                  <span className="quick-action-title">Upload Invoice</span>
+                  <span className="quick-action-sub">CSV, Excel or PDF</span>
+                </div>
+              </div>
 
-              <button
-                className="graphical-action-btn"
-                onClick={() => setDashboardDeepDiveInvoice(data.invoices[0] || true)}
-                style={{ background: "rgba(244, 63, 94, 0.08)", borderColor: "rgba(244, 63, 94, 0.3)", color: "var(--accent-rose)", fontWeight: 700 }}
-              >
-                <ShieldAlert size={15} style={{ color: "var(--accent-rose)" }} />
-                <span>Deep-Dive Risk Analysis</span>
-              </button>
+              <div className="quick-action-item" onClick={() => setDashboardDeepDiveInvoice(data.invoices[0] || true)}>
+                <div className="quick-action-icon" style={{ background: "#ffebee", color: "#c62828" }}><ShieldAlert size={18} /></div>
+                <div className="quick-action-text">
+                  <span className="quick-action-title">Deep-Dive Risk Analysis</span>
+                  <span className="quick-action-sub">Find hidden risks</span>
+                </div>
+              </div>
 
-              <button className="graphical-action-btn" onClick={() => navigate("/vendors")}>
-                <ShieldAlert size={15} style={{ color: "var(--accent-rose)" }} />
-                <span>MSME 43B(h) Radar</span>
-              </button>
+              <div className="quick-action-item" onClick={() => navigate("/vendors")}>
+                <div className="quick-action-icon" style={{ background: "#f5f5f5", color: "#424242" }}><Grid size={18} /></div>
+                <div className="quick-action-text">
+                  <span className="quick-action-title">MSME 43B(h) Radar</span>
+                  <span className="quick-action-sub">Check eligibility</span>
+                </div>
+              </div>
 
-              <button className="graphical-action-btn" onClick={() => navigate("/financing")}>
-                <Landmark size={15} style={{ color: "var(--accent-emerald)" }} />
-                <span>TReDS & CGTMSE Loans</span>
-              </button>
+              <div className="quick-action-item" onClick={() => navigate("/financing")}>
+                <div className="quick-action-icon" style={{ background: "#e8f5e9", color: "#2e7d5b" }}><Landmark size={18} /></div>
+                <div className="quick-action-text">
+                  <span className="quick-action-title">TReDS & CGTMSE Loans</span>
+                  <span className="quick-action-sub">Explore options</span>
+                </div>
+              </div>
 
-              <button className="graphical-action-btn" onClick={() => navigate("/simulator")}>
-                <FlaskConical size={15} style={{ color: "var(--accent-purple)" }} />
-                <span>9-Aspect Simulator</span>
-              </button>
             </div>
           </div>
 
           {/* Solvency Health Score Radar Gauge */}
-          <div className="solvency-score-card">
-            <div style={{ position: "relative", width: 96, height: 96, marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <div style={{ position: "relative", width: 96, height: 96, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="96" height="96" viewBox="0 0 96 96">
-                <circle cx="48" cy="48" r="40" fill="transparent" stroke="var(--bg-secondary)" strokeWidth="8" />
+                <circle cx="48" cy="48" r="40" fill="transparent" stroke="rgba(0,0,0,0.05)" strokeWidth="6" />
                 <circle
                   cx="48"
                   cy="48"
                   r="40"
                   fill="transparent"
-                  stroke={solvencyScore >= 75 ? "var(--accent-emerald)" : solvencyScore >= 50 ? "var(--accent-amber)" : "var(--accent-rose)"}
-                  strokeWidth={8}
+                  stroke={solvencyScore >= 75 ? "#1F5A4A" : solvencyScore >= 50 ? "var(--accent-amber)" : "var(--accent-rose)"}
+                  strokeWidth={6}
                   strokeDasharray={251}
                   strokeDashoffset={251 - (solvencyScore / 100) * 251}
                   strokeLinecap="round"
@@ -458,29 +466,27 @@ export default function Dashboard() {
                 />
               </svg>
               <div style={{ position: "absolute", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <span style={{ fontSize: 22, fontWeight: 900, color: "var(--text-primary)", lineHeight: 1 }}>
+                <span style={{ fontSize: 28, fontWeight: 800, color: "var(--text-primary)", lineHeight: 1 }}>
                   {solvencyScore}
                 </span>
-                <span style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, marginTop: 2 }}>
+                <span style={{ fontSize: 8, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, marginTop: 4, letterSpacing: 0.5 }}>
                   Health Score
                 </span>
               </div>
             </div>
-
-            <span
-              style={{
-                fontSize: 12.5,
-                fontWeight: 800,
-                color: solvencyScore >= 75 ? "var(--accent-emerald)" : solvencyScore >= 50 ? "var(--accent-amber)" : "var(--accent-rose)",
-              }}
-            >
-              {solvencyScore >= 75 ? "Excellent Solvency" : solvencyScore >= 50 ? "Moderate Liquidity" : "High Risk Exposure"}
-            </span>
-
-            <div style={{ display: "flex", gap: 8, marginTop: 6, fontSize: 10.5, color: "var(--text-muted)" }}>
-              <span>Buffer: {displayRunway}d</span>
-              <span>•</span>
-              <span>DSO: {summary.dso || 42}d</span>
+            
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#1F5A4A", marginBottom: 4 }}>
+                {solvencyScore >= 75 ? "Excellent Solvency" : solvencyScore >= 50 ? "Moderate Liquidity" : "High Risk Exposure"}
+              </span>
+              <div style={{ display: "flex", gap: 8, fontSize: 12, color: "var(--text-secondary)", marginBottom: 10 }}>
+                <span>Buffer: {displayRunway}d</span>
+                <span>•</span>
+                <span>DSO: {summary.dso || 42}d</span>
+              </div>
+              <button style={{ background: "white", border: "1px solid rgba(0,0,0,0.08)", padding: "4px 12px", borderRadius: 12, fontSize: 11, fontWeight: 600, color: "var(--text-primary)", cursor: "pointer", boxShadow: "0 2px 5px rgba(0,0,0,0.02)" }}>
+                View Details →
+              </button>
             </div>
           </div>
         </div>
@@ -489,21 +495,23 @@ export default function Dashboard() {
       {/* =================================================================
           2. PROACTIVE GEMINI COPILOT INTELLIGENCE BANNER
           ================================================================= */}
-      <div className="copilot-proactive-card">
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-          <div className="copilot-proactive-icon">
-            <Sparkles size={18} />
+      <div className="insight-card">
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#e8f5e9", color: "#1F5A4A", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Sparkles size={16} fill="currentColor" />
           </div>
 
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 13.5, fontWeight: 800, color: "var(--text-primary)" }}>
-                NexFin Gemini Copilot Insight
+          <div style={{ flex: 1, zIndex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
+                FinTwin Insight
               </span>
-              <span className="copilot-pill-tag">Automated Financial Twin Telemetry</span>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: "#4f5a6b", background: "#e2e8f0", padding: "2px 8px", borderRadius: 12, textTransform: "uppercase" }}>
+                AUTOMATED FINANCIAL TWIN TELEMETRY
+              </span>
             </div>
 
-            <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.55 }}>
+            <p style={{ margin: "0 0 16px", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5, maxWidth: "80%" }}>
               {trapped43bAmount > 0 ? (
                 <span>
                   Detected <strong>₹{formatLakhs(trapped43bAmount)}</strong> in pending payments exceeding the statutory 45-day limit. Buyers owe an estimated <strong>₹{Math.round(penalInterestAccumulated).toLocaleString("en-IN")}</strong> in compound penal interest. Discounting via TReDS or issuing legal demand notices will inject immediate cash before month-end obligations.
@@ -515,43 +523,20 @@ export default function Dashboard() {
               )}
             </p>
 
-            {/* Action Buttons */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {trapped43bAmount > 0 && (
-                <button
-                  className="copilot-quick-action-btn primary"
-                  onClick={() => {
-                    const firstOverdue =
-                      data.invoices.find((i) => i.status !== "Paid" && (i.daysOverdue || 0) > 0) ||
-                      data.invoices[0];
-                    setDashboardRecoveryInvoice(firstOverdue);
-                  }}
-                  style={{
-                    background: "linear-gradient(135deg, #10b981, #059669)",
-                    borderColor: "#10b981",
-                    color: "#fff",
-                    fontWeight: 700,
-                  }}
-                >
-                  <Zap size={13} />
-                  <span>⚡ 1-Click WhatsApp & Email Recovery</span>
-                </button>
-              )}
-
-              {trapped43bAmount > 0 && (
-                <button className="copilot-quick-action-btn" onClick={() => copyLegalNotice()}>
-                  <Copy size={13} />
-                  <span>Copy 43B(h) Notice</span>
-                </button>
-              )}
-
-              <button className="copilot-quick-action-btn" onClick={() => navigate("/financing")}>
-                <Landmark size={13} />
+            <div style={{ display: "flex", gap: 12 }}>
+              <button 
+                onClick={() => navigate("/financing")}
+                style={{ display: "flex", alignItems: "center", gap: 6, background: "#1F5A4A", color: "white", border: "none", padding: "8px 16px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 10px rgba(31,90,74,0.2)" }}
+              >
+                <Landmark size={14} />
                 <span>Auction Invoices on TReDS</span>
               </button>
 
-              <button className="copilot-quick-action-btn" onClick={() => navigate("/simulator")}>
-                <Sliders size={13} />
+              <button 
+                onClick={() => navigate("/simulator")}
+                style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.8)", color: "var(--text-primary)", border: "1px solid rgba(0,0,0,0.1)", padding: "8px 16px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", backdropFilter: "blur(4px)" }}
+              >
+                <Sliders size={14} />
                 <span>Simulate Runway Shocks</span>
               </button>
             </div>
@@ -559,101 +544,104 @@ export default function Dashboard() {
         </div>
       </div>
 
+
       {/* =================================================================
           3. DYNAMIC 4 PRIMARY KPI SUMMARY CARDS
           ================================================================= */}
-      <div className="grid-4">
-        {/* Money in the Bank */}
-        <div className="kpi-card graphical-card-interactive">
-          <div className="kpi-top">
-            <span className="kpi-label">💰 Money in the Bank</span>
-            <div className="card-icon-wrap emerald">
-              <Wallet size={18} />
-            </div>
+      <div style={{ marginBottom: 4 }}>
+        <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "var(--text-muted)", display: "flex", justifyContent: "space-between" }}>
+          <span>Financial Position</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--accent-emerald)" }}>
+             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "currentColor" }}></span> Live
+          </span>
+        </h2>
+        <div style={{ height: 1, background: "var(--border-subtle)", marginTop: 8, marginBottom: 20 }}></div>
+      </div>
+      <div className="metric-row">
+        <div className="metric-col">
+          <div className="metric-icon" style={{ background: "#e8f5e9", color: "#2e7d5b" }}>
+            <Wallet size={20} />
           </div>
-          <div className="kpi-value-row">
-            <span className="kpi-value" style={{ color: "var(--accent-emerald)" }}>
-              {formatLakhs(displayCash)}
-            </span>
-            {isSimulationActive && (
-              <span className="kpi-variance-pill negative">
-                -₹{Math.abs(cashVariance / 100000).toFixed(2)}L
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 24, fontWeight: 750, color: "var(--text-primary)", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}>
+                {formatLakhs(displayCash)}
               </span>
-            )}
-          </div>
-          <div className="kpi-trend positive">
-            <ArrowUpRight size={14} />
-            <span>{displayRunway} days of operational burn</span>
+              {isSimulationActive && (
+                <span style={{ fontSize: 11, background: "#ffebee", color: "#c62828", padding: "2px 6px", borderRadius: 12, fontWeight: 650, fontVariantNumeric: "tabular-nums" }}>
+                  -₹{Math.abs(cashVariance / 100000).toFixed(2)}L
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--text-secondary)", marginBottom: 4 }}>Money in the Bank</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#2e7d5b", fontWeight: 500 }}>
+              <ArrowUpRight size={12} />
+              <span>{displayRunway} days of operational burn</span>
+            </div>
           </div>
         </div>
 
-        {/* Unpaid Invoices */}
-        <div className="kpi-card graphical-card-interactive">
-          <div className="kpi-top">
-            <span className="kpi-label">📬 Receivables Pipeline</span>
-            <div className="card-icon-wrap blue">
-              <FileText size={18} />
-            </div>
+        <div className="metric-col">
+          <div className="metric-icon" style={{ background: "#e3f2fd", color: "#1976d2" }}>
+            <FileText size={20} />
           </div>
-          <div className="kpi-value-row">
-            <span className="kpi-value" style={{ color: "var(--accent-blue)" }}>
-              {formatLakhs(displayReceivables)}
-            </span>
-            {trapped43bAmount > 0 && (
-              <span className="kpi-variance-pill alert">
-                {overdue43bInvoices.length} in 43B(h)
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 24, fontWeight: 750, color: "var(--text-primary)", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}>
+                {formatLakhs(displayReceivables)}
               </span>
-            )}
-          </div>
-          <div className="kpi-trend neutral">
-            <Clock size={14} />
-            <span>{pendingInvoices.length} invoices ({summary.dso}d average turn)</span>
+              {trapped43bAmount > 0 && (
+                <span style={{ fontSize: 11, background: "#fff3e0", color: "#ef6c00", padding: "2px 6px", borderRadius: 12, fontWeight: 650 }}>
+                  {overdue43bInvoices.length} in 43B(h)
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--text-secondary)", marginBottom: 4 }}>Receivables Pipeline</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>
+              <Clock size={12} />
+              <span>{pendingInvoices.length} invoices ({summary.dso}d avg)</span>
+            </div>
           </div>
         </div>
 
-        {/* Monthly Bills & Salaries */}
-        <div className="kpi-card graphical-card-interactive">
-          <div className="kpi-top">
-            <span className="kpi-label">🧾 Monthly Expense Burn</span>
-            <div className="card-icon-wrap amber">
-              <CreditCard size={18} />
+        <div className="metric-col">
+          <div className="metric-icon" style={{ background: "#fff3e0", color: "#e65100" }}>
+            <CreditCard size={20} />
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 24, fontWeight: 750, color: "var(--text-primary)", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}>
+                {formatLakhs(summary.totalExpenses)}
+              </span>
             </div>
-          </div>
-          <div className="kpi-value-row">
-            <span className="kpi-value" style={{ color: "var(--accent-amber)" }}>
-              {formatLakhs(summary.totalExpenses)}
-            </span>
-          </div>
-          <div className="kpi-trend negative">
-            <ArrowDownRight size={14} />
-            <span>{formatLakhs(summary.recurringExpenses)} fixed staff & rent</span>
+            <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--text-secondary)", marginBottom: 4 }}>Monthly Expense Burn</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#c62828", fontWeight: 500 }}>
+              <ArrowDownRight size={12} />
+              <span>{formatLakhs(summary.recurringExpenses)} fixed staff & rent</span>
+            </div>
           </div>
         </div>
 
-        {/* Projected Stand in 30 Days */}
-        <div className="kpi-card graphical-card-interactive">
-          <div className="kpi-top">
-            <span className="kpi-label">🌱 Projected Stand in {forecastDays}d</span>
-            <div className="card-icon-wrap purple">
-              <TrendingUp size={18} />
+        <div className="metric-col">
+          <div className="metric-icon" style={{ background: "#e8f5e9", color: "#2e7d5b" }}>
+            <TrendingUp size={20} />
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 24, fontWeight: 750, color: summary.projectedCash >= 0 ? "var(--text-primary)" : "#c62828", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}>
+                {formatLakhs(isSimulationActive ? twinStressedData.stressedCash : summary.projectedCash)}
+              </span>
+              {isSimulationActive && (
+                <span style={{ fontSize: 11, background: "#ffebee", color: "#c62828", padding: "2px 6px", borderRadius: 12, fontWeight: 650 }}>
+                  Stressed
+                </span>
+              )}
             </div>
-          </div>
-          <div className="kpi-value-row">
-            <span
-              className="kpi-value"
-              style={{
-                color: summary.projectedCash >= 0 ? "var(--accent-purple)" : "var(--accent-rose)",
-              }}
-            >
-              {formatLakhs(isSimulationActive ? twinStressedData.stressedCash : summary.projectedCash)}
-            </span>
-            {isSimulationActive && (
-              <span className="kpi-variance-pill negative">Stressed</span>
-            )}
-          </div>
-          <div className="kpi-trend positive">
-            <Zap size={14} />
-            <span>Net position after collections & bills</span>
+            <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--text-secondary)", marginBottom: 4 }}>Projected Stand in {forecastDays}d</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#2e7d5b", fontWeight: 500 }}>
+              <Zap size={12} />
+              <span>Net position after collections</span>
+            </div>
           </div>
         </div>
       </div>
@@ -663,7 +651,7 @@ export default function Dashboard() {
           ================================================================= */}
       <div className="grid-12">
         {/* Dynamic Cash Flow Forecast */}
-        <div className="col-span-8 glass-card">
+        <div className="col-span-8 solid-card">
           <div className="card-header" style={{ flexWrap: "wrap", gap: 14 }}>
             <div className="card-title-group">
               <div className="card-icon-wrap blue">
@@ -789,8 +777,8 @@ export default function Dashboard() {
                       <stop offset="95%" stopColor={currentTheme.primaryAccent} stopOpacity={0.02} />
                     </linearGradient>
                     <linearGradient id="forecastBest" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#2E7D5B" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#2E7D5B" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
@@ -819,7 +807,7 @@ export default function Dashboard() {
                     <Area
                       type="monotone"
                       dataKey="bestCase"
-                      stroke="#059669"
+                      stroke="#2E7D5B"
                       strokeWidth={1.5}
                       strokeDasharray="4 4"
                       fill="url(#forecastBest)"
@@ -840,7 +828,7 @@ export default function Dashboard() {
                     <Area
                       type="monotone"
                       dataKey="worstCase"
-                      stroke="#e11d48"
+                      stroke="#B54747"
                       strokeWidth={1.5}
                       strokeDasharray="4 4"
                       fill="transparent"
@@ -870,13 +858,13 @@ export default function Dashboard() {
                     formatter={(val) => [formatMoney(val)]}
                   />
                   {showBestCase && (
-                    <Line type="monotone" dataKey="bestCase" stroke="#059669" strokeWidth={2} dot={false} animationDuration={400} />
+                    <Line type="monotone" dataKey="bestCase" stroke="#2E7D5B" strokeWidth={2} dot={false} animationDuration={400} />
                   )}
                   {showExpected && (
                     <Line type="monotone" dataKey="expectedCash" stroke={currentTheme.primaryAccent} strokeWidth={2.5} dot={false} animationDuration={400} />
                   )}
                   {showWorstCase && (
-                    <Line type="monotone" dataKey="worstCase" stroke="#e11d48" strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={400} />
+                    <Line type="monotone" dataKey="worstCase" stroke="#B54747" strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={400} />
                   )}
                 </LineChart>
               ) : (
@@ -908,7 +896,7 @@ export default function Dashboard() {
         </div>
 
         {/* Section 43B(h) & Receivables Aging Breakdown */}
-        <div className="col-span-4 glass-card">
+        <div className="col-span-4 solid-card">
           <div className="card-header" style={{ flexWrap: "wrap", gap: 10 }}>
             <div className="card-title-group">
               <div className="card-icon-wrap amber">
@@ -984,7 +972,7 @@ export default function Dashboard() {
                   {agingData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={index === 0 ? "#4f46e5" : index === 1 ? "#059669" : index === 2 ? "#d97706" : "#e11d48"}
+                      fill={index === 0 ? "#1F5A4A" : index === 1 ? "#2E7D5B" : index === 2 ? "#B7791F" : "#B54747"}
                     />
                   ))}
                 </Bar>
@@ -999,7 +987,7 @@ export default function Dashboard() {
           ================================================================= */}
       <div className="grid-12">
         {/* On-Dashboard Scenario Sandbox */}
-        <div className="col-span-6 glass-card">
+        <div className="col-span-6 solid-card">
           <div className="card-header">
             <div className="card-title-group">
               <div className="card-icon-wrap purple">
@@ -1077,19 +1065,19 @@ export default function Dashboard() {
             <div className="sandbox-results-panel">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 500 }}>
                     Simulated Runway
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: sandboxSimulation.stressedRunway > 35 ? "var(--accent-emerald)" : "var(--accent-rose)", marginTop: 2 }}>
+                  <div style={{ fontSize: 22, fontWeight: 750, fontVariantNumeric: "tabular-nums", color: sandboxSimulation.stressedRunway > 35 ? "var(--accent-emerald)" : "var(--accent-rose)", marginTop: 2 }}>
                     {sandboxSimulation.stressedRunway} Days
                   </div>
                 </div>
 
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 500 }}>
                     Simulated Liquid Cash
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: "var(--text-primary)", marginTop: 2 }}>
+                  <div style={{ fontSize: 22, fontWeight: 750, fontVariantNumeric: "tabular-nums", color: "var(--text-primary)", marginTop: 2 }}>
                     ₹{(sandboxSimulation.stressedCash / 100000).toFixed(2)}L
                   </div>
                 </div>
@@ -1111,7 +1099,7 @@ export default function Dashboard() {
         </div>
 
         {/* Section 43B(h) Trapped Capital Radar */}
-        <div className="col-span-6 glass-card">
+        <div className="col-span-6 solid-card">
           <div className="card-header">
             <div className="card-title-group">
               <div className="card-icon-wrap rose">
@@ -1133,25 +1121,25 @@ export default function Dashboard() {
             {/* Metric Banner */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", borderRadius: "var(--radius-md)", background: "rgba(225,29,72,0.06)", border: "1px solid rgba(225,29,72,0.2)" }}>
               <div>
-                <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 500 }}>
                   Statutory 45-Day Violations
                 </div>
-                <div style={{ fontSize: 24, fontWeight: 900, color: "var(--accent-rose)", marginTop: 2 }}>
+                <div style={{ fontSize: 24, fontWeight: 750, fontVariantNumeric: "tabular-nums", color: "var(--accent-rose)", marginTop: 2 }}>
                   ₹{(trapped43bAmount / 100000).toFixed(2)}L
                 </div>
-                <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2 }}>
                   Across {overdue43bInvoices.length} enterprise buyer accounts
                 </div>
               </div>
 
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 500 }}>
                   Accumulated Penal Interest
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 900, color: "var(--accent-amber)", marginTop: 2 }}>
+                <div style={{ fontSize: 22, fontWeight: 750, fontVariantNumeric: "tabular-nums", color: "var(--accent-amber)", marginTop: 2 }}>
                   ₹{Math.round(penalInterestAccumulated).toLocaleString("en-IN")}
                 </div>
-                <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2 }}>
                   3x RBI repo rate (~19.5% p.a.)
                 </div>
               </div>
@@ -1204,7 +1192,7 @@ export default function Dashboard() {
       {/* =================================================================
           6. RECENT FINANCIAL ACTIVITY & INFLOW LEDGER
           ================================================================= */}
-      <div className="glass-card">
+      <div className="solid-card">
         <div className="card-header" style={{ flexWrap: "wrap", gap: 12 }}>
           <div className="card-title-group">
             <div className="card-icon-wrap emerald">
@@ -1370,9 +1358,9 @@ export default function Dashboard() {
                           <button
                             className="btn btn-sm"
                             style={{
-                              background: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(59, 130, 246, 0.15))",
+                              background: "var(--bg-tertiary)",
                               border: "1px solid rgba(34, 197, 94, 0.4)",
-                              color: "#22c55e",
+                              color: "#2E7D5B",
                               padding: "4px 8px",
                               fontSize: 11,
                               fontWeight: 700,
@@ -1383,7 +1371,7 @@ export default function Dashboard() {
                             onClick={() => setDashboardRecoveryInvoice(item.raw)}
                             title="Send WhatsApp & Email Cash Recovery Notice"
                           >
-                            <Zap size={12} style={{ color: "#22c55e" }} />
+                            <Zap size={12} style={{ color: "#2E7D5B" }} />
                             <span>⚡ Cash Recovery</span>
                           </button>
                         )}

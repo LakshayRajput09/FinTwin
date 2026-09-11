@@ -316,7 +316,7 @@ export default function QuickActionModal({ isOpen, onClose }) {
           <form onSubmit={handleSaveBurnAndRev}>
             <div style={{ padding: "12px 14px", borderRadius: "var(--radius-md)", background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", marginBottom: 16 }}>
               <div style={{ fontSize: 12.5, color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                <strong style={{ color: "#fbbf24" }}>AI Burn Calibration: </strong>
+                <strong style={{ color: "#B7791F" }}>AI Burn Calibration: </strong>
                 If you haven't uploaded detailed expense bills yet, entering your estimated monthly burn rate allows the ML engine to forecast your cash burn velocity immediately.
               </div>
             </div>

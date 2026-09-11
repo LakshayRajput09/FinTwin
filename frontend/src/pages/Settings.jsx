@@ -93,7 +93,7 @@ export default function Settings() {
             position: "fixed",
             top: 85,
             right: 36,
-            background: "linear-gradient(135deg, #10b981, #059669)",
+            background: "#1F5A4A",
             color: "#fff",
             padding: "12px 20px",
             borderRadius: "var(--radius-md)",
@@ -114,7 +114,7 @@ export default function Settings() {
       {/* =================================================================
           1. REGIONAL LANGUAGE & LOCALIZATION SETTINGS (NEW)
           ================================================================= */}
-      <div className="glass-card" style={{ border: "1px solid rgba(139, 92, 246, 0.35)", background: "linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%)" }}>
+      <div className="glass-card" style={{ border: "1px solid rgba(139, 92, 246, 0.35)", background: "var(--bg-tertiary)" }}>
         <div className="card-header">
           <div className="card-title-group">
             <div className="card-icon-wrap purple">

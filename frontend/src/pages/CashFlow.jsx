@@ -102,7 +102,7 @@ export default function CashFlow() {
             </div>
           </div>
           <div className="kpi-value-row">
-            <span className="kpi-value" style={{ color: "#fbbf24" }}>
+            <span className="kpi-value" style={{ color: "#B7791F" }}>
               {formatLakhs(summary.totalExpenses)}
             </span>
           </div>
@@ -188,12 +188,12 @@ export default function CashFlow() {
                     key={`cell-${index}`}
                     fill={
                       entry.type === "start"
-                        ? "#3b82f6"
+                        ? "#1F5A4A"
                         : entry.type === "inflow"
-                        ? "#10b981"
+                        ? "#2E7D5B"
                         : entry.type === "outflow"
                         ? "#f43f5e"
-                        : "#8b5cf6"
+                        : "#1F5A4A"
                     }
                   />
                 ))}
@@ -237,7 +237,7 @@ export default function CashFlow() {
                   .map((inv) => (
                     <tr key={inv.id}>
                       <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>{inv.customer}</td>
-                      <td style={{ fontWeight: 700, color: "#34d399" }}>
+                      <td style={{ fontWeight: 700, color: "#34d399", fontVariantNumeric: "tabular-nums" }}>
                         {formatLakhs(inv.amount)}
                       </td>
                       <td>{inv.dueDate}</td>
@@ -282,7 +282,7 @@ export default function CashFlow() {
                   <tr key={rec.id}>
                     <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>{rec.category}</td>
                     <td>{rec.description}</td>
-                    <td style={{ fontWeight: 700, color: "#fb7185" }}>
+                    <td style={{ fontWeight: 700, color: "#fb7185", fontVariantNumeric: "tabular-nums" }}>
                       {formatLakhs(rec.amount)}
                     </td>
                     <td>

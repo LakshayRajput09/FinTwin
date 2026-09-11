@@ -43,14 +43,14 @@ import {
 } from "../engines/digitalTwin";
 
 const COLORS = [
-  "#3b82f6",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#06b6d4",
-  "#ec4899",
-  "#64748b",
+  "#1F5A4A",
+  "#2E7D5B",
+  "#B7791F",
+  "#B54747",
+  "#1F5A4A",
+  "#336B5A",
+  "#8C5A5A",
+  "#6B6B6B",
 ];
 
 const DEFAULT_EXPENSE_PRESETS = [
@@ -161,7 +161,7 @@ export default function Expenses() {
             </div>
           </div>
           <div className="kpi-value-row">
-            <span className="kpi-value" style={{ color: "#fbbf24" }}>
+            <span className="kpi-value" style={{ color: "#B7791F" }}>
               {formatLakhs(totalRecurring)}
             </span>
           </div>
@@ -229,7 +229,7 @@ export default function Expenses() {
                     padding: "4px 8px",
                     borderRadius: 4,
                     border: "none",
-                    background: chartViewMode === "pie" ? "#3b82f6" : "transparent",
+                    background: chartViewMode === "pie" ? "#1F5A4A" : "transparent",
                     color: chartViewMode === "pie" ? "#fff" : "var(--text-muted)",
                     fontSize: 11,
                     cursor: "pointer",
@@ -245,7 +245,7 @@ export default function Expenses() {
                     padding: "4px 8px",
                     borderRadius: 4,
                     border: "none",
-                    background: chartViewMode === "bar" ? "#3b82f6" : "transparent",
+                    background: chartViewMode === "bar" ? "#1F5A4A" : "transparent",
                     color: chartViewMode === "bar" ? "#fff" : "var(--text-muted)",
                     fontSize: 11,
                     cursor: "pointer",
@@ -455,7 +455,7 @@ export default function Expenses() {
             </div>
 
             <div style={{ padding: 14, borderRadius: "var(--radius-md)", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}>
-              <div style={{ fontWeight: 600, fontSize: 13, color: "#fbbf24" }}>
+              <div style={{ fontWeight: 600, fontSize: 13, color: "#B7791F" }}>
                 🚛 Freight Consolidation
               </div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>
@@ -519,7 +519,7 @@ export default function Expenses() {
                   <tr key={rec.id}>
                     <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>{rec.category}</td>
                     <td>{rec.description}</td>
-                    <td style={{ fontWeight: 700, color: "#fbbf24" }}>
+                    <td style={{ fontWeight: 700, color: "#B7791F", fontVariantNumeric: "tabular-nums" }}>
                       {formatLakhs(rec.amount)}
                     </td>
                     <td>Monthly (Day {rec.dayOfMonth})</td>
@@ -546,7 +546,7 @@ export default function Expenses() {
                   <tr key={exp.id}>
                     <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>{exp.category}</td>
                     <td>{exp.description}</td>
-                    <td style={{ fontWeight: 700, color: "#60a5fa" }}>
+                    <td style={{ fontWeight: 700, color: "#60a5fa", fontVariantNumeric: "tabular-nums" }}>
                       {formatLakhs(exp.amount)}
                     </td>
                     <td>{exp.date || "2026-08-10"}</td>

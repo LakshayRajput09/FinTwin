@@ -166,7 +166,7 @@ export default function CashRecoveryModal({ invoice, customer, onClose, onAction
                 width: 40,
                 height: 40,
                 borderRadius: 10,
-                background: "linear-gradient(135deg, rgba(16,185,129,0.2), rgba(59,130,246,0.2))",
+                background: "var(--bg-tertiary)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -253,11 +253,11 @@ export default function CashRecoveryModal({ invoice, customer, onClose, onAction
           >
             {/* Risk Index */}
             <div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600 }}>
                 Risk Analysis Score
               </div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 4 }}>
-                <span style={{ fontSize: 22, fontWeight: 900, color: risk.riskBadgeColor }}>
+                <span style={{ fontSize: 22, fontWeight: 800, fontVariantNumeric: "tabular-nums", color: risk.riskBadgeColor }}>
                   {risk.riskScoreIndex}
                 </span>
                 <span style={{ fontSize: 12, color: "var(--text-muted)" }}>/ 100</span>
@@ -269,10 +269,10 @@ export default function CashRecoveryModal({ invoice, customer, onClose, onAction
 
             {/* Default Probability */}
             <div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600 }}>
                 Default Probability
               </div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: risk.defaultProbability > 50 ? "var(--accent-rose)" : "var(--accent-amber)", marginTop: 4 }}>
+              <div style={{ fontSize: 20, fontWeight: 800, fontVariantNumeric: "tabular-nums", color: risk.defaultProbability > 50 ? "var(--accent-rose)" : "var(--accent-amber)", marginTop: 4 }}>
                 {risk.defaultProbability}%
               </div>
               <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2 }}>
@@ -282,13 +282,13 @@ export default function CashRecoveryModal({ invoice, customer, onClose, onAction
 
             {/* Section 43B(h) Status */}
             <div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600 }}>
                 Section 43B(h) Audit Risk
               </div>
               <div
                 style={{
                   fontSize: 13,
-                  fontWeight: 800,
+                  fontWeight: 700,
                   color: risk.section43bSeverity === "critical" ? "var(--accent-rose)" : risk.section43bSeverity === "warning" ? "var(--accent-amber)" : "var(--accent-emerald)",
                   marginTop: 6,
                 }}
@@ -302,10 +302,10 @@ export default function CashRecoveryModal({ invoice, customer, onClose, onAction
 
             {/* Accrued Penal Interest */}
             <div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600 }}>
                 Accrued 3x RBI Penal Interest
               </div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: "var(--accent-purple)", marginTop: 4 }}>
+              <div style={{ fontSize: 20, fontWeight: 800, fontVariantNumeric: "tabular-nums", color: "var(--accent-purple)", marginTop: 4 }}>
                 ₹{risk.accruedPenalInterest.toLocaleString("en-IN")}
               </div>
               <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2 }}>
@@ -318,7 +318,7 @@ export default function CashRecoveryModal({ invoice, customer, onClose, onAction
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
             <div>
               <label style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                <Phone size={13} style={{ color: "#22c55e" }} />
+                <Phone size={13} style={{ color: "#2E7D5B" }} />
                 <span>Seller / Buyer WhatsApp Phone</span>
               </label>
               <input
@@ -333,7 +333,7 @@ export default function CashRecoveryModal({ invoice, customer, onClose, onAction
 
             <div>
               <label style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                <Mail size={13} style={{ color: "#38bdf8" }} />
+                <Mail size={13} style={{ color: "#1F5A4A" }} />
                 <span>Finance / Accounts Payable Email</span>
               </label>
               <input
@@ -428,7 +428,7 @@ export default function CashRecoveryModal({ invoice, customer, onClose, onAction
                     padding: "6px 14px",
                     borderRadius: 8,
                     border: "none",
-                    background: activeTab === "whatsapp" ? "#22c55e" : "transparent",
+                    background: activeTab === "whatsapp" ? "#2E7D5B" : "transparent",
                     color: activeTab === "whatsapp" ? "#fff" : "var(--text-secondary)",
                     fontSize: 12,
                     fontWeight: 700,
@@ -551,7 +551,7 @@ export default function CashRecoveryModal({ invoice, customer, onClose, onAction
                     type="button"
                     className="btn btn-primary"
                     style={{
-                      background: "linear-gradient(135deg, #22c55e, #16a34a)",
+                      background: "#1F5A4A",
                       border: "none",
                       height: 36,
                       padding: "0 18px",
@@ -570,7 +570,7 @@ export default function CashRecoveryModal({ invoice, customer, onClose, onAction
                     type="button"
                     className="btn btn-primary"
                     style={{
-                      background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+                      background: "var(--bg-tertiary)",
                       border: "none",
                       height: 36,
                       padding: "0 18px",

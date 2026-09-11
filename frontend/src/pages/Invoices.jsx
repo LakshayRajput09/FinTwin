@@ -176,7 +176,7 @@ export default function Invoices() {
             position: "fixed",
             top: 85,
             right: 36,
-            background: "linear-gradient(135deg, #10b981, #059669)",
+            background: "#1F5A4A",
             color: "#fff",
             padding: "12px 20px",
             borderRadius: "var(--radius-md)",
@@ -212,10 +212,10 @@ export default function Invoices() {
         <div className="kpi-card">
           <div className="kpi-top">
             <span className="kpi-label">Pending Collection</span>
-            <Clock size={18} style={{ color: "#fbbf24" }} />
+            <Clock size={18} style={{ color: "#B7791F" }} />
           </div>
           <div className="kpi-value-row">
-            <span className="kpi-value" style={{ color: "#fbbf24" }}>
+            <span className="kpi-value" style={{ color: "#B7791F" }}>
               {formatLakhs(totalPending)}
             </span>
           </div>
@@ -260,7 +260,7 @@ export default function Invoices() {
         style={{
           padding: "16px 22px",
           borderRadius: 14,
-          background: "linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(59, 130, 246, 0.08))",
+          background: "var(--bg-tertiary)",
           border: "1px solid rgba(34, 197, 94, 0.25)",
           display: "flex",
           alignItems: "center",
@@ -275,11 +275,11 @@ export default function Invoices() {
               width: 44,
               height: 44,
               borderRadius: 12,
-              background: "linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(59, 130, 246, 0.2))",
+              background: "var(--bg-tertiary)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#22c55e",
+              color: "#2E7D5B",
               flexShrink: 0,
             }}
           >
@@ -337,7 +337,7 @@ export default function Invoices() {
           <button
             className="btn btn-sm"
             style={{
-              background: "linear-gradient(135deg, #22c55e, #16a34a)",
+              background: "#1F5A4A",
               color: "#fff",
               border: "none",
               height: 36,
@@ -380,7 +380,7 @@ export default function Invoices() {
               <BarChart
                 layout="vertical"
                 data={[
-                  { name: "Pending", amount: totalPending, count: invoices.filter((i) => i.status === "Pending").length, fill: "#fbbf24" },
+                  { name: "Pending", amount: totalPending, count: invoices.filter((i) => i.status === "Pending").length, fill: "#B7791F" },
                   { name: "Overdue", amount: totalOverdue, count: invoices.filter((i) => i.status === "Overdue").length, fill: "#fb7185" },
                   { name: "Collected", amount: totalPaid, count: invoices.filter((i) => i.status === "Paid").length, fill: "#34d399" },
                 ]}
@@ -411,7 +411,7 @@ export default function Invoices() {
                 />
                 <Bar dataKey="amount" radius={[0, 6, 6, 0]} maxBarSize={24}>
                   {[
-                    { fill: "#fbbf24" },
+                    { fill: "#B7791F" },
                     { fill: "#fb7185" },
                     { fill: "#34d399" },
                   ].map((entry, index) => (
@@ -538,12 +538,12 @@ export default function Invoices() {
                       <div style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
                         <span>Issued: {inv.invoiceDate || "2026-08-01"}</span>
                         {(inv.phone || cust?.phone) && (
-                          <span style={{ color: "#22c55e", fontWeight: 600 }}>• 📱 {inv.phone || cust?.phone}</span>
+                          <span style={{ color: "#2E7D5B", fontWeight: 600 }}>• 📱 {inv.phone || cust?.phone}</span>
                         )}
                       </div>
                     </td>
                     <td>
-                      <div style={{ fontWeight: 800, color: "#60a5fa", fontSize: 14 }}>
+                      <div style={{ fontWeight: 750, color: "#60a5fa", fontSize: 14, fontVariantNumeric: "tabular-nums" }}>
                         {formatLakhs(inv.amount)}
                       </div>
                       {inv.status !== "Paid" && risk.accruedPenalInterest > 0 && (
@@ -642,7 +642,7 @@ export default function Invoices() {
                             <ShieldAlert size={10} />
                             {risk.riskTier}
                           </span>
-                          <span style={{ fontSize: 11, fontWeight: 900, color: risk.riskBadgeColor }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: risk.riskBadgeColor }}>
                             {risk.riskScoreIndex}/100
                           </span>
                         </div>
@@ -675,7 +675,7 @@ export default function Invoices() {
                             style={{
                               fontSize: 10,
                               fontWeight: 600,
-                              color: inv.lastChannel === "whatsapp" ? "#22c55e" : "#38bdf8",
+                              color: inv.lastChannel === "whatsapp" ? "#2E7D5B" : "#1F5A4A",
                               display: "flex",
                               alignItems: "center",
                               gap: 3,
@@ -692,9 +692,9 @@ export default function Invoices() {
                           <button
                             className="btn btn-sm"
                             style={{
-                              background: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(59, 130, 246, 0.15))",
+                              background: "var(--bg-tertiary)",
                               border: "1px solid rgba(34, 197, 94, 0.4)",
-                              color: "#22c55e",
+                              color: "#2E7D5B",
                               padding: "4px 10px",
                               fontWeight: 700,
                               fontSize: 11.5,
@@ -706,7 +706,7 @@ export default function Invoices() {
                             onClick={() => setRecoveryInvoice(inv)}
                             title="Open MSME Cash Recovery Hub (WhatsApp & Email Dispatch)"
                           >
-                            <Zap size={13} style={{ color: "#22c55e" }} />
+                            <Zap size={13} style={{ color: "#2E7D5B" }} />
                             <span>Cash Recovery</span>
                           </button>
                         )}
@@ -843,7 +843,7 @@ export default function Invoices() {
               <span className="status-badge" style={{ background: "rgba(16,185,129,0.15)", color: "#34d399" }}>
                 <FileSpreadsheet size={13} /> .XLSX / .XLS (Excel)
               </span>
-              <span className="status-badge" style={{ background: "rgba(245,158,11,0.15)", color: "#fbbf24" }}>
+              <span className="status-badge" style={{ background: "rgba(245,158,11,0.15)", color: "#B7791F" }}>
                 <FileCode size={13} /> .JSON / GST e-Invoice
               </span>
               <span className="status-badge" style={{ background: "rgba(244,63,94,0.15)", color: "#fb7185" }}>
@@ -948,7 +948,7 @@ export default function Invoices() {
                             {inv.id}
                           </td>
                           <td>{inv.customer}</td>
-                          <td style={{ fontWeight: 700, color: "#60a5fa" }}>
+                          <td style={{ fontWeight: 700, color: "#60a5fa", fontVariantNumeric: "tabular-nums" }}>
                             {formatLakhs(inv.amount)}
                           </td>
                           <td>{inv.dueDate}</td>

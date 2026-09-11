@@ -11,24 +11,26 @@ import { LanguageProvider } from "./context/LanguageContext";
 
 // Master Layout
 import AppLayout from "./components/AppLayout";
+import AmbientBackground from "./components/AmbientBackground";
 
 // Pages
-import LandingPage from "./pages/LandingPage";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import CashFlow from "./pages/CashFlow";
-import Invoices from "./pages/Invoices";
-import Expenses from "./pages/Expenses";
-import Customers from "./pages/Customers";
-import Vendors from "./pages/Vendors";
-import Forecast from "./pages/Forecast";
-import Simulator from "./pages/Simulator";
-import Financing from "./pages/Financing";
-import Gst from "./pages/Gst";
-import Payroll from "./pages/Payroll";
-import Reports from "./pages/Reports";
-import Integrations from "./pages/Integrations";
-import Settings from "./pages/Settings";
+const LandingPage = React.lazy(() => import("./pages/LandingPage"));
+const Login = React.lazy(() => import("./pages/Login"));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const CashFlow = React.lazy(() => import("./pages/CashFlow"));
+const Invoices = React.lazy(() => import("./pages/Invoices"));
+const Expenses = React.lazy(() => import("./pages/Expenses"));
+const Customers = React.lazy(() => import("./pages/Customers"));
+const Vendors = React.lazy(() => import("./pages/Vendors"));
+const Forecast = React.lazy(() => import("./pages/Forecast"));
+const Simulator = React.lazy(() => import("./pages/Simulator"));
+const Financing = React.lazy(() => import("./pages/Financing"));
+const Gst = React.lazy(() => import("./pages/Gst"));
+const Payroll = React.lazy(() => import("./pages/Payroll"));
+const Reports = React.lazy(() => import("./pages/Reports"));
+const Integrations = React.lazy(() => import("./pages/Integrations"));
+const Settings = React.lazy(() => import("./pages/Settings"));
+const ProductivitySaaS = React.lazy(() => import("./pages/ProductivitySaaS"));
 
 // ==========================================
 // PROTECTED ROUTE WRAPPER
@@ -51,7 +53,8 @@ function App() {
     <AuthProvider>
       <LanguageProvider>
         <BrowserRouter>
-          <Routes>
+          <React.Suspense fallback={<div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--text-secondary)'}}>Loading FinTwin...</div>}>
+            <Routes>
           {/* Public Landing Pages */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/landing" element={<LandingPage />} />
@@ -59,6 +62,9 @@ function App() {
           {/* Authentication Routes (Always Accessible) */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Login />} />
+
+          {/* SaaS Demo Route */}
+          <Route path="/saas-demo" element={<ProductivitySaaS />} />
 
           {/* Protected Application Routes (Requires Login) */}
           <Route
@@ -190,6 +196,7 @@ function App() {
           {/* Fallback Catch-All */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+          </React.Suspense>
       </BrowserRouter>
     </LanguageProvider>
   </AuthProvider>

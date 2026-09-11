@@ -66,24 +66,24 @@ export default function Reports() {
   // Chart series for P&L Breakdown
   const plChartData = [
     { name: "Invoiced Revenue", amount: revenue, fill: "#34d399" },
-    { name: "Fixed Burn", amount: fixedBurn, fill: "#fbbf24" },
-    { name: "Variable Spend", amount: variableBurn, fill: "#f87171" },
+    { name: "Fixed Burn", amount: fixedBurn, fill: "#B7791F" },
+    { name: "Variable Spend", amount: variableBurn, fill: "#B54747" },
     { name: "Net Cash Margin", amount: netMargin, fill: netMargin >= 0 ? "#60a5fa" : "#f43f5e" },
   ];
 
   // Chart series for Aging Breakdown
   const agingChartData = [
-    { name: "0-30 Days", amount: aging["0-30 Days"] || 0, fill: "#38bdf8" },
-    { name: "31-60 Days", amount: aging["31-60 Days"] || 0, fill: "#fbbf24" },
+    { name: "0-30 Days", amount: aging["0-30 Days"] || 0, fill: "#1F5A4A" },
+    { name: "31-60 Days", amount: aging["31-60 Days"] || 0, fill: "#B7791F" },
     { name: "61-90 Days", amount: aging["61-90 Days"] || 0, fill: "#fb923c" },
     { name: "90+ Days", amount: aging["90+ Days"] || 0, fill: "#f43f5e" },
   ];
 
   // Chart series for Cash Flow Direct Method
   const cashflowChartData = [
-    { name: "Opening Cash", amount: summary.currentCash, fill: "#38bdf8" },
+    { name: "Opening Cash", amount: summary.currentCash, fill: "#1F5A4A" },
     { name: "+ Receivables", amount: summary.receivables, fill: "#34d399" },
-    { name: "- Total Outflows", amount: -summary.totalExpenses, fill: "#f87171" },
+    { name: "- Total Outflows", amount: -summary.totalExpenses, fill: "#B54747" },
     { name: "= Closing Cash", amount: summary.projectedCash, fill: summary.projectedCash >= 0 ? "#818cf8" : "#f43f5e" },
   ];
 
@@ -112,7 +112,7 @@ export default function Reports() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `NexFin_${activeReport}_report.csv`);
+    link.setAttribute("download", `FinTwin_${activeReport}_report.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -237,10 +237,10 @@ export default function Reports() {
                   <tr>
                     <td style={{ fontWeight: 700, color: "var(--text-primary)" }}>Gross Invoiced Revenue</td>
                     <td>Operating Inflow</td>
-                    <td style={{ textAlign: "right", fontWeight: 800, color: "#34d399", fontSize: 15 }}>
+                    <td style={{ textAlign: "right", fontWeight: 750, fontVariantNumeric: "tabular-nums", color: "#34d399", fontSize: 15 }}>
                       {formatLakhs(revenue)}
                     </td>
-                    <td style={{ textAlign: "right", color: "var(--text-muted)" }}>100.0%</td>
+                    <td style={{ textAlign: "right", color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>100.0%</td>
                   </tr>
 
                   <tr style={{ background: "rgba(255,255,255,0.01)" }}>
@@ -248,10 +248,10 @@ export default function Reports() {
                       - Fixed Operating Liabilities (Payroll, Rent, SaaS)
                     </td>
                     <td>Fixed Burn</td>
-                    <td style={{ textAlign: "right", fontWeight: 600, color: "#fbbf24" }}>
+                    <td style={{ textAlign: "right", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#B7791F" }}>
                       - {formatLakhs(fixedBurn)}
                     </td>
-                    <td style={{ textAlign: "right", color: "var(--text-muted)" }}>
+                    <td style={{ textAlign: "right", color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
                       {revenue > 0 ? `${((fixedBurn / revenue) * 100).toFixed(1)}%` : "0%"}
                     </td>
                   </tr>
@@ -261,30 +261,31 @@ export default function Reports() {
                       - Variable Direct Expenses (Raw Materials, Freight, Repairs)
                     </td>
                     <td>Variable Spend</td>
-                    <td style={{ textAlign: "right", fontWeight: 600, color: "#fbbf24" }}>
+                    <td style={{ textAlign: "right", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#B7791F" }}>
                       - {formatLakhs(variableBurn)}
                     </td>
-                    <td style={{ textAlign: "right", color: "var(--text-muted)" }}>
+                    <td style={{ textAlign: "right", color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
                       {revenue > 0 ? `${((variableBurn / revenue) * 100).toFixed(1)}%` : "0%"}
                     </td>
                   </tr>
 
                   <tr style={{ borderTop: "2px solid var(--border-medium)" }}>
-                    <td style={{ fontWeight: 800, color: "var(--text-primary)", fontSize: 15 }}>
+                    <td style={{ fontWeight: 750, color: "var(--text-primary)", fontSize: 15 }}>
                       Net Operating Cash Margin (EBITDA approx.)
                     </td>
                     <td>Net Retained Buffer</td>
                     <td
                       style={{
                         textAlign: "right",
-                        fontWeight: 800,
+                        fontWeight: 750,
+                        fontVariantNumeric: "tabular-nums",
                         color: netMargin >= 0 ? "#34d399" : "#fb7185",
                         fontSize: 16,
                       }}
                     >
                       {formatLakhs(netMargin)}
                     </td>
-                    <td style={{ textAlign: "right", fontWeight: 700, color: "#60a5fa" }}>
+                    <td style={{ textAlign: "right", fontWeight: 700, fontVariantNumeric: "tabular-nums", color: "#60a5fa" }}>
                       {revenue > 0 ? `${((netMargin / revenue) * 100).toFixed(1)}%` : "0%"}
                     </td>
                   </tr>
@@ -367,31 +368,32 @@ export default function Reports() {
                   <tr>
                     <td style={{ fontWeight: 700, color: "var(--text-primary)" }}>Opening Liquid Cash</td>
                     <td>Bank Current Account & Cash Equivalent</td>
-                    <td style={{ textAlign: "right", fontWeight: 700, color: "#60a5fa" }}>
+                    <td style={{ textAlign: "right", fontWeight: 700, fontVariantNumeric: "tabular-nums", color: "#60a5fa" }}>
                       {formatLakhs(summary.currentCash)}
                     </td>
                   </tr>
                   <tr>
                     <td style={{ color: "var(--text-secondary)" }}>+ Inflows from Customer Invoices</td>
                     <td>Operating Receivables</td>
-                    <td style={{ textAlign: "right", fontWeight: 600, color: "#34d399" }}>
+                    <td style={{ textAlign: "right", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#34d399" }}>
                       + {formatLakhs(summary.receivables)}
                     </td>
                   </tr>
                   <tr>
                     <td style={{ color: "var(--text-secondary)" }}>- Outflows for Operational Burn</td>
                     <td>Operating Payables</td>
-                    <td style={{ textAlign: "right", fontWeight: 600, color: "#fb7185" }}>
+                    <td style={{ textAlign: "right", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#fb7185" }}>
                       - {formatLakhs(summary.totalExpenses)}
                     </td>
                   </tr>
                   <tr style={{ borderTop: "2px solid var(--border-medium)" }}>
-                    <td style={{ fontWeight: 800, color: "var(--text-primary)" }}>Projected Closing Cash Balance</td>
+                    <td style={{ fontWeight: 750, color: "var(--text-primary)" }}>Projected Closing Cash Balance</td>
                     <td>Net Month-End Position</td>
                     <td
                       style={{
                         textAlign: "right",
-                        fontWeight: 800,
+                        fontWeight: 750,
+                        fontVariantNumeric: "tabular-nums",
                         color: summary.projectedCash >= 0 ? "#34d399" : "#fb7185",
                         fontSize: 16,
                       }}
@@ -485,7 +487,7 @@ export default function Reports() {
                   </tr>
                   <tr>
                     <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>31 - 60 Days</td>
-                    <td style={{ fontWeight: 700, color: "#fbbf24" }}>{formatLakhs(aging["31-60 Days"])}</td>
+                    <td style={{ fontWeight: 700, color: "#B7791F" }}>{formatLakhs(aging["31-60 Days"])}</td>
                     <td>{aging.total > 0 ? `${((aging["31-60 Days"] / aging.total) * 100).toFixed(1)}%` : "0%"}</td>
                     <td>
                       <span className="status-badge pending">Moderate Followup</span>

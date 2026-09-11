@@ -359,8 +359,8 @@ export default function SetuVerificationModal({ onClose, onVerified }) {
               alignItems: "center",
               gap: 6,
               fontWeight: 800,
-              background: "linear-gradient(135deg, #059669, #047857)",
-              border: "1px solid #059669",
+              background: "#1F5A4A",
+              border: "1px solid #2E7D5B",
               color: "#ffffff",
               boxShadow: "0 2px 8px rgba(5, 150, 105, 0.25)",
             }}
@@ -995,7 +995,7 @@ export default function SetuVerificationModal({ onClose, onVerified }) {
             <button
               className="btn btn-primary btn-sm"
               onClick={() => {
-                alert(`✓ Setu KYC Verification Dossier linked to NexFin Twin! Bank Account Aggregator is fully authorized.`);
+                alert(`✓ Setu KYC Verification Dossier linked to FinTwin Twin! Bank Account Aggregator is fully authorized.`);
                 if (onVerified) onVerified();
                 onClose();
               }}

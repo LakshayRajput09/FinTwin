@@ -104,6 +104,68 @@ const initialConnectors = [
   },
 ];
 
+const getConnectorBadgeMeta = (c) => {
+  switch (c.id) {
+    case "aa":
+      return {
+        icon: Landmark,
+        bg: "#E8F5E9",
+        color: "#1F5A4A",
+        statusBg: "#E8F5E9",
+        statusColor: "#1F5A4A",
+      };
+    case "setu_kyc":
+      return {
+        icon: ShieldCheck,
+        bg: "#E3F2FD",
+        color: "#1976D2",
+        statusBg: "#E0F2FE",
+        statusColor: "#0284C7",
+      };
+    case "tally":
+      return {
+        icon: FileText,
+        bg: "#FFF8E1",
+        color: "#D97706",
+        statusBg: "#E8F5E9",
+        statusColor: "#1F5A4A",
+      };
+    case "zoho":
+      return {
+        icon: Layers,
+        bg: "#F3E8FF",
+        color: "#9333EA",
+        statusBg: "#E8F5E9",
+        statusColor: "#1F5A4A",
+      };
+    case "gstn":
+      return {
+        icon: FileText,
+        bg: "#E6F4EA",
+        color: "#059669",
+        statusBg: "#E8F5E9",
+        statusColor: "#1F5A4A",
+      };
+    case "razorpay":
+      return {
+        icon: CreditCard,
+        bg: "#FEE2E2",
+        color: "#E11D48",
+        statusBg: "#E8F5E9",
+        statusColor: "#1F5A4A",
+      };
+    case "quickbooks":
+    default:
+      return {
+        icon: ExternalLink,
+        bg: "#F1F5F9",
+        color: "#475569",
+        statusBg: "#F1F5F9",
+        statusColor: "#64748B",
+      };
+  }
+};
+
 export default function Integrations() {
   const [connectors, setConnectors] = useState(initialConnectors);
   const [syncingId, setSyncingId] = useState(null);
@@ -352,14 +414,14 @@ export default function Integrations() {
     }
   };
 
-  // Step 4 Action: 1-Click Sync Live Bank Balance to NexFin
+  // Step 4 Action: 1-Click Sync Live Bank Balance to FinTwin
   const handleSyncBalanceToStore = () => {
     if (!fiData || !fiData.total_liquid_cash) return;
     updateBusinessProfile({
       openingCash: Number(fiData.total_liquid_cash),
     });
 
-    setToast(`Synced ₹${(fiData.total_liquid_cash / 100000).toFixed(2)}L live bank balance to NexFin!`);
+    setToast(`Synced ₹${(fiData.total_liquid_cash / 100000).toFixed(2)}L live bank balance to FinTwin!`);
     setTimeout(() => setToast(""), 4000);
     setShowAaModal(false);
   };
@@ -373,7 +435,7 @@ export default function Integrations() {
             position: "fixed",
             top: 85,
             right: 36,
-            background: "linear-gradient(135deg, #10b981, #059669)",
+            background: "#1F5A4A",
             color: "#fff",
             padding: "12px 20px",
             borderRadius: "var(--radius-md)",
@@ -391,81 +453,136 @@ export default function Integrations() {
         </div>
       )}
 
-      {/* Header Info */}
-      <div className="pictorial-hero-card" style={{ padding: "26px 30px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
-          <div style={{ maxWidth: 700 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-              <span className="pictorial-badge emerald" style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <ShieldCheck size={13} />
-                <span>RBI Regulated Open Banking</span>
-              </span>
-              <span className="pictorial-badge cyan">ReBIT 1.1.2 Standard</span>
-              <span className="pictorial-badge purple">Setu / Sahamati Ecosystem</span>
+      {/* Header Info - Open Liquid Glass Canvas */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 24, marginTop: 4, marginBottom: 28, position: "relative" }}>
+        <div style={{ maxWidth: 720 }}>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.2px" }}>
+              Integrations
             </div>
-
-            <h1 style={{ fontSize: 24, fontWeight: 800, color: "var(--text-primary)", margin: "4px 0 8px" }}>
-              Financial Stack & Live Banking Integrations
-            </h1>
-
-            <p style={{ color: "var(--text-secondary)", fontSize: 13.8, lineHeight: 1.6, margin: 0 }}>
-              Connect directly to the <strong>RBI Account Aggregator Network</strong> to pull live, encrypted bank statements from SBI, HDFC, ICICI, and Axis Bank. Automatically sync real cash balances and reconcile customer invoices with zero manual data entry.
-            </p>
-
-            <div style={{ display: "flex", gap: 10, marginTop: 18, flexWrap: "wrap" }}>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => {
-                  setAaStep(1);
-                  setShowAaModal(true);
-                }}
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-              >
-                <Landmark size={15} />
-                <span>Launch RBI Account Aggregator</span>
-              </button>
-
-              <button
-                className="btn btn-emerald btn-sm"
-                onClick={() => setShowSetuKycModal(true)}
-                style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700 }}
-              >
-                <ShieldCheck size={14} />
-                <span>Setu KYC & Verification Suite</span>
-              </button>
-
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={() => setShowConfigDrawer(true)}
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-              >
-                <Key size={14} />
-                <span>Setu / AA API Keys</span>
-              </button>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+              Connect with Tally Prime, Zoho Books, GSTN & Banks
             </div>
           </div>
 
-          {/* End-to-End Encryption Badge */}
+          <h1 style={{ fontSize: "clamp(26px, 3vw, 32px)", fontWeight: 700, lineHeight: 1.2, color: "var(--text-primary)", margin: "0 0 12px", letterSpacing: "-0.02em" }}>
+            Financial Stack & Live Banking Integrations
+          </h1>
+
+          <p style={{ color: "var(--text-secondary)", fontSize: 14.5, fontWeight: 450, lineHeight: 1.55, margin: "0 0 20px" }}>
+            Connect directly to the <strong>RBI Account Aggregator Network</strong> to pull live, encrypted bank statements from SBI, HDFC, ICICI, and Axis Bank. Automatically sync real cash balances and reconcile customer invoices with zero manual data entry.
+          </p>
+
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+            <button
+              className="btn"
+              onClick={() => {
+                setAaStep(1);
+                setShowAaModal(true);
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "#1F5A4A",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: 9999,
+                padding: "9px 20px",
+                fontSize: 13,
+                fontWeight: 600,
+                boxShadow: "0 4px 14px rgba(31, 90, 74, 0.25)",
+                cursor: "pointer"
+              }}
+            >
+              <Landmark size={15} />
+              <span>Launch RBI Account Aggregator</span>
+            </button>
+
+            <button
+              className="btn"
+              onClick={() => setShowSetuKycModal(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(255, 255, 255, 0.7)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                color: "var(--text-primary)",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
+                borderRadius: 9999,
+                padding: "9px 18px",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer"
+              }}
+            >
+              <ShieldCheck size={15} style={{ color: "#1F5A4A" }} />
+              <span>Setup KYC & Verification</span>
+            </button>
+
+            <button
+              className="btn"
+              onClick={() => setShowConfigDrawer(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(255, 255, 255, 0.7)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                color: "var(--text-primary)",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
+                borderRadius: 9999,
+                padding: "9px 18px",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer"
+              }}
+            >
+              <Key size={15} />
+              <span>Setup / AA API Keys</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Floating Encrypted Glass Card matching media_1789119606296.jpg */}
+        <div
+          style={{
+            padding: "22px 24px",
+            borderRadius: 20,
+            background: "rgba(255, 255, 255, 0.55)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            border: "1px solid rgba(255, 255, 255, 0.75)",
+            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.04)",
+            width: 240,
+            textAlign: "center",
+            flexShrink: 0
+          }}
+        >
           <div
             style={{
-              padding: "16px 20px",
-              borderRadius: "var(--radius-md)",
-              background: "var(--bg-card)",
-              border: "1px solid var(--border-medium)",
-              boxShadow: "var(--shadow-sm)",
-              minWidth: 220,
-              textAlign: "center",
+              width: 42,
+              height: 42,
+              borderRadius: "50%",
+              background: "rgba(31, 90, 74, 0.1)",
+              color: "#1F5A4A",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 10px",
+              border: "1px solid rgba(31, 90, 74, 0.15)"
             }}
           >
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(5,150,105,0.12)", color: "var(--accent-emerald)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 8px" }}>
-              <Lock size={18} />
-            </div>
-            <strong style={{ fontSize: 13, color: "var(--text-primary)", display: "block" }}>
-              Curve25519 Encrypted
-            </strong>
-            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
-              Data encrypted between FIP bank & NexFin. AA never sees statements.
-            </span>
+            <Lock size={18} />
+          </div>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>
+            Curve25519 Encrypted
+          </div>
+          <div style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.4 }}>
+            Data encrypted between FIP bank & FinTwin. AA never sees statements.
           </div>
         </div>
       </div>
@@ -479,7 +596,7 @@ export default function Integrations() {
           return (
             <div
               key={c.id}
-              className="glass-card graphical-card-interactive"
+              className="integration-card"
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -878,7 +995,7 @@ export default function Integrations() {
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: 12, color: "var(--text-secondary)" }}>
                     <div><strong>Customer:</strong> {mobileNumber}{selectedHandle}</div>
-                    <div><strong>Consumer (FIU):</strong> NexFin Digital Twin FIU</div>
+                    <div><strong>Consumer (FIU):</strong> FinTwin Digital Twin FIU</div>
                     <div><strong>Data Types:</strong> Transactions, Balance Summary</div>
                     <div><strong>Purpose:</strong> 101 - Cash Flow Twin & Forecasting</div>
                     <div><strong>Data Range:</strong> Last 180 Days (6 Months)</div>
@@ -930,7 +1047,7 @@ export default function Integrations() {
                   Executing Curve25519 End-to-End Encrypted Data Handshake
                 </h3>
                 <p style={{ color: "var(--text-secondary)", fontSize: 13, maxWidth: 460, margin: "0 auto", lineHeight: 1.6 }}>
-                  Pulling encrypted bank statement packets from HDFC Bank and State Bank of India via {selectedHandle}. Decrypting locally in NexFin FIU...
+                  Pulling encrypted bank statement packets from HDFC Bank and State Bank of India via {selectedHandle}. Decrypting locally in FinTwin FIU...
                 </p>
               </div>
             )}
@@ -941,7 +1058,7 @@ export default function Integrations() {
             {aaStep === 4 && fiData && (
               <div>
                 {/* Total Liquid Balance Banner */}
-                <div style={{ padding: 18, borderRadius: "var(--radius-md)", background: "linear-gradient(135deg, rgba(5,150,105,0.08) 0%, rgba(79,70,229,0.06) 100%)", border: "1px solid var(--border-medium)", marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
+                <div style={{ padding: 18, borderRadius: "var(--radius-md)", background: "var(--bg-tertiary)", border: "1px solid var(--border-medium)", marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
                   <div>
                     <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)" }}>
                       Verified Real-time Bank Balance
@@ -960,7 +1077,7 @@ export default function Integrations() {
                     style={{ display: "flex", alignItems: "center", gap: 6 }}
                   >
                     <CheckCircle2 size={15} />
-                    <span>Sync ₹{(fiData.total_liquid_cash / 100000).toFixed(2)}L to NexFin Dashboard</span>
+                    <span>Sync ₹{(fiData.total_liquid_cash / 100000).toFixed(2)}L to FinTwin Dashboard</span>
                   </button>
                 </div>
 
@@ -1027,7 +1144,7 @@ export default function Integrations() {
                     Close
                   </button>
                   <button className="btn btn-primary btn-sm" onClick={handleSyncBalanceToStore}>
-                    Commit to NexFin Ledger ✓
+                    Commit to FinTwin Ledger ✓
                   </button>
                 </div>
               </div>
@@ -1082,7 +1199,7 @@ export default function Integrations() {
               </div>
 
               <p style={{ fontSize: 12.5, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 20 }}>
-                NexFin runs seamlessly in high-fidelity RBI AA Sandbox mode out-of-the-box. If you have production Setu AA or Sahamati FIU credentials, you can enter them below:
+                FinTwin runs seamlessly in high-fidelity RBI AA Sandbox mode out-of-the-box. If you have production Setu AA or Sahamati FIU credentials, you can enter them below:
               </p>
 
               <div className="form-group">

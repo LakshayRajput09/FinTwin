@@ -643,9 +643,9 @@ Udyam Registration: UDYAM-MH-01-0089124`;
                               style={{
                                 fontSize: 11,
                                 padding: "4px 10px",
-                                background: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(59, 130, 246, 0.15))",
+                                background: "var(--bg-tertiary)",
                                 borderColor: item.isOverdue45 ? "rgba(225,29,72,0.4)" : "rgba(34, 197, 94, 0.4)",
-                                color: item.isOverdue45 ? "var(--accent-rose)" : "#22c55e",
+                                color: item.isOverdue45 ? "var(--accent-rose)" : "#2E7D5B",
                                 fontWeight: 700,
                                 display: "flex",
                                 alignItems: "center",

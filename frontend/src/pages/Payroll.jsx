@@ -180,7 +180,7 @@ export default function Payroll() {
     const csvContent =
       "data:text/csv;charset=utf-8," +
       [
-        "NexFin Payroll & Salary Disbursal Statement",
+        "FinTwin Payroll & Salary Disbursal Statement",
         `Business Name,${business.name || "My Enterprise"}`,
         `Export Date,${new Date().toISOString().slice(0, 10)}`,
         "",
@@ -319,7 +319,7 @@ export default function Payroll() {
             </div>
           </div>
           <div className="kpi-value-row">
-            <span className="kpi-value" style={{ color: "#fbbf24" }}>
+            <span className="kpi-value" style={{ color: "#B7791F" }}>
               {formatLakhs(totalMonthlyPayrollLiability)}
             </span>
           </div>
@@ -449,7 +449,7 @@ export default function Payroll() {
                             width: 32,
                             height: 32,
                             borderRadius: "var(--radius-full)",
-                            background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
+                            background: "var(--bg-tertiary)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -472,7 +472,7 @@ export default function Payroll() {
                     </td>
 
                     <td>
-                      <span style={{ fontWeight: 700, color: "#34d399", fontFamily: "var(--font-mono)" }}>
+                      <span style={{ fontWeight: 700, color: "#34d399", fontVariantNumeric: "tabular-nums" }}>
                         {formatCurrency(w.monthlySalary)}
                       </span>
                     </td>
@@ -500,7 +500,7 @@ export default function Payroll() {
                         className="status-badge"
                         style={{
                           background: w.status === "Active" ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)",
-                          color: w.status === "Active" ? "#34d399" : "#fbbf24",
+                          color: w.status === "Active" ? "#34d399" : "#B7791F",
                         }}
                       >
                         {w.status}
@@ -591,17 +591,17 @@ export default function Payroll() {
                       <span style={{ fontWeight: 600, color: "#c4b5fd", fontSize: 12 }}>{p.month}</span>
                     </td>
                     <td>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>
+                      <span style={{ fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
                         {formatCurrency(p.baseSalary)}
                       </span>
                     </td>
                     <td>
-                      <span style={{ fontSize: 11.5, color: p.bonus > 0 ? "#34d399" : p.deductions > 0 ? "#fb7185" : "var(--text-muted)" }}>
+                      <span style={{ fontSize: 11.5, fontVariantNumeric: "tabular-nums", color: p.bonus > 0 ? "#34d399" : p.deductions > 0 ? "#fb7185" : "var(--text-muted)" }}>
                         {p.bonus > 0 ? `+${formatCurrency(p.bonus)}` : p.deductions > 0 ? `-${formatCurrency(p.deductions)}` : "—"}
                       </span>
                     </td>
                     <td>
-                      <span style={{ fontWeight: 700, color: "#34d399", fontFamily: "var(--font-mono)", fontSize: 13 }}>
+                      <span style={{ fontWeight: 700, color: "#34d399", fontVariantNumeric: "tabular-nums", fontSize: 13 }}>
                         {formatCurrency(p.netAmount)}
                       </span>
                     </td>
@@ -857,10 +857,10 @@ export default function Payroll() {
                       borderRadius: "var(--radius-md)",
                       background: "rgba(16,185,129,0.1)",
                       border: "1px solid rgba(16,185,129,0.3)",
-                      fontWeight: 800,
+                      fontWeight: 750,
                       color: "#34d399",
                       fontSize: 16,
-                      fontFamily: "var(--font-mono)",
+                      fontVariantNumeric: "tabular-nums",
                     }}
                   >
                     {formatCurrency(

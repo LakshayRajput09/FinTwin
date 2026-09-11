@@ -88,7 +88,7 @@ export default function Forecast() {
             </div>
           </div>
           <div className="kpi-value-row">
-            <span className="kpi-value" style={{ color: "#fbbf24" }}>
+            <span className="kpi-value" style={{ color: "#B7791F" }}>
               {forecast.breachDay}
             </span>
           </div>
@@ -209,7 +209,7 @@ export default function Forecast() {
               padding: "2px 8px",
               borderRadius: 12,
               background: showExpected ? "rgba(56,189,248,0.2)" : "rgba(255,255,255,0.05)",
-              color: showExpected ? "#38bdf8" : "var(--text-muted)",
+              color: showExpected ? "#1F5A4A" : "var(--text-muted)",
               border: "1px solid rgba(56,189,248,0.3)",
             }}
           >
@@ -249,16 +249,16 @@ export default function Forecast() {
               <AreaChart data={forecast.timeline} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <defs>
                   <linearGradient id="colorBest" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#2E7D5B" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#2E7D5B" stopOpacity={0.0} />
                   </linearGradient>
                   <linearGradient id="colorExpected" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={currentTheme.primaryAccent} stopOpacity={0.35} />
                     <stop offset="95%" stopColor={currentTheme.primaryAccent} stopOpacity={0.0} />
                   </linearGradient>
                   <linearGradient id="colorWorst" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#B54747" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#B54747" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
@@ -282,7 +282,7 @@ export default function Forecast() {
                   <Area
                     type="monotone"
                     dataKey="bestCase"
-                    stroke="#10b981"
+                    stroke="#2E7D5B"
                     strokeWidth={2}
                     strokeDasharray="4 4"
                     fill="url(#colorBest)"
@@ -303,7 +303,7 @@ export default function Forecast() {
                   <Area
                     type="monotone"
                     dataKey="worstCase"
-                    stroke="#ef4444"
+                    stroke="#B54747"
                     strokeWidth={2}
                     strokeDasharray="4 4"
                     fill="url(#colorWorst)"
@@ -331,13 +331,13 @@ export default function Forecast() {
                   formatter={(val) => [`₹${(Number(val) / 100000).toFixed(2)}L`, ""]}
                 />
                 {showBest && (
-                  <Line type="monotone" dataKey="bestCase" stroke="#10b981" strokeWidth={2} dot={false} animationDuration={500} />
+                  <Line type="monotone" dataKey="bestCase" stroke="#2E7D5B" strokeWidth={2} dot={false} animationDuration={500} />
                 )}
                 {showExpected && (
                   <Line type="monotone" dataKey="expectedCash" stroke={currentTheme.primaryAccent} strokeWidth={3} dot={false} animationDuration={500} />
                 )}
                 {showWorst && (
-                  <Line type="monotone" dataKey="worstCase" stroke="#ef4444" strokeWidth={2} strokeDasharray="4 4" dot={false} animationDuration={500} />
+                  <Line type="monotone" dataKey="worstCase" stroke="#B54747" strokeWidth={2} strokeDasharray="4 4" dot={false} animationDuration={500} />
                 )}
               </LineChart>
             )}

@@ -37,45 +37,25 @@ import { calculateRunwayDays } from "../engines/digitalTwin";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 
-const navGroups = [
-  {
-    title: "Overview & Cash Health",
-    icon: Activity,
-    items: [
-      { key: "dashboard", name: "Overview & Health", path: "/dashboard", icon: LayoutDashboard },
-      { key: "cashFlow", name: "Cash Flow Mirror", path: "/cash-flow", icon: Wallet },
-      { key: "forecast", name: "Future Cash Forecast", path: "/forecast", icon: TrendingUp },
-      { key: "simulator", name: "Scenario Planner", path: "/simulator", icon: FlaskConical },
-    ],
-  },
-  {
-    title: "Money & Partners",
-    icon: Landmark,
-    items: [
-      { key: "financing", name: "Financing & Risk Analysis", path: "/financing", icon: Landmark, badge: "Risk Radar" },
-      { key: "invoices", name: "Invoices & Cash Recovery", path: "/invoices", icon: FileText, badge: "⚡ Recovery" },
-      { key: "customers", name: "Customer Insights", path: "/customers", icon: Users },
-      { key: "vendors", name: "Vendors & Suppliers", path: "/vendors", icon: Package, badge: "43B(h)" },
-    ],
-  },
-  {
-    title: "Bills, Taxes & Team",
-    icon: ShieldCheck,
-    items: [
-      { key: "expenses", name: "Bills & Expenses", path: "/expenses", icon: CreditCard },
-      { key: "gst", name: "GST & Tax Filing", path: "/gst", icon: Percent, badge: "Tax" },
-      { key: "payroll", name: "Team & Payroll", path: "/payroll", icon: UserCheck, badge: "Staff" },
-      { key: "reports", name: "Profit & Loss Reports", path: "/reports", icon: FileSpreadsheet },
-    ],
-  },
-  {
-    title: "Account",
-    icon: Layers,
-    items: [
-      { key: "integrations", name: "Bank & App Sync", path: "/integrations", icon: Layers },
-      { key: "settings", name: "Business Settings", path: "/settings", icon: Settings },
-    ],
-  },
+const primaryNavItems = [
+  { key: "dashboard", name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { key: "invoices", name: "Invoices", path: "/invoices", icon: FileText },
+  { key: "customers", name: "Customers", path: "/customers", icon: Users },
+  { key: "expenses", name: "Expenses", path: "/expenses", icon: CreditCard },
+  { key: "cashFlow", name: "Cash Flow", path: "/cash-flow", icon: Wallet },
+  { key: "forecast", name: "Forecast", path: "/forecast", icon: TrendingUp },
+  { key: "risk", name: "Risk", path: "/financing", icon: ShieldCheck },
+  { key: "simulator", name: "Simulator", path: "/simulator", icon: FlaskConical },
+  { key: "financing", name: "Financing", path: "/financing", icon: Landmark },
+  { key: "reports", name: "Reports", path: "/reports", icon: FileSpreadsheet },
+  { key: "integrations", name: "Integrations", path: "/integrations", icon: Layers },
+  { key: "settings", name: "Settings", path: "/settings", icon: Settings },
+];
+
+const secondaryNavItems = [
+  { key: "vendors", name: "Vendors (43B)", path: "/vendors", icon: Package },
+  { key: "gst", name: "GST Tax", path: "/gst", icon: Percent },
+  { key: "payroll", name: "Payroll", path: "/payroll", icon: UserCheck },
 ];
 
 export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMobile }) {
@@ -111,20 +91,29 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
     >
       {/* Brand Header */}
       <div className="sidebar-header">
-        <Link to="/landing" className="brand-logo-wrap" onClick={handleNavClick}>
-          <div className="brand-logo-icon">
-            NF
+        <Link to="/landing" className="brand-logo-wrap" onClick={handleNavClick} style={{ textDecoration: 'none' }}>
+          <div style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            background: "rgba(31, 90, 74, 0.1)",
+            color: "#1F5A4A",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: 800,
+            fontSize: 14,
+            border: "1px solid rgba(31, 90, 74, 0.15)"
+          }}>
+            FT
           </div>
           {!collapsed && (
-            <div className="brand-text">
-              <span className="brand-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span>NexFin</span>
-                <span style={{ fontSize: 9.5, padding: "1px 6px", borderRadius: 4, background: "rgba(79,70,229,0.1)", color: "var(--accent-blue)", fontWeight: 700 }}>
-                  Companion
-                </span>
+            <div className="brand-text" style={{ marginLeft: 12 }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.5px" }}>
+                FinTwin
               </span>
-              <span className="brand-subtitle">
-                <Sparkles size={11} /> Smart Finance
+              <span style={{ fontSize: 11, color: "var(--text-secondary)", display: "block" }}>
+                Your Financial Twin
               </span>
             </div>
           )}
@@ -189,113 +178,117 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
         </div>
       )}
 
-      {/* Navigation Groupings */}
-      <nav className="sidebar-nav" style={{ overflowY: "auto", flex: 1, paddingBottom: 16 }}>
-        {navGroups.map((group) => {
-          const GroupIcon = group.icon;
+      {/* Navigation List */}
+      <nav className="sidebar-nav" style={{ overflowY: "auto", flex: 1, padding: "8px 12px", display: "flex", flexDirection: "column", gap: 3 }}>
+        {primaryNavItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
           return (
-            <div key={group.title} style={{ marginBottom: 6 }}>
+            <Link
+              key={item.key + item.path}
+              to={item.path}
+              className={`nav-item ${isActive ? "active" : ""}`}
+              onClick={handleNavClick}
+              title={collapsed ? item.name : undefined}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "8px 12px",
+                borderRadius: "0 10px 10px 0",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: isActive ? 650 : 500,
+                color: isActive ? "#1F5A4A" : "#2D3748",
+                background: isActive ? "rgba(31, 90, 74, 0.10)" : "transparent",
+                borderLeft: isActive ? "3px solid #1F5A4A" : "3px solid transparent",
+                transition: "all 0.15s ease"
+              }}
+            >
+              <div
+                className="nav-item-icon"
+                style={{
+                  color: isActive ? "#1F5A4A" : "#374151",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                <Icon size={18} />
+              </div>
               {!collapsed && (
-                <div className="nav-group-title">
-                  <GroupIcon size={12} />
-                  <span>{group.title}</span>
-                </div>
+                <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {item.name}
+                </span>
               )}
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`nav-item ${isActive ? "active" : ""}`}
-                    onClick={handleNavClick}
-                    title={collapsed ? item.name : undefined}
-                  >
-                    <div className="nav-item-icon">
-                      <Icon size={17} />
-                    </div>
-                    {!collapsed && <span style={{ flex: 1 }}>{t(item.key, item.name)}</span>}
-                    {!collapsed && item.badge && (
-                      <span
-                        className="nav-badge"
-                        style={{
-                          background: item.badge === "Live" ? "rgba(5, 150, 105, 0.1)" : "rgba(79, 70, 229, 0.1)",
-                          color: item.badge === "Live" ? "var(--accent-emerald)" : "var(--accent-blue)",
-                          border: "1px solid rgba(0,0,0,0.06)",
-                        }}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
+            </Link>
+          );
+        })}
+
+        {/* Secondary modules divider if uncollapsed */}
+        {!collapsed && (
+          <div style={{ margin: "10px 0 4px", padding: "0 12px" }}>
+            <div style={{ height: 1, background: "rgba(0,0,0,0.05)" }} />
+          </div>
+        )}
+
+        {secondaryNavItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.key}
+              to={item.path}
+              className={`nav-item ${isActive ? "active" : ""}`}
+              onClick={handleNavClick}
+              title={collapsed ? item.name : undefined}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "7px 12px",
+                borderRadius: "0 10px 10px 0",
+                textDecoration: "none",
+                fontSize: 13,
+                fontWeight: isActive ? 650 : 500,
+                color: isActive ? "#1F5A4A" : "#64748B",
+                background: isActive ? "rgba(31, 90, 74, 0.08)" : "transparent",
+                borderLeft: isActive ? "3px solid #1F5A4A" : "3px solid transparent",
+              }}
+            >
+              <div style={{ color: isActive ? "#1F5A4A" : "#64748B" }}>
+                <Icon size={16} />
+              </div>
+              {!collapsed && <span>{item.name}</span>}
+            </Link>
           );
         })}
       </nav>
 
-      {/* Human Companion Widget Footer */}
-      {!collapsed && (
-        <div className="sidebar-footer" style={{ borderTop: "1px solid var(--border-subtle)", padding: 14 }}>
-          {/* Friendly Status Card */}
-          <div
-            style={{
-              padding: "11px 13px",
-              borderRadius: "var(--radius-md)",
-              background: "var(--bg-secondary)",
-              border: "1px solid var(--border-subtle)",
-              marginBottom: 10,
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(5,150,105,0.12)", color: "var(--accent-emerald)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <HeartHandshake size={15} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--accent-emerald)", display: "flex", alignItems: "center", gap: 4 }}>
-                <span>SAFE BUFFER</span>
-              </div>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {runway} Days of Cash Runway
-              </div>
-            </div>
+      {/* Human Software Widget Footer */}
+      <div style={{ padding: "8px 10px 12px", borderTop: "1px solid rgba(0,0,0,0.05)" }}>
+        <div
+          className="sidebar-user-pill"
+          onClick={() => {
+            navigate("/settings");
+            handleNavClick();
+          }}
+          title="Account Settings"
+        >
+          <div className="sidebar-user-avatar">
+            {user?.name ? user.name.slice(0, 2).toUpperCase() : "CE"}
           </div>
-
-          <div className="sidebar-db-status" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span className="status-indicator" style={{ fontSize: 11, color: "var(--text-muted)" }}>
-              <span className={dbConnected ? "dot-connected" : "dot-offline"} />
-              {dbConnected ? t("Database Synced", "All Data Saved") : t("Local Twin Mode", "Local Mode")}
-            </span>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                logout();
-                handleNavClick();
-                navigate("/login");
-              }}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-                fontSize: 11,
-                color: "var(--accent-rose)",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                fontWeight: 600,
-              }}
-            >
-              <LogOut size={11} /> {t("logout", "Logout")}
-            </button>
-          </div>
+          {!collapsed && (
+            <>
+              <div className="sidebar-user-info" style={{ flex: 1, minWidth: 0 }}>
+                <div className="sidebar-user-name">{user?.name || "Ceo"}</div>
+                <div className="sidebar-user-role">{user?.role || "CEO"}</div>
+              </div>
+              <ChevronRight size={15} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+            </>
+          )}
         </div>
-      )}
-    </aside>
+      </div>
+</aside>
   );
 }

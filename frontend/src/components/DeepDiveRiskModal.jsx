@@ -220,11 +220,11 @@ export default function DeepDiveRiskModal({ invoice, onClose, onOpenRecovery }) 
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, marginBottom: 14 }}>
             <div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" }}>
                 COMPOSITE BANKABILITY & SOLVENCY INDEX
               </span>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 2 }}>
-                <span style={{ fontSize: 32, fontWeight: 900, color: riskTier.color }}>
+                <span style={{ fontSize: 32, fontWeight: 800, fontVariantNumeric: "tabular-nums", color: riskTier.color }}>
                   {riskScore}
                 </span>
                 <span style={{ fontSize: 15, color: "var(--text-muted)", fontWeight: 600 }}>/ 100</span>
@@ -243,9 +243,9 @@ export default function DeepDiveRiskModal({ invoice, onClose, onOpenRecovery }) 
                     onOpenRecovery();
                   }}
                   style={{
-                    background: "linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(59, 130, 246, 0.2))",
+                    background: "var(--bg-tertiary)",
                     border: "1px solid rgba(34, 197, 94, 0.5)",
-                    color: "#22c55e",
+                    color: "#2E7D5B",
                     fontWeight: 800,
                     display: "flex",
                     alignItems: "center",
@@ -253,7 +253,7 @@ export default function DeepDiveRiskModal({ invoice, onClose, onOpenRecovery }) 
                     padding: "6px 14px",
                   }}
                 >
-                  <Zap size={13} style={{ color: "#22c55e" }} />
+                  <Zap size={13} style={{ color: "#2E7D5B" }} />
                   <span>⚡ Cash Recovery Hub</span>
                 </button>
               )}

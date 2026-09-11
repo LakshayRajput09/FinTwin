@@ -108,7 +108,7 @@ export default function Gst() {
     const csvContent =
       "data:text/csv;charset=utf-8," +
       [
-        "GSTR Return Summary Report - NexFin Digital Twin",
+        "GSTR Return Summary Report - FinTwin Digital Twin",
         `Business Name,${business.name || "My Business"}`,
         `GSTIN,${business.gstin || "Unspecified"}`,
         `Generated Date,${new Date().toISOString().slice(0, 10)}`,
@@ -184,7 +184,7 @@ export default function Gst() {
             <span
               className="kpi-value"
               style={{
-                color: gstSummary.netGstPayable > 0 ? "#fbbf24" : "#34d399",
+                color: gstSummary.netGstPayable > 0 ? "#B7791F" : "#34d399",
               }}
             >
               {formatLakhs(gstSummary.netGstPayable)}
@@ -474,7 +474,7 @@ export default function Gst() {
                     padding: "3px 10px",
                     borderRadius: "var(--radius-full)",
                     background: gstSummary.netGstPayable > 0 ? "rgba(245,158,11,0.2)" : "rgba(16,185,129,0.2)",
-                    color: gstSummary.netGstPayable > 0 ? "#fbbf24" : "#34d399",
+                    color: gstSummary.netGstPayable > 0 ? "#B7791F" : "#34d399",
                   }}
                 >
                   {gstSummary.netGstPayable > 0 ? "Challan Required" : "Zero Cash Due"}

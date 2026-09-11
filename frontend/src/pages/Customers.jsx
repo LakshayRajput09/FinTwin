@@ -38,7 +38,7 @@ import { calculateReceivables } from "../engines/digitalTwin";
 import { calculateInvoiceRiskAnalysis } from "../utils/riskRecoveryEngine";
 import CashRecoveryModal from "../components/CashRecoveryModal";
 
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
+const COLORS = ["#1F5A4A", "#2E7D5B", "#B7791F", "#B54747", "#1F5A4A", "#06b6d4"];
 
 export default function Customers() {
   const [customers, setCustomers] = useState(getCustomers());
@@ -146,10 +146,10 @@ export default function Customers() {
         <div className="kpi-card">
           <div className="kpi-top">
             <span className="kpi-label">Average Portfolio Delay</span>
-            <Clock size={18} style={{ color: "#fbbf24" }} />
+            <Clock size={18} style={{ color: "#B7791F" }} />
           </div>
           <div className="kpi-value-row">
-            <span className="kpi-value" style={{ color: "#fbbf24" }}>
+            <span className="kpi-value" style={{ color: "#B7791F" }}>
               14.2 Days
             </span>
           </div>
@@ -308,7 +308,7 @@ export default function Customers() {
                       <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{cust.name}</div>
                       <div style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
                         <span>{cust.contactEmail || "billing@client.com"}</span>
-                        {cust.phone && <span style={{ color: "#22c55e" }}>• 📱 {cust.phone}</span>}
+                        {cust.phone && <span style={{ color: "#2E7D5B" }}>• 📱 {cust.phone}</span>}
                       </div>
                     </td>
                     <td>{cust.industry}</td>
@@ -332,7 +332,7 @@ export default function Customers() {
                             cust.avgDelayDays > 12
                               ? "#fb7185"
                               : cust.avgDelayDays > 5
-                              ? "#fbbf24"
+                              ? "#B7791F"
                               : "#34d399",
                         }}
                       >
@@ -345,7 +345,7 @@ export default function Customers() {
                           <span
                             style={{
                               fontSize: 11,
-                              fontWeight: 800,
+                              fontWeight: 700,
                               padding: "2px 8px",
                               borderRadius: "var(--radius-full)",
                               background: risk.riskBg,
@@ -355,7 +355,7 @@ export default function Customers() {
                           >
                             {risk.riskTier}
                           </span>
-                          <span style={{ fontSize: 11.5, fontWeight: 900, color: risk.riskBadgeColor }}>
+                          <span style={{ fontSize: 11.5, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: risk.riskBadgeColor }}>
                             {risk.riskScoreIndex}/100
                           </span>
                         </div>
@@ -369,9 +369,9 @@ export default function Customers() {
                         <button
                           className="btn btn-sm"
                           style={{
-                            background: "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(59, 130, 246, 0.15))",
+                            background: "var(--bg-tertiary)",
                             border: "1px solid rgba(34, 197, 94, 0.4)",
-                            color: "#22c55e",
+                            color: "#2E7D5B",
                             padding: "4px 10px",
                             fontWeight: 700,
                             fontSize: 11.5,
@@ -383,7 +383,7 @@ export default function Customers() {
                           onClick={() => setRecoveryData({ invoice: sampleInv, customer: cust })}
                           title="Send WhatsApp / Email Cash Recovery Notice"
                         >
-                          <Zap size={12} style={{ color: "#22c55e" }} />
+                          <Zap size={12} style={{ color: "#2E7D5B" }} />
                           <span>⚡ Cash Recovery</span>
                         </button>
                       ) : (

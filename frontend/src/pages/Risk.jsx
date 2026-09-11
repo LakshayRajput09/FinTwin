@@ -336,7 +336,7 @@ function Risk() {
             </h2>
 
             <p>
-              NexFin is analyzing payment behavior,
+              FinTwin is analyzing payment behavior,
               liquidity and customer concentration.
             </p>
 
@@ -428,7 +428,7 @@ function Risk() {
   return (
     <ModulePage
       title="Risk Analysis"
-      description="Understand the financial risks identified by the NexFin AI engine."
+      description="Understand the financial risks identified by the FinTwin AI engine."
     >
 
       {/* =====================================
@@ -461,7 +461,7 @@ function Risk() {
                     : "#dcfce7",
               color:
                 overall.risk === "HIGH"
-                  ? "#dc2626"
+                  ? "#B54747"
                   : overall.risk === "MEDIUM"
                     ? "#a16207"
                     : "#15803d",
@@ -618,7 +618,7 @@ function Risk() {
           <div>
 
             <h2>
-              Why NexFin identified these risks
+              Why FinTwin identified these risks
             </h2>
 
             <p>
@@ -846,7 +846,7 @@ function Risk() {
         <strong>
           Important:
         </strong>{" "}
-        NexFin's risk indicators are analytical
+        FinTwin's risk indicators are analytical
         predictions based on available financial
         data. They are not credit decisions,
         lending approvals, or financial advice.
@@ -885,7 +885,7 @@ function RiskCard({
           style={{
             color:
               risk === "HIGH"
-                ? "#dc2626"
+                ? "#B54747"
                 : risk === "MEDIUM"
                   ? "#a16207"
                   : "#15803d",
