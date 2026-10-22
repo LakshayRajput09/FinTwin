@@ -53,17 +53,18 @@ export default function DeepDiveRiskModal({ invoice, onClose, onOpenRecovery }) 
 
   const calculateEMI = (principal, annualRate, months) => {
     if (!principal || !months) return 0;
+    if (annualRate <= 0) return Math.round(principal / months);
     const monthlyRate = annualRate / 12 / 100;
-    return Math.round(
-      (principal * monthlyRate * Math.pow(1 + monthlyRate, months)) /
-        (Math.pow(1 + monthlyRate, months) - 1)
-    );
+    const factor = Math.pow(1 + monthlyRate, months);
+    if (!factor || factor <= 1) return Math.round(principal / months);
+    const emi = (principal * monthlyRate * factor) / (factor - 1);
+    return isNaN(emi) || !isFinite(emi) ? 0 : Math.round(emi);
   };
 
   const stressedEMI = calculateEMI(targetLoanAmount, effectiveStressRate, tenureMonths);
   const stressedOperatingProfit = Math.max(15000, stressedRevenue - baseMonthlyExpenses);
-  const dscrRatio = Math.max(0.2, Number((stressedOperatingProfit / stressedEMI).toFixed(2)));
-  const foirPercent = Math.min(100, Math.round((stressedEMI / stressedRevenue) * 100));
+  const dscrRatio = stressedEMI > 0 ? Math.max(0.2, Number((stressedOperatingProfit / stressedEMI).toFixed(2))) : 2.5;
+  const foirPercent = stressedRevenue > 0 ? Math.min(100, Math.round((stressedEMI / stressedRevenue) * 100)) : 0;
   const stressedRunwayDays = Math.max(
     14,
     Math.round(180 * (1 + riskRevenueShock / 120) - riskDebtorDelay * 0.8)

@@ -222,15 +222,15 @@ export default function Expenses() {
 
             {/* View Mode Toggle */}
             {chartData.length > 0 && (
-              <div style={{ display: "flex", gap: 4, background: "rgba(15,23,42,0.6)", padding: 2, borderRadius: 6 }}>
+              <div style={{ display: "flex", gap: 4, background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)", padding: 2, borderRadius: 6 }}>
                 <button
                   onClick={() => setChartViewMode("pie")}
                   style={{
                     padding: "4px 8px",
                     borderRadius: 4,
                     border: "none",
-                    background: chartViewMode === "pie" ? "#1F5A4A" : "transparent",
-                    color: chartViewMode === "pie" ? "#fff" : "var(--text-muted)",
+                    background: chartViewMode === "pie" ? "var(--accent-blue)" : "transparent",
+                    color: chartViewMode === "pie" ? "#fff" : "var(--text-secondary)",
                     fontSize: 11,
                     cursor: "pointer",
                     fontWeight: 600,
@@ -245,8 +245,8 @@ export default function Expenses() {
                     padding: "4px 8px",
                     borderRadius: 4,
                     border: "none",
-                    background: chartViewMode === "bar" ? "#1F5A4A" : "transparent",
-                    color: chartViewMode === "bar" ? "#fff" : "var(--text-muted)",
+                    background: chartViewMode === "bar" ? "var(--accent-blue)" : "transparent",
+                    color: chartViewMode === "bar" ? "#fff" : "var(--text-secondary)",
                     fontSize: 11,
                     cursor: "pointer",
                     fontWeight: 600,
@@ -282,10 +282,12 @@ export default function Expenses() {
                       </Pie>
                       <Tooltip
                         contentStyle={{
-                          background: "rgba(15, 23, 42, 0.95)",
-                          border: "1px solid rgba(255,255,255,0.15)",
+                          background: "var(--bg-card)",
+                          border: "1px solid var(--border-medium)",
                           borderRadius: 8,
                           fontSize: 12,
+                          color: "var(--text-primary)",
+                          boxShadow: "var(--shadow-md)",
                         }}
                         formatter={(val) => [`${formatMoney(val)} (${totalExpensesSum > 0 ? ((Number(val) / totalExpensesSum) * 100).toFixed(1) : 0}%)`, "Expenditure"]}
                       />

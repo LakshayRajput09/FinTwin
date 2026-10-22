@@ -122,7 +122,8 @@ export default function Financing() {
   };
 
   const formatLakhs = (amount) => {
-    const val = Number(amount || 0);
+    const raw = Number(amount);
+    const val = isNaN(raw) || !isFinite(raw) ? 0 : raw;
     const abs = Math.abs(val);
     if (abs >= 10000000) return `₹${(val / 10000000).toFixed(2)} Cr`;
     if (abs >= 100000) return `₹${(val / 100000).toFixed(2)} L`;
@@ -136,7 +137,9 @@ export default function Financing() {
     if (annualRate <= 0) return Math.round(principal / tenureMonths);
     const monthlyRate = annualRate / 100 / 12;
     const factor = Math.pow(1 + monthlyRate, tenureMonths);
-    return Math.round((principal * monthlyRate * factor) / (factor - 1));
+    if (!factor || factor <= 1) return Math.round(principal / tenureMonths);
+    const emi = (principal * monthlyRate * factor) / (factor - 1);
+    return isNaN(emi) || !isFinite(emi) ? 0 : Math.round(emi);
   };
 
   // Derived Financials

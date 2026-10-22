@@ -104,7 +104,7 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
           <span style={{ color: "var(--text-muted)", fontSize: 13, flex: 1, textAlign: "left" }}>
             Search invoices, customers, or ask anything...
           </span>
-          <kbd className="search-kbd" style={{ background: "rgba(255, 255, 255, 0.8)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 6, padding: "2px 6px", fontSize: 11, color: "var(--text-secondary)" }}>
+          <kbd className="search-kbd" style={{ background: "var(--bg-card)", border: "1px solid var(--border-medium)", borderRadius: 6, padding: "2px 6px", fontSize: 11, color: "var(--text-secondary)" }}>
             ⌘K
           </kbd>
         </button>
@@ -455,13 +455,13 @@ export default function Topbar({ onOpenAiCopilot, onOpenQuickAction, onOpenSearc
                   width: 28,
                   height: 28,
                   borderRadius: "50%",
-                  background: "var(--bg-tertiary), #1F5A4A)",
+                  background: "var(--accent-blue)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 11,
                   fontWeight: 700,
-                  color: "#fff",
+                  color: "#ffffff",
                 }}
               >
                 {user?.avatar || "NF"}

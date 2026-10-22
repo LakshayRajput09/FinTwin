@@ -514,7 +514,7 @@ export default function Dashboard() {
             <p style={{ margin: "0 0 16px", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5, maxWidth: "80%" }}>
               {trapped43bAmount > 0 ? (
                 <span>
-                  Detected <strong>₹{formatLakhs(trapped43bAmount)}</strong> in pending payments exceeding the statutory 45-day limit. Buyers owe an estimated <strong>₹{Math.round(penalInterestAccumulated).toLocaleString("en-IN")}</strong> in compound penal interest. Discounting via TReDS or issuing legal demand notices will inject immediate cash before month-end obligations.
+                  Detected <strong>{formatLakhs(trapped43bAmount)}</strong> in pending payments exceeding the statutory 45-day limit. Buyers owe an estimated <strong>₹{Math.round(penalInterestAccumulated).toLocaleString("en-IN")}</strong> in compound penal interest. Discounting via TReDS or issuing legal demand notices will inject immediate cash before month-end obligations.
                 </span>
               ) : (
                 <span>

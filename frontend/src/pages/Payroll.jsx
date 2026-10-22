@@ -449,11 +449,11 @@ export default function Payroll() {
                             width: 32,
                             height: 32,
                             borderRadius: "var(--radius-full)",
-                            background: "var(--bg-tertiary)",
+                            background: "var(--accent-blue)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            color: "#fff",
+                            color: "#ffffff",
                             fontSize: 12,
                             fontWeight: 700,
                           }}

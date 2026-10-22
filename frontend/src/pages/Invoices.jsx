@@ -531,20 +531,20 @@ export default function Invoices() {
                 return (
                   <tr key={inv.id}>
                     <td style={{ fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-mono)" }}>
-                      {inv.id}
+                      {inv.id || inv.invoice_id}
                     </td>
                     <td>
-                      <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{inv.customer}</div>
+                      <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{inv.customer || inv.customer_name || inv.buyer || "Enterprise Client"}</div>
                       <div style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
-                        <span>Issued: {inv.invoiceDate || "2026-08-01"}</span>
+                        <span>Issued: {inv.invoiceDate || inv.invoice_date || "2026-08-01"}</span>
                         {(inv.phone || cust?.phone) && (
-                          <span style={{ color: "#2E7D5B", fontWeight: 600 }}>• 📱 {inv.phone || cust?.phone}</span>
+                          <span style={{ color: "var(--accent-emerald)", fontWeight: 600 }}>• 📱 {inv.phone || cust?.phone}</span>
                         )}
                       </div>
                     </td>
                     <td>
                       <div style={{ fontWeight: 750, color: "#60a5fa", fontSize: 14, fontVariantNumeric: "tabular-nums" }}>
-                        {formatLakhs(inv.amount)}
+                        {formatLakhs(inv.amount || inv.invoice_amount || 0)}
                       </div>
                       {inv.status !== "Paid" && risk.accruedPenalInterest > 0 && (
                         <div
@@ -556,7 +556,7 @@ export default function Invoices() {
                       )}
                     </td>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{inv.dueDate}</div>
+                      <div style={{ fontWeight: 600 }}>{inv.dueDate || inv.due_date || "Pending"}</div>
                       {risk.daysOverdue > 0 && (
                         <div style={{ fontSize: 10.5, color: "var(--accent-rose)", fontWeight: 700 }}>
                           +{risk.daysOverdue}d overdue
@@ -572,14 +572,14 @@ export default function Invoices() {
                               fontSize: 11.5,
                               fontWeight: 600,
                               color:
-                                inv.predictedDelayDays > 15
+                                (inv.predictedDelayDays ?? inv.predicted_delay_days ?? 4) > 15
                                   ? "var(--accent-rose)"
-                                  : inv.predictedDelayDays > 5
+                                  : (inv.predictedDelayDays ?? inv.predicted_delay_days ?? 4) > 5
                                   ? "var(--accent-amber)"
                                   : "var(--accent-emerald)",
                             }}
                           >
-                            +{inv.predictedDelayDays || 4}d predicted delay
+                            +{inv.predictedDelayDays ?? inv.predicted_delay_days ?? 4}d predicted delay
                           </span>
                         </div>
                         <span

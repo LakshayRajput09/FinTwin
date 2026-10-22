@@ -9,8 +9,10 @@
  */
 export function calculateInvoiceRiskAnalysis(invoice, customer = null, business = null) {
   const today = new Date();
-  const dueDate = new Date(invoice?.dueDate || today);
-  const invoiceDate = new Date(invoice?.invoiceDate || today);
+  const rawDueDate = invoice?.dueDate || invoice?.due_date;
+  const rawInvoiceDate = invoice?.invoiceDate || invoice?.invoice_date;
+  const dueDate = rawDueDate ? new Date(rawDueDate) : today;
+  const invoiceDate = rawInvoiceDate ? new Date(rawInvoiceDate) : today;
 
   // Overdue and Age calculations
   const diffTime = today - dueDate;
@@ -19,7 +21,8 @@ export function calculateInvoiceRiskAnalysis(invoice, customer = null, business 
 
   const isPaid = invoice?.status === "Paid";
   const isOverdue = invoice?.status === "Overdue" || daysOverdue > 0;
-  const amount = Number(invoice?.amount || 0);
+  const rawAmount = invoice?.amount ?? invoice?.invoice_amount ?? 0;
+  const amount = isNaN(Number(rawAmount)) ? 0 : Number(rawAmount);
 
   // 1. Section 43B(h) Compliance Classification
   // MSMED Act statutory maximum: 45 days.
@@ -43,7 +46,8 @@ export function calculateInvoiceRiskAnalysis(invoice, customer = null, business 
   // 2. Accrued Penal Interest Calculation (Section 16, MSMED Act 2006)
   // Mandates compound interest with monthly rests at 3 times RBI Bank Rate (~6.5% * 3 = 19.5% p.a.)
   const annualPenalRate = 0.195;
-  const effectiveDelay = daysOverdue > 0 ? daysOverdue : Number(invoice?.predictedDelayDays || 4);
+  const rawDelay = invoice?.predictedDelayDays ?? invoice?.predicted_delay_days ?? 4;
+  const effectiveDelay = daysOverdue > 0 ? daysOverdue : (isNaN(Number(rawDelay)) ? 4 : Number(rawDelay));
   const accruedPenalInterest = isPaid
     ? 0
     : Math.round(amount * (annualPenalRate / 365) * effectiveDelay);

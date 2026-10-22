@@ -278,19 +278,21 @@ export default function Forecast() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="day" stroke="#64748b" fontSize={11} tickLine={false} />
+                <XAxis dataKey="day" stroke="var(--text-muted)" fontSize={11} tickLine={false} />
                 <YAxis
-                  stroke="#64748b"
+                  stroke="var(--text-muted)"
                   fontSize={11}
                   tickLine={false}
                   tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
                 />
                 <Tooltip
                   contentStyle={{
-                    background: "rgba(13, 18, 31, 0.95)",
-                    border: "1px solid rgba(255,255,255,0.15)",
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border-medium)",
                     borderRadius: 8,
                     fontSize: 12,
+                    color: "var(--text-primary)",
+                    boxShadow: "var(--shadow-md)",
                   }}
                   formatter={(val) => [`₹${(Number(val) / 100000).toFixed(2)}L`, ""]}
                 />
@@ -330,19 +332,21 @@ export default function Forecast() {
             ) : (
               <LineChart data={forecast.timeline} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="day" stroke="#64748b" fontSize={11} tickLine={false} />
+                <XAxis dataKey="day" stroke="var(--text-muted)" fontSize={11} tickLine={false} />
                 <YAxis
-                  stroke="#64748b"
+                  stroke="var(--text-muted)"
                   fontSize={11}
                   tickLine={false}
                   tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
                 />
                 <Tooltip
                   contentStyle={{
-                    background: "rgba(13, 18, 31, 0.95)",
-                    border: "1px solid rgba(255,255,255,0.15)",
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border-medium)",
                     borderRadius: 8,
                     fontSize: 12,
+                    color: "var(--text-primary)",
+                    boxShadow: "var(--shadow-md)",
                   }}
                   formatter={(val) => [`₹${(Number(val) / 100000).toFixed(2)}L`, ""]}
                 />

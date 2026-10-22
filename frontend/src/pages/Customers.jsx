@@ -208,10 +208,12 @@ export default function Customers() {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    background: "rgba(13, 18, 31, 0.95)",
-                    border: "1px solid rgba(255,255,255,0.15)",
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border-medium)",
                     borderRadius: 8,
                     fontSize: 12,
+                    color: "var(--text-primary)",
+                    boxShadow: "var(--shadow-md)",
                   }}
                   formatter={(val) => [`₹${(Number(val) / 100000).toFixed(2)} Lakhs`, ""]}
                 />

@@ -458,7 +458,8 @@ export default function Simulator() {
   ]);
 
   function formatMoney(amount) {
-    const value = Number(amount || 0);
+    const raw = Number(amount);
+    const value = isNaN(raw) || !isFinite(raw) ? 0 : raw;
     const absolute = Math.abs(value);
 
     if (absolute >= 10000000) {

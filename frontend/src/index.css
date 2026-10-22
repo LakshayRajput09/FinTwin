@@ -72,9 +72,16 @@ html, body {
   
   --accent-blue: #1F5A4A;
   --accent-blue-hover: #164236;
+  --accent-blue-glow: rgba(31, 90, 74, 0.2);
   --accent-emerald: #2E7D5B;
+  --accent-emerald-hover: #246347;
+  --accent-emerald-glow: rgba(46, 125, 91, 0.2);
   --accent-amber: #B7791F;
   --accent-rose: #B54747;
+  --accent-purple: #8b5cf6;
+  --accent-purple-hover: #7c3aed;
+  --accent-purple-glow: rgba(139, 92, 246, 0.2);
+  --accent-cyan: #06b6d4;
   
   --shadow-xs: inset 0 1px 0 rgba(255,255,255,0.4), 0 2px 6px rgba(0,0,0,0.02);
   --shadow-sm: inset 0 1px 0 rgba(255,255,255,0.6), 0 4px 15px rgba(0,0,0,0.04);
@@ -198,6 +205,11 @@ html, body {
   --accent-blue-glow: rgba(129, 140, 248, 0.25);
   --accent-emerald: #34d399;
   --accent-amber: #fbbf24;
+  --accent-rose: #fb7185;
+  --accent-purple: #c084fc;
+  --accent-purple-hover: #a855f7;
+  --accent-purple-glow: rgba(192, 132, 252, 0.25);
+  --accent-cyan: #38bdf8;
 }
 
 /* Reset & Base */

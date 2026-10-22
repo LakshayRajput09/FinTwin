@@ -506,11 +506,11 @@ export default function Integrations() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                background: "rgba(255, 255, 255, 0.7)",
+                background: "var(--bg-card)",
                 backdropFilter: "blur(12px)",
                 WebkitBackdropFilter: "blur(12px)",
                 color: "var(--text-primary)",
-                border: "1px solid rgba(0, 0, 0, 0.08)",
+                border: "1px solid var(--border-medium)",
                 borderRadius: 9999,
                 padding: "9px 18px",
                 fontSize: 13,
@@ -518,7 +518,7 @@ export default function Integrations() {
                 cursor: "pointer"
               }}
             >
-              <ShieldCheck size={15} style={{ color: "#1F5A4A" }} />
+              <ShieldCheck size={15} style={{ color: "var(--accent-emerald)" }} />
               <span>Setup KYC & Verification</span>
             </button>
 
@@ -529,11 +529,11 @@ export default function Integrations() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                background: "rgba(255, 255, 255, 0.7)",
+                background: "var(--bg-card)",
                 backdropFilter: "blur(12px)",
                 WebkitBackdropFilter: "blur(12px)",
                 color: "var(--text-primary)",
-                border: "1px solid rgba(0, 0, 0, 0.08)",
+                border: "1px solid var(--border-medium)",
                 borderRadius: 9999,
                 padding: "9px 18px",
                 fontSize: 13,
@@ -552,11 +552,11 @@ export default function Integrations() {
           style={{
             padding: "22px 24px",
             borderRadius: 20,
-            background: "rgba(255, 255, 255, 0.55)",
+            background: "var(--bg-card)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            border: "1px solid rgba(255, 255, 255, 0.75)",
-            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.04)",
+            border: "1px solid var(--border-medium)",
+            boxShadow: "var(--shadow-sm)",
             width: 240,
             textAlign: "center",
             flexShrink: 0

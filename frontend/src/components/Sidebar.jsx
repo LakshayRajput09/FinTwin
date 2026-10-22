@@ -199,16 +199,16 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 textDecoration: "none",
                 fontSize: 14,
                 fontWeight: isActive ? 650 : 500,
-                color: isActive ? "#1F5A4A" : "#2D3748",
-                background: isActive ? "rgba(31, 90, 74, 0.10)" : "transparent",
-                borderLeft: isActive ? "3px solid #1F5A4A" : "3px solid transparent",
+                color: isActive ? "var(--accent-blue)" : "var(--text-primary)",
+                background: isActive ? "rgba(31, 90, 74, 0.12)" : "transparent",
+                borderLeft: isActive ? "3px solid var(--accent-blue)" : "3px solid transparent",
                 transition: "all 0.15s ease"
               }}
             >
               <div
                 className="nav-item-icon"
                 style={{
-                  color: isActive ? "#1F5A4A" : "#374151",
+                  color: isActive ? "var(--accent-blue)" : "var(--text-secondary)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center"
@@ -228,7 +228,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
         {/* Secondary modules divider if uncollapsed */}
         {!collapsed && (
           <div style={{ margin: "10px 0 4px", padding: "0 12px" }}>
-            <div style={{ height: 1, background: "rgba(0,0,0,0.05)" }} />
+            <div style={{ height: 1, background: "var(--border-subtle)" }} />
           </div>
         )}
 
@@ -251,12 +251,12 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 textDecoration: "none",
                 fontSize: 13,
                 fontWeight: isActive ? 650 : 500,
-                color: isActive ? "#1F5A4A" : "#64748B",
-                background: isActive ? "rgba(31, 90, 74, 0.08)" : "transparent",
-                borderLeft: isActive ? "3px solid #1F5A4A" : "3px solid transparent",
+                color: isActive ? "var(--accent-blue)" : "var(--text-secondary)",
+                background: isActive ? "rgba(31, 90, 74, 0.10)" : "transparent",
+                borderLeft: isActive ? "3px solid var(--accent-blue)" : "3px solid transparent",
               }}
             >
-              <div style={{ color: isActive ? "#1F5A4A" : "#64748B" }}>
+              <div style={{ color: isActive ? "var(--accent-blue)" : "var(--text-muted)" }}>
                 <Icon size={16} />
               </div>
               {!collapsed && <span>{item.name}</span>}
@@ -266,7 +266,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
       </nav>
 
       {/* Human Software Widget Footer */}
-      <div style={{ padding: "8px 10px 12px", borderTop: "1px solid rgba(0,0,0,0.05)" }}>
+      <div style={{ padding: "8px 10px 12px", borderTop: "1px solid var(--border-subtle)" }}>
         <div
           className="sidebar-user-pill"
           onClick={() => {

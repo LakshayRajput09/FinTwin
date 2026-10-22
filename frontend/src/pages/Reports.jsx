@@ -183,20 +183,22 @@ export default function Reports() {
             <div style={{ height: 260, width: "100%", marginTop: 10 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={plChartData} margin={{ top: 15, right: 25, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11.5} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                  <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11.5} tickLine={false} />
                   <YAxis
-                    stroke="#94a3b8"
+                    stroke="var(--text-muted)"
                     fontSize={11}
                     tickLine={false}
                     tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
                   />
                   <Tooltip
                     contentStyle={{
-                      background: "rgba(15, 23, 42, 0.95)",
-                      border: "1px solid rgba(255,255,255,0.15)",
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border-medium)",
                       borderRadius: 8,
                       fontSize: 12,
+                      color: "var(--text-primary)",
+                      boxShadow: "var(--shadow-md)",
                     }}
                     formatter={(val) => [`₹${Number(val).toLocaleString("en-IN")}`, "Amount"]}
                   />
@@ -318,20 +320,22 @@ export default function Reports() {
             <div style={{ height: 260, width: "100%", marginTop: 10 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={cashflowChartData} margin={{ top: 15, right: 25, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11.5} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                  <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11.5} tickLine={false} />
                   <YAxis
-                    stroke="#94a3b8"
+                    stroke="var(--text-muted)"
                     fontSize={11}
                     tickLine={false}
                     tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`}
                   />
                   <Tooltip
                     contentStyle={{
-                      background: "rgba(15, 23, 42, 0.95)",
-                      border: "1px solid rgba(255,255,255,0.15)",
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border-medium)",
                       borderRadius: 8,
                       fontSize: 12,
+                      color: "var(--text-primary)",
+                      boxShadow: "var(--shadow-md)",
                     }}
                     formatter={(val) => [`₹${Number(val).toLocaleString("en-IN")}`, "Amount"]}
                   />
