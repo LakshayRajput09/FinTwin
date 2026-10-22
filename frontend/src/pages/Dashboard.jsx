@@ -404,7 +404,7 @@ export default function Dashboard() {
             <div className="mobile-scroll-x" style={{ display: "flex", gap: 24, marginTop: 32, flexWrap: "nowrap" }}>
               
               <div className="quick-action-item" onClick={() => navigate("/invoices")}>
-                <div className="quick-action-icon" style={{ background: "#e8f5e9", color: "#2e7d5b" }}><Zap size={18} /></div>
+                <div className="quick-action-icon" style={{ background: "rgba(16, 185, 129, 0.12)", color: "#10b981" }}><Zap size={18} /></div>
                 <div className="quick-action-text">
                   <span className="quick-action-title">Cash Recovery Hub</span>
                   <span className="quick-action-sub">Identify & collect dues</span>
@@ -412,7 +412,7 @@ export default function Dashboard() {
               </div>
 
               <div className="quick-action-item" onClick={() => navigate("/invoices")}>
-                <div className="quick-action-icon" style={{ background: "#e3f2fd", color: "#1976d2" }}><Plus size={18} /></div>
+                <div className="quick-action-icon" style={{ background: "rgba(59, 130, 246, 0.12)", color: "#3b82f6" }}><Plus size={18} /></div>
                 <div className="quick-action-text">
                   <span className="quick-action-title">Upload Invoice</span>
                   <span className="quick-action-sub">CSV, Excel or PDF</span>
@@ -420,7 +420,7 @@ export default function Dashboard() {
               </div>
 
               <div className="quick-action-item" onClick={() => setDashboardDeepDiveInvoice(data.invoices[0] || true)}>
-                <div className="quick-action-icon" style={{ background: "#ffebee", color: "#c62828" }}><ShieldAlert size={18} /></div>
+                <div className="quick-action-icon" style={{ background: "rgba(239, 68, 68, 0.12)", color: "#ef4444" }}><ShieldAlert size={18} /></div>
                 <div className="quick-action-text">
                   <span className="quick-action-title">Deep-Dive Risk Analysis</span>
                   <span className="quick-action-sub">Find hidden risks</span>
@@ -428,7 +428,7 @@ export default function Dashboard() {
               </div>
 
               <div className="quick-action-item" onClick={() => navigate("/vendors")}>
-                <div className="quick-action-icon" style={{ background: "#f5f5f5", color: "#424242" }}><Grid size={18} /></div>
+                <div className="quick-action-icon" style={{ background: "var(--bg-tertiary)", color: "var(--text-secondary)" }}><Grid size={18} /></div>
                 <div className="quick-action-text">
                   <span className="quick-action-title">MSME 43B(h) Radar</span>
                   <span className="quick-action-sub">Check eligibility</span>
@@ -436,7 +436,7 @@ export default function Dashboard() {
               </div>
 
               <div className="quick-action-item" onClick={() => navigate("/financing")}>
-                <div className="quick-action-icon" style={{ background: "#e8f5e9", color: "#2e7d5b" }}><Landmark size={18} /></div>
+                <div className="quick-action-icon" style={{ background: "rgba(16, 185, 129, 0.12)", color: "#10b981" }}><Landmark size={18} /></div>
                 <div className="quick-action-text">
                   <span className="quick-action-title">TReDS & CGTMSE Loans</span>
                   <span className="quick-action-sub">Explore options</span>
@@ -484,7 +484,7 @@ export default function Dashboard() {
                 <span>•</span>
                 <span>DSO: {summary.dso || 42}d</span>
               </div>
-              <button style={{ background: "white", border: "1px solid rgba(0,0,0,0.08)", padding: "4px 12px", borderRadius: 12, fontSize: 11, fontWeight: 600, color: "var(--text-primary)", cursor: "pointer", boxShadow: "0 2px 5px rgba(0,0,0,0.02)" }}>
+              <button style={{ background: "var(--bg-card)", border: "1px solid var(--border-medium)", padding: "4px 12px", borderRadius: 12, fontSize: 11, fontWeight: 600, color: "var(--text-primary)", cursor: "pointer", boxShadow: "var(--shadow-xs)" }}>
                 View Details →
               </button>
             </div>
@@ -497,7 +497,7 @@ export default function Dashboard() {
           ================================================================= */}
       <div className="insight-card">
         <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#e8f5e9", color: "#1F5A4A", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--accent-blue-glow, rgba(31, 90, 74, 0.15))", color: "var(--accent-blue)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <Sparkles size={16} fill="currentColor" />
           </div>
 
@@ -506,7 +506,7 @@ export default function Dashboard() {
               <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
                 FinTwin Insight
               </span>
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: "#4f5a6b", background: "#e2e8f0", padding: "2px 8px", borderRadius: 12, textTransform: "uppercase" }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: "var(--text-secondary)", background: "var(--bg-tertiary)", padding: "2px 8px", borderRadius: 12, textTransform: "uppercase" }}>
                 AUTOMATED FINANCIAL TWIN TELEMETRY
               </span>
             </div>
@@ -526,7 +526,7 @@ export default function Dashboard() {
             <div style={{ display: "flex", gap: 12 }}>
               <button 
                 onClick={() => navigate("/financing")}
-                style={{ display: "flex", alignItems: "center", gap: 6, background: "#1F5A4A", color: "white", border: "none", padding: "8px 16px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 10px rgba(31,90,74,0.2)" }}
+                style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--accent-blue)", color: "var(--text-on-accent)", border: "none", padding: "8px 16px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 10px var(--accent-blue-glow, rgba(31,90,74,0.2))" }}
               >
                 <Landmark size={14} />
                 <span>Auction Invoices on TReDS</span>
@@ -534,7 +534,7 @@ export default function Dashboard() {
 
               <button 
                 onClick={() => navigate("/simulator")}
-                style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.8)", color: "var(--text-primary)", border: "1px solid rgba(0,0,0,0.1)", padding: "8px 16px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", backdropFilter: "blur(4px)" }}
+                style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--bg-card)", color: "var(--text-primary)", border: "1px solid var(--border-medium)", padding: "8px 16px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", backdropFilter: "blur(4px)" }}
               >
                 <Sliders size={14} />
                 <span>Simulate Runway Shocks</span>
@@ -559,7 +559,7 @@ export default function Dashboard() {
       </div>
       <div className="metric-row">
         <div className="metric-col">
-          <div className="metric-icon" style={{ background: "#e8f5e9", color: "#2e7d5b" }}>
+          <div className="metric-icon" style={{ background: "rgba(16, 185, 129, 0.12)", color: "#10b981" }}>
             <Wallet size={20} />
           </div>
           <div>
@@ -568,7 +568,7 @@ export default function Dashboard() {
                 {formatLakhs(displayCash)}
               </span>
               {isSimulationActive && (
-                <span style={{ fontSize: 11, background: "#ffebee", color: "#c62828", padding: "2px 6px", borderRadius: 12, fontWeight: 650, fontVariantNumeric: "tabular-nums" }}>
+                <span style={{ fontSize: 11, background: "rgba(239, 68, 68, 0.15)", color: "#ef4444", padding: "2px 6px", borderRadius: 12, fontWeight: 650, fontVariantNumeric: "tabular-nums" }}>
                   -₹{Math.abs(cashVariance / 100000).toFixed(2)}L
                 </span>
               )}
@@ -582,7 +582,7 @@ export default function Dashboard() {
         </div>
 
         <div className="metric-col">
-          <div className="metric-icon" style={{ background: "#e3f2fd", color: "#1976d2" }}>
+          <div className="metric-icon" style={{ background: "rgba(59, 130, 246, 0.12)", color: "#3b82f6" }}>
             <FileText size={20} />
           </div>
           <div>
@@ -591,7 +591,7 @@ export default function Dashboard() {
                 {formatLakhs(displayReceivables)}
               </span>
               {trapped43bAmount > 0 && (
-                <span style={{ fontSize: 11, background: "#fff3e0", color: "#ef6c00", padding: "2px 6px", borderRadius: 12, fontWeight: 650 }}>
+                <span style={{ fontSize: 11, background: "rgba(245, 158, 11, 0.12)", color: "#f59e0b", padding: "2px 6px", borderRadius: 12, fontWeight: 650 }}>
                   {overdue43bInvoices.length} in 43B(h)
                 </span>
               )}
@@ -605,7 +605,7 @@ export default function Dashboard() {
         </div>
 
         <div className="metric-col">
-          <div className="metric-icon" style={{ background: "#fff3e0", color: "#e65100" }}>
+          <div className="metric-icon" style={{ background: "rgba(245, 158, 11, 0.12)", color: "#f59e0b" }}>
             <CreditCard size={20} />
           </div>
           <div>
@@ -623,7 +623,7 @@ export default function Dashboard() {
         </div>
 
         <div className="metric-col">
-          <div className="metric-icon" style={{ background: "#e8f5e9", color: "#2e7d5b" }}>
+          <div className="metric-icon" style={{ background: "rgba(16, 185, 129, 0.12)", color: "#10b981" }}>
             <TrendingUp size={20} />
           </div>
           <div>
@@ -632,7 +632,7 @@ export default function Dashboard() {
                 {formatLakhs(isSimulationActive ? twinStressedData.stressedCash : summary.projectedCash)}
               </span>
               {isSimulationActive && (
-                <span style={{ fontSize: 11, background: "#ffebee", color: "#c62828", padding: "2px 6px", borderRadius: 12, fontWeight: 650 }}>
+                <span style={{ fontSize: 11, background: "rgba(239, 68, 68, 0.15)", color: "#ef4444", padding: "2px 6px", borderRadius: 12, fontWeight: 650 }}>
                   Stressed
                 </span>
               )}

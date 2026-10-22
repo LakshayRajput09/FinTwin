@@ -96,14 +96,14 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
             width: 32,
             height: 32,
             borderRadius: 8,
-            background: "rgba(31, 90, 74, 0.1)",
-            color: "#1F5A4A",
+            background: "var(--accent-blue-glow, rgba(31, 90, 74, 0.1))",
+            color: "var(--accent-blue)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontWeight: 800,
             fontSize: 14,
-            border: "1px solid rgba(31, 90, 74, 0.15)"
+            border: "1px solid var(--border-subtle)"
           }}>
             FT
           </div>
@@ -200,7 +200,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 fontSize: 14,
                 fontWeight: isActive ? 650 : 500,
                 color: isActive ? "var(--accent-blue)" : "var(--text-primary)",
-                background: isActive ? "rgba(31, 90, 74, 0.12)" : "transparent",
+                background: isActive ? "var(--accent-blue-glow, rgba(31, 90, 74, 0.12))" : "transparent",
                 borderLeft: isActive ? "3px solid var(--accent-blue)" : "3px solid transparent",
                 transition: "all 0.15s ease"
               }}
@@ -252,7 +252,7 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, onCloseMo
                 fontSize: 13,
                 fontWeight: isActive ? 650 : 500,
                 color: isActive ? "var(--accent-blue)" : "var(--text-secondary)",
-                background: isActive ? "rgba(31, 90, 74, 0.10)" : "transparent",
+                background: isActive ? "var(--accent-blue-glow, rgba(31, 90, 74, 0.10))" : "transparent",
                 borderLeft: isActive ? "3px solid var(--accent-blue)" : "3px solid transparent",
               }}
             >

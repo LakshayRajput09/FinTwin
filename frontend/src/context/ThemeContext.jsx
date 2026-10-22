@@ -74,10 +74,13 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     const root = document.documentElement;
+    const body = document.body;
     Object.keys(THEMES).forEach((t) => {
       root.classList.remove(`theme-${t}`);
+      if (body) body.classList.remove(`theme-${t}`);
     });
     root.classList.add(`theme-${theme}`);
+    if (body) body.classList.add(`theme-${theme}`);
 
     // Quick keyboard shortcut (Alt + T / Option + T) to cycle theme
     const handleKeyDown = (e) => {

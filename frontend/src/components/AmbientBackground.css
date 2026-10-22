@@ -45,3 +45,24 @@
   );
   pointer-events: none;
 }
+
+/* Calm Evening Slate (Dusk) - Pure dark atmospheric slate without daylight leaks */
+.theme-dusk .ambient-background-canvas {
+  background: radial-gradient(circle at 15% 15%, rgba(129, 140, 248, 0.12) 0%, transparent 45%),
+              radial-gradient(circle at 85% 25%, rgba(52, 211, 153, 0.08) 0%, transparent 45%),
+              radial-gradient(circle at 50% 80%, rgba(129, 140, 248, 0.09) 0%, transparent 55%),
+              #0f172a !important;
+}
+
+.theme-dusk .ambient-wallpaper-img {
+  opacity: 0 !important;
+  display: none !important;
+}
+
+.theme-dusk .ambient-soft-bloom {
+  background: radial-gradient(
+    ellipse at 50% 20%,
+    rgba(129, 140, 248, 0.12) 0%,
+    rgba(15, 23, 42, 0) 70%
+  ) !important;
+}
