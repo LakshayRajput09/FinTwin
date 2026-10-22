@@ -211,18 +211,29 @@ html {
   scroll-behavior: smooth;
 }
 
-body,
-.theme-daylight,
-.theme-sage,
-.theme-sunset,
-.theme-dusk {
+body {
   font-family: var(--font-sans);
-  background-color: #F8F9F8;
-  background-image: radial-gradient(ellipse at 80% 0%, rgba(31, 90, 74, 0.08) 0%, transparent 60%),
-                    radial-gradient(ellipse at 0% 100%, rgba(31, 90, 74, 0.04) 0%, transparent 50%);
-  background-attachment: fixed;
+  background-color: var(--bg-canvas);
   color: var(--text-primary);
   line-height: 1.5;
+}
+
+.theme-daylight,
+.theme-sage,
+.theme-sunset {
+  background-color: var(--bg-canvas);
+  background-image: radial-gradient(ellipse at 80% 0%, rgba(31, 90, 74, 0.06) 0%, transparent 60%),
+                    radial-gradient(ellipse at 0% 100%, rgba(31, 90, 74, 0.03) 0%, transparent 50%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+}
+
+.theme-dusk {
+  background-color: var(--bg-canvas);
+  background-image: radial-gradient(ellipse at 80% 0%, rgba(129, 140, 248, 0.08) 0%, transparent 60%),
+                    radial-gradient(ellipse at 0% 100%, rgba(52, 211, 153, 0.04) 0%, transparent 50%);
+  background-attachment: fixed;
+  color: var(--text-primary);
 }
 
 h1, .page-title, .main-title {
@@ -2694,18 +2705,17 @@ input[type="range"].range-slider::-webkit-slider-thumb:active {
     grid-column: span 12 / span 12 !important;
   }
 
-  /* Cards & Spacing */
+  /* Cards & Spacing on Mobile (Preserving Liquid Glass & Borders) */
   .glass-card {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-  box-shadow: none;
-  border-radius: 0;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  margin-bottom: 32px;
-  padding-bottom: 32px;
-}
+    background: var(--bg-card);
+    backdrop-filter: blur(18px) saturate(145%);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-sm);
+    border-radius: 14px;
+    padding: 18px 16px;
+    margin-bottom: 16px;
+  }
 
   .card-header {
     flex-direction: column;
@@ -2718,31 +2728,30 @@ input[type="range"].range-slider::-webkit-slider-thumb:active {
   }
 
   .kpi-card {
-  background: transparent;
-  border: none;
-  border-right: 1px solid rgba(0,0,0,0.06);
-  box-shadow: none;
-  border-radius: 0;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  padding: 10px 24px;
-}
+    background: var(--bg-card);
+    backdrop-filter: blur(18px) saturate(145%);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-xs);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
 
   .kpi-value {
     font-size: 22px;
   }
 
-  /* Pictorial Hero Card mobile stacking */
+  /* Pictorial Hero Card mobile styling */
   .pictorial-hero-card {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0 !important;
-  margin-bottom: 32px;
-}
-.pictorial-hero-card > div {
-  background: transparent !important;
-}
+    background: var(--bg-card);
+    backdrop-filter: blur(18px) saturate(145%);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-sm);
+    border-radius: 14px;
+    padding: 18px 16px !important;
+    margin-bottom: 20px;
+  }
 
   .pictorial-hero-card > div {
     flex-direction: column !important;

@@ -198,10 +198,10 @@ export default function LandingPage() {
           justifyContent: "space-between",
           maxWidth: 1320,
           margin: "0 auto",
-          background: "rgba(255, 255, 255, 0.65)",
+          background: "var(--bg-glass)",
           backdropFilter: "blur(20px) saturate(150%)",
           WebkitBackdropFilter: "blur(20px) saturate(150%)",
-          border: "1px solid rgba(255, 255, 255, 0.8)",
+          border: "1px solid var(--border-medium)",
           borderRadius: "var(--radius-full)",
           boxShadow: "0 8px 32px rgba(0,0,0,0.06)",
         }}
@@ -350,10 +350,10 @@ export default function LandingPage() {
             fontSize: 12.5,
             fontWeight: 600,
             color: "var(--text-primary)",
-            background: "rgba(255, 255, 255, 0.75)",
+            background: "var(--bg-glass)",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.9)",
+            border: "1px solid var(--border-medium)",
             boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
           }}
         >
@@ -1786,7 +1786,7 @@ export default function LandingPage() {
       {/* =================================================================
           9. BOTTOM CALL TO ACTION
           ================================================================= */}
-      <section style={{ padding: "70px 24px 80px", textAlign: "center", background: "rgba(255, 255, 255, 0.55)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid var(--border-subtle)" }}>
+      <section style={{ padding: "70px 24px 80px", textAlign: "center", background: "var(--bg-glass)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid var(--border-subtle)" }}>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
           <h2 style={{ fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 800, color: "var(--text-primary)", margin: "0 0 12px" }}>
             Ready to Protect Your Working Capital?
