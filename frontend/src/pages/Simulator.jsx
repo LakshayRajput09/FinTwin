@@ -1017,7 +1017,7 @@ export default function Simulator() {
               fontSize: 12.5,
               fontWeight: 700,
               background: activeTab === "sales" ? "var(--accent-blue)" : "var(--bg-secondary)",
-              color: activeTab === "sales" ? "#fff" : "var(--text-secondary)",
+              color: activeTab === "sales" ? "var(--text-on-accent, #fff)" : "var(--text-secondary)",
               display: "flex",
               alignItems: "center",
               gap: 6,
@@ -1039,7 +1039,7 @@ export default function Simulator() {
               fontSize: 12.5,
               fontWeight: 700,
               background: activeTab === "operations" ? "var(--accent-blue)" : "var(--bg-secondary)",
-              color: activeTab === "operations" ? "#fff" : "var(--text-secondary)",
+              color: activeTab === "operations" ? "var(--text-on-accent, #fff)" : "var(--text-secondary)",
               display: "flex",
               alignItems: "center",
               gap: 6,
@@ -1061,7 +1061,7 @@ export default function Simulator() {
               fontSize: 12.5,
               fontWeight: 700,
               background: activeTab === "statutory" ? "var(--accent-blue)" : "var(--bg-secondary)",
-              color: activeTab === "statutory" ? "#fff" : "var(--text-secondary)",
+              color: activeTab === "statutory" ? "var(--text-on-accent, #fff)" : "var(--text-secondary)",
               display: "flex",
               alignItems: "center",
               gap: 6,
@@ -1083,7 +1083,7 @@ export default function Simulator() {
               fontSize: 12.5,
               fontWeight: 700,
               background: activeTab === "capex" ? "var(--accent-blue)" : "var(--bg-secondary)",
-              color: activeTab === "capex" ? "#fff" : "var(--text-secondary)",
+              color: activeTab === "capex" ? "var(--text-on-accent, #fff)" : "var(--text-secondary)",
               display: "flex",
               alignItems: "center",
               gap: 6,
@@ -1105,7 +1105,7 @@ export default function Simulator() {
               fontSize: 12.5,
               fontWeight: 700,
               background: activeTab === "relief" ? "var(--accent-emerald)" : "var(--bg-secondary)",
-              color: activeTab === "relief" ? "#fff" : "var(--accent-emerald)",
+              color: activeTab === "relief" ? "var(--text-on-accent, #fff)" : "var(--accent-emerald)",
               display: "flex",
               alignItems: "center",
               gap: 6,
@@ -1127,7 +1127,7 @@ export default function Simulator() {
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>Revenue / Demand Shock</strong>
-                <span style={{ fontSize: 13, fontWeight: 700, color: revenueChange < 0 ? "var(--accent-rose)" : revenueChange > 0 ? "var(--accent-emerald)" : "var(--text-muted)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: revenueChange < 0 ? "var(--accent-rose)" : revenueChange > 0 ? "var(--accent-emerald)" : "var(--text-secondary)" }}>
                   {revenueChange > 0 ? `+${revenueChange}%` : `${revenueChange}%`}
                 </span>
               </div>
@@ -1140,7 +1140,7 @@ export default function Simulator() {
                 onChange={(e) => setRevenueChange(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-blue)" }}
               />
-              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
                 Simulate drop in orders, customer cancellations, or market slowdown.
               </p>
             </div>
@@ -1149,7 +1149,7 @@ export default function Simulator() {
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>Customer Payment Delay</strong>
-                <span style={{ fontSize: 13, fontWeight: 700, color: paymentDelay > 0 ? "var(--accent-amber)" : "var(--text-muted)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: paymentDelay > 0 ? "var(--accent-amber)" : "var(--text-secondary)" }}>
                   {paymentDelay} Days Delay
                 </span>
               </div>
@@ -1162,7 +1162,7 @@ export default function Simulator() {
                 onChange={(e) => setPaymentDelay(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-amber)" }}
               />
-              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
                 Buyers take longer to pay overdue invoices past agreed credit periods.
               </p>
             </div>
@@ -1171,7 +1171,7 @@ export default function Simulator() {
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>Top Client Bad Debt Default</strong>
-                <span style={{ fontSize: 13, fontWeight: 700, color: customerDefault > 0 ? "var(--accent-rose)" : "var(--text-muted)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: customerDefault > 0 ? "var(--accent-rose)" : "var(--text-secondary)" }}>
                   {customerDefault}% Written Off
                 </span>
               </div>
@@ -1184,7 +1184,7 @@ export default function Simulator() {
                 onChange={(e) => setCustomerDefault(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-rose)" }}
               />
-              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
                 Simulate a major customer going bankrupt or disputing payment entirely.
               </p>
             </div>
@@ -1193,7 +1193,7 @@ export default function Simulator() {
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>🚢 Export Bulk Order Strain</strong>
-                <span style={{ fontSize: 13, fontWeight: 700, color: exportSurge > 0 ? "var(--accent-blue)" : "var(--text-muted)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: exportSurge > 0 ? "var(--accent-blue)" : "var(--text-secondary)" }}>
                   +{exportSurge}% Order Volume
                 </span>
               </div>
@@ -1206,7 +1206,7 @@ export default function Simulator() {
                 onChange={(e) => setExportSurge(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-blue)" }}
               />
-              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
                 High-volume order requires heavy upfront inventory before 60-day Letter of Credit matures.
               </p>
             </div>
@@ -1220,7 +1220,7 @@ export default function Simulator() {
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>General OpEx Surge</strong>
-                <span style={{ fontSize: 13, fontWeight: 700, color: expenseChange > 0 ? "var(--accent-rose)" : "var(--text-muted)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: expenseChange > 0 ? "var(--accent-rose)" : "var(--text-secondary)" }}>
                   +{expenseChange}%
                 </span>
               </div>
@@ -1233,7 +1233,7 @@ export default function Simulator() {
                 onChange={(e) => setExpenseChange(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-rose)" }}
               />
-              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
                 Increase in utility bills, factory power charges, office rent, and administrative costs.
               </p>
             </div>
@@ -1242,7 +1242,7 @@ export default function Simulator() {
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>Raw Material & Supplier Price Surge</strong>
-                <span style={{ fontSize: 13, fontWeight: 700, color: rawMaterialInflation > 0 ? "var(--accent-amber)" : "var(--text-muted)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: rawMaterialInflation > 0 ? "var(--accent-amber)" : "var(--text-secondary)" }}>
                   +{rawMaterialInflation}% Vendor Inflation
                 </span>
               </div>
@@ -1255,7 +1255,7 @@ export default function Simulator() {
                 onChange={(e) => setRawMaterialInflation(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-amber)" }}
               />
-              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
                 Models commodity price inflation, steel/plastic cost hikes, and shipping spikes.
               </p>
             </div>
@@ -1264,7 +1264,7 @@ export default function Simulator() {
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>Team Expansion / Salary Increment</strong>
-                <span style={{ fontSize: 13, fontWeight: 700, color: payrollHike > 0 ? "var(--accent-blue)" : "var(--text-muted)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: payrollHike > 0 ? "var(--accent-blue)" : "var(--text-secondary)" }}>
                   +{payrollHike}% Payroll Surge
                 </span>
               </div>
@@ -1277,7 +1277,7 @@ export default function Simulator() {
                 onChange={(e) => setPayrollHike(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-blue)" }}
               />
-              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
                 Models annual appraisals, Diwali/festive bonuses, or hiring 2-5 technical specialists.
               </p>
             </div>
@@ -1313,7 +1313,7 @@ export default function Simulator() {
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>⚖️ Section 43B(h) Delay (3x RBI Interest)</strong>
-                <span style={{ fontSize: 13, fontWeight: 700, color: sec43bOverdue > 0 ? "var(--accent-rose)" : "var(--text-muted)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: sec43bOverdue > 0 ? "var(--accent-rose)" : "var(--text-secondary)" }}>
                   {sec43bOverdue} Days Past 45d
                 </span>
               </div>
@@ -1326,7 +1326,7 @@ export default function Simulator() {
                 onChange={(e) => setSec43bOverdue(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-rose)" }}
               />
-              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
                 Delays past 45 days incur 3x RBI bank rate (~19.5% p.a.) compound interest + 30% tax disallowance.
               </p>
             </div>
@@ -1335,7 +1335,7 @@ export default function Simulator() {
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>🏛️ RBI Repo Rate Hike on Bank OD/CC</strong>
-                <span style={{ fontSize: 13, fontWeight: 700, color: repoRateHike > 0 ? "var(--accent-amber)" : "var(--text-muted)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: repoRateHike > 0 ? "var(--accent-amber)" : "var(--text-secondary)" }}>
                   +{repoRateHike} bps (+{(repoRateHike / 100).toFixed(2)}%)
                 </span>
               </div>
@@ -1348,7 +1348,7 @@ export default function Simulator() {
                 onChange={(e) => setRepoRateHike(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-amber)" }}
               />
-              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
                 Simulate floating rate benchmark hikes across working capital cash credit & overdraft facilities.
               </p>
             </div>
@@ -1357,7 +1357,7 @@ export default function Simulator() {
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>📋 GST ITC Reversal (GSTR-2B Mismatch)</strong>
-                <span style={{ fontSize: 13, fontWeight: 700, color: itcReversal > 0 ? "var(--accent-rose)" : "var(--text-muted)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: itcReversal > 0 ? "var(--accent-rose)" : "var(--text-secondary)" }}>
                   {formatMoney(itcReversal)}
                 </span>
               </div>
@@ -1370,7 +1370,7 @@ export default function Simulator() {
                 onChange={(e) => setItcReversal(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-rose)" }}
               />
-              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
                 Non-filing by suppliers forces temporary cash blockage and statutory tax clawback.
               </p>
             </div>
@@ -1379,7 +1379,7 @@ export default function Simulator() {
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>Quarterly GST & Advance Tax Due</strong>
-                <span style={{ fontSize: 13, fontWeight: 700, color: taxOutflow > 0 ? "var(--accent-rose)" : "var(--text-muted)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: taxOutflow > 0 ? "var(--accent-rose)" : "var(--text-secondary)" }}>
                   {formatMoney(taxOutflow)}
                 </span>
               </div>
@@ -1392,7 +1392,7 @@ export default function Simulator() {
                 onChange={(e) => setTaxOutflow(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-rose)" }}
               />
-              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
                 Lump-sum statutory tax liability settlement and advance tax installments.
               </p>
             </div>
@@ -1401,7 +1401,7 @@ export default function Simulator() {
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>Monthly Bank Loan EMI Burden</strong>
-                <span style={{ fontSize: 13, fontWeight: 700, color: loanEmi > 0 ? "var(--accent-amber)" : "var(--text-muted)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: loanEmi > 0 ? "var(--accent-amber)" : "var(--text-secondary)" }}>
                   {formatMoney(loanEmi)} / mo
                 </span>
               </div>
@@ -1414,7 +1414,7 @@ export default function Simulator() {
                 onChange={(e) => setLoanEmi(Number(e.target.value))}
                 style={{ width: "100%", accentColor: "var(--accent-amber)" }}
               />
-              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
                 Principal & interest outflow on business term loans, CGTMSE facilities, or equipment debt.
               </p>
             </div>
@@ -1428,7 +1428,7 @@ export default function Simulator() {
             <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>🏭 Plant Machinery & Tooling Downpayment</strong>
-                <span style={{ fontSize: 13, fontWeight: 700, color: capexOutflow > 0 ? "var(--accent-blue)" : "var(--text-muted)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: capexOutflow > 0 ? "var(--accent-blue)" : "var(--text-secondary)" }}>
                   {formatMoney(capexOutflow)}
                 </span>
               </div>
@@ -1452,7 +1452,7 @@ export default function Simulator() {
                       padding: "2px 6px",
                       borderRadius: 4,
                       background: capexOutflow === amt ? "var(--accent-blue)" : "var(--bg-card)",
-                      color: capexOutflow === amt ? "#fff" : "var(--text-secondary)",
+                      color: capexOutflow === amt ? "var(--text-on-accent, #fff)" : "var(--text-secondary)",
                       border: "1px solid var(--border-subtle)",
                       cursor: "pointer",
                     }}
@@ -1461,7 +1461,7 @@ export default function Simulator() {
                   </button>
                 ))}
               </div>
-              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-muted)" }}>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--text-secondary)" }}>
                 Models CNC lathe purchases, warehouse automation, or tooling upgrades before revenue begins.
               </p>
             </div>
@@ -1543,7 +1543,7 @@ export default function Simulator() {
                       padding: "2px 6px",
                       borderRadius: 4,
                       background: govtSubsidy === amt ? "var(--accent-blue)" : "var(--bg-card)",
-                      color: govtSubsidy === amt ? "#fff" : "var(--text-secondary)",
+                      color: govtSubsidy === amt ? "var(--text-on-accent, #fff)" : "var(--text-secondary)",
                       border: "1px solid var(--border-subtle)",
                       cursor: "pointer",
                     }}
@@ -1587,7 +1587,7 @@ export default function Simulator() {
                 fontSize: 12,
                 fontWeight: 600,
                 background: activeChartTab === "bar" ? "var(--bg-card)" : "transparent",
-                color: activeChartTab === "bar" ? "var(--text-primary)" : "var(--text-muted)",
+                color: activeChartTab === "bar" ? "var(--text-primary)" : "var(--text-secondary)",
                 boxShadow: activeChartTab === "bar" ? "var(--shadow-sm)" : "none",
                 display: "flex",
                 alignItems: "center",
@@ -1606,7 +1606,7 @@ export default function Simulator() {
                 fontSize: 12,
                 fontWeight: 600,
                 background: activeChartTab === "trajectory" ? "var(--bg-card)" : "transparent",
-                color: activeChartTab === "trajectory" ? "var(--text-primary)" : "var(--text-muted)",
+                color: activeChartTab === "trajectory" ? "var(--text-primary)" : "var(--text-secondary)",
                 boxShadow: activeChartTab === "trajectory" ? "var(--shadow-sm)" : "none",
                 display: "flex",
                 alignItems: "center",
@@ -1625,7 +1625,7 @@ export default function Simulator() {
                 fontSize: 12,
                 fontWeight: 600,
                 background: activeChartTab === "matrix" ? "var(--bg-card)" : "transparent",
-                color: activeChartTab === "matrix" ? "var(--text-primary)" : "var(--text-muted)",
+                color: activeChartTab === "matrix" ? "var(--text-primary)" : "var(--text-secondary)",
                 boxShadow: activeChartTab === "matrix" ? "var(--shadow-sm)" : "none",
                 display: "flex",
                 alignItems: "center",
@@ -1644,8 +1644,8 @@ export default function Simulator() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={comparisonChartData} margin={{ top: 20, right: 20, left: 15, bottom: 40 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={10.5} angle={-25} textAnchor="end" height={60} interval={0} />
-                <YAxis stroke="var(--text-muted)" fontSize={11} tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`} />
+                <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fill: "var(--text-secondary)" }} fontSize={10.5} angle={-25} textAnchor="end" height={60} interval={0} />
+                <YAxis stroke="var(--text-secondary)" tick={{ fill: "var(--text-secondary)" }} fontSize={11} tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`} />
                 <Tooltip
                   contentStyle={{
                     background: "var(--bg-card)",
@@ -1695,8 +1695,8 @@ export default function Simulator() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-                <XAxis dataKey="day" stroke="var(--text-muted)" fontSize={11} />
-                <YAxis stroke="var(--text-muted)" fontSize={11} tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`} />
+                <XAxis dataKey="day" stroke="var(--text-secondary)" tick={{ fill: "var(--text-secondary)" }} fontSize={11} />
+                <YAxis stroke="var(--text-secondary)" tick={{ fill: "var(--text-secondary)" }} fontSize={11} tickFormatter={(val) => `₹${(val / 100000).toFixed(1)}L`} />
                 <Tooltip
                   contentStyle={{
                     background: "var(--bg-card)",
@@ -1708,7 +1708,7 @@ export default function Simulator() {
                   }}
                   formatter={(val) => [formatMoney(val)]}
                 />
-                <Legend verticalAlign="top" height={36} />
+                <Legend verticalAlign="top" height={36} wrapperStyle={{ color: "var(--text-primary)" }} />
                 <ReferenceLine y={0} stroke="#B54747" strokeDasharray="3 3" />
                 <Area type="monotone" dataKey="baseline" name="Base Operations" stroke="#1F5A4A" strokeWidth={2} fill="url(#colorBaseline)" />
                 <Area type="monotone" dataKey="stressed" name="Stressed (No Relief)" stroke="#B54747" strokeWidth={2} strokeDasharray="4 4" fill="url(#colorStressed)" />
