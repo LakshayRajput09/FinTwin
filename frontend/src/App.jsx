@@ -32,6 +32,7 @@ const Integrations = React.lazy(() => import("./pages/Integrations"));
 const Settings = React.lazy(() => import("./pages/Settings"));
 const Risk = React.lazy(() => import("./pages/Risk"));
 const ProductivitySaaS = React.lazy(() => import("./pages/ProductivitySaaS"));
+const NotFound = React.lazy(() => import("./pages/NotFound"));
 
 // ==========================================
 // PROTECTED ROUTE WRAPPER
@@ -212,8 +213,8 @@ function App() {
             }
           />
 
-          {/* Fallback Catch-All */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Fallback Catch-All Custom 404 Page */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
           </React.Suspense>
       </BrowserRouter>
